@@ -1,0 +1,197 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Designer Portfolio — design tokens.
+ *
+ * Extracted from the original application's stylesheet:
+ *   --background: hsl(0 0% 96.5%)   light "gallery" paper (#F6F6F6)
+ *   --foreground: hsl(0 0% 7%)      near-black ink (#121212)
+ *   --color-cobalt: #2E5BFF         interactive accent
+ *   --color-gallery: #F5F5F7        alt surface
+ * Typography: Inter (body) + JetBrains Mono (labels/meta).
+ * Radius scale is deliberately near-zero — the original is sharp-cornered
+ * editorial geometry, not rounded cards.
+ */
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-cobalt: var(--cobalt);
+  --color-gallery: var(--gallery);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 4px);
+  --ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root {
+  --radius: 0.125rem;
+  --background: hsl(0 0% 96.5%);
+  --foreground: hsl(0 0% 7%);
+  --card: hsl(0 0% 98%);
+  --card-foreground: hsl(0 0% 7%);
+  --popover: hsl(0 0% 98%);
+  --popover-foreground: hsl(0 0% 7%);
+  --primary: hsl(227 100% 59%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(0 0% 92%);
+  --secondary-foreground: hsl(0 0% 7%);
+  --muted: hsl(0 0% 92%);
+  --muted-foreground: hsl(0 0% 40%);
+  --accent: hsl(227 100% 59% / 8%);
+  --accent-foreground: hsl(227 100% 45%);
+  --destructive: hsl(0 72% 51%);
+  --border: hsl(0 0% 85%);
+  --input: hsl(0 0% 85%);
+  --ring: hsl(227 100% 59%);
+  --sidebar: hsl(0 0% 98%);
+  --sidebar-foreground: hsl(0 0% 7%);
+  --sidebar-primary: hsl(227 100% 59%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(0 0% 92%);
+  --sidebar-accent-foreground: hsl(0 0% 7%);
+  --sidebar-border: hsl(0 0% 85%);
+  --sidebar-ring: hsl(227 100% 59%);
+  --cobalt: #2e5bff;
+  --gallery: #f5f5f7;
+}
+
+.dark {
+  --background: hsl(0 0% 7%);
+  --foreground: hsl(0 0% 96.5%);
+  --card: hsl(0 0% 10%);
+  --card-foreground: hsl(0 0% 96.5%);
+  --popover: hsl(0 0% 10%);
+  --popover-foreground: hsl(0 0% 96.5%);
+  --primary: hsl(227 100% 66%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(0 0% 15%);
+  --secondary-foreground: hsl(0 0% 96.5%);
+  --muted: hsl(0 0% 15%);
+  --muted-foreground: hsl(0 0% 55%);
+  --accent: hsl(227 100% 66% / 12%);
+  --accent-foreground: hsl(227 100% 72%);
+  --destructive: hsl(0 62% 60%);
+  --border: hsl(0 0% 18%);
+  --input: hsl(0 0% 22%);
+  --ring: hsl(227 100% 66%);
+  --sidebar: hsl(0 0% 10%);
+  --sidebar-foreground: hsl(0 0% 96.5%);
+  --sidebar-primary: hsl(227 100% 66%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(0 0% 15%);
+  --sidebar-accent-foreground: hsl(0 0% 96.5%);
+  --sidebar-border: hsl(0 0% 18%);
+  --sidebar-ring: hsl(227 100% 66%);
+  --cobalt: #6c86ff;
+  --gallery: hsl(0 0% 12%);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+  ::selection {
+    background: var(--cobalt);
+    color: white;
+  }
+}
+
+@layer utilities {
+  /* Mono micro-label — the signature "technical" tag style of the site. */
+  .label-mono {
+    @apply font-mono text-[10px] md:text-xs tracking-[0.25em] uppercase;
+  }
+  /* Faint 12-column vertical grid overlay used across public pages. */
+  .grid-lines {
+    background-image: linear-gradient(
+      to right,
+      hsl(0 0% 50% / 0.06) 0,
+      hsl(0 0% 50% / 0.06) 1px,
+      transparent 1px,
+      transparent calc(100% / 12)
+    );
+    background-size: calc(100% / 12) 100%;
+  }
+  .dark .grid-lines {
+    background-image: linear-gradient(
+      to right,
+      hsl(0 0% 100% / 0.05) 0,
+      hsl(0 0% 100% / 0.05) 1px,
+      transparent 1px,
+      transparent calc(100% / 12)
+    );
+  }
+  /* Infinite marquee band. */
+  .marquee-track {
+    animation: marquee 40s linear infinite;
+  }
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-track {
+      animation: none;
+    }
+    html {
+      scroll-behavior: auto;
+    }
+  }
+  /* Custom scrollbar for dashboard list panels. */
+  .scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(0 0% 60%) transparent;
+  }
+  .scroll-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  .scroll-thin::-webkit-scrollbar-thumb {
+    background: hsl(0 0% 60%);
+    border-radius: 3px;
+  }
+  .scroll-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}

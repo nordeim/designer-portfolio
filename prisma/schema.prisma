@@ -1,0 +1,104 @@
+// Designer Portfolio — Prisma schema
+// SQLite is the default (zero-config local dev); switch `provider` to
+// "postgresql" and set DATABASE_URL to scale up — the schema is
+// provider-portable (no SQLite-specific column types are used).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Auth
+// ---------------------------------------------------------------------------
+
+/// Portfolio owner / staff account. Passwords are scrypt-hashed (see
+/// src/lib/auth/password.ts); the raw password never touches the database.
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String?
+  passwordHash String
+  role         String    @default("OWNER") // OWNER | VIEWER
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  sessions     Session[]
+}
+
+/// Server-side session store. The cookie carries an opaque token; only its
+/// SHA-256 hash is persisted, so a database leak cannot be replayed as a
+/// valid session.
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ---------------------------------------------------------------------------
+// Portfolio content
+// ---------------------------------------------------------------------------
+
+/// A portfolio project. Ordered by `order` (ascending) — the public site
+/// renders this order as the 01/…/NN numbering seen across the original.
+model Project {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  order       Int      @default(0)
+  title       String
+  subtitle    String
+  role        String
+  year        String
+  category    String
+  objective   String
+  tagline     String
+  description String
+  problem     String
+  solution    String
+  process     String
+  /// JSON string[] — validated with Zod at every boundary (SQLite has no
+  /// native array type; see src/lib/validation.ts).
+  outcomes    String   @default("[]")
+  /// JSON string[] — validated with Zod at every boundary.
+  deliverables String  @default("[]")
+  /// JSON MediaItem[] — {kind:"image"|"video", src, alt} (validated).
+  gallery     String   @default("[]")
+  heroImage   String
+  coverImage  String
+  processImage String?
+  featured    Boolean  @default(true)
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Contact form
+// ---------------------------------------------------------------------------
+
+/// An inquiry submitted through the public contact form.
+model Inquiry {
+  id          String   @id @default(cuid())
+  name        String
+  email       String
+  company     String?
+  projectType String
+  budgetRange String
+  timeline    String
+  details     String
+  status      String   @default("NEW") // NEW | READ | REPLIED | ARCHIVED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}

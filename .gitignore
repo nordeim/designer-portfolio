@@ -1,0 +1,39 @@
+# dependencies
+node_modules/
+
+# next.js
+.next/
+out/
+build/
+next-env.d.ts
+
+# logs
+*.log
+dev.log
+server.log
+
+# env — never commit real secrets
+.env
+.env.*
+!.env.example
+
+# database (SQLite default)
+db/
+*.db
+*.db-journal
+
+# deploy keys / secrets — never commit
+*.key
+ssh-key.txt
+
+# testing
+coverage/
+
+# misc
+.DS_Store
+*.pem
+*.tsbuildinfo
+
+# IDE
+.idea/
+.vscode/
