@@ -1,42 +1,13 @@
-$ diff .env .env.example
-8c8,17
-< # SQLite by default (zero-config local dev). To use PostgreSQL instead:
----
-> # SQLite by default (zero-config local dev). The `db/` folder lives at the
-> # repo root, git-ignored. A RELATIVE `file:` URL is resolved against
-> # prisma/schema.prisma — exactly like the Prisma CLI — so `file:../db/custom.db`
-> # points at <repo>/db/custom.db for the CLI (migrate/seed), `next build`, and
-> # the running server alike, regardless of the process working directory.
-> # (src/lib/db-path.ts implements this resolution; tests/db-path.test.ts
-> # pins the contract.)
-> # For production, an ABSOLUTE path is still recommended — see
-> # docs/DEPLOYMENT.md §4.
-> # To use PostgreSQL:
-19c28
-< AUTH_SECRET="nt1GXmZOy6tB+gUmdn77ppwHzC0zgsGuKfKb8mSxWQU="
----
-> AUTH_SECRET=set-me-openssl-rand-base64-32
-32,34c41
-< # NEXT_PUBLIC_SITE_URL=http://localhost:3000
-< NEXT_PUBLIC_SITE_URL=https://designer-portfolio.jesspete.shop
-< SITE_URL=https://designer-portfolio.jesspete.shop
----
-> NEXT_PUBLIC_SITE_URL=http://localhost:3000
-57a65,69
-> #   E2E_OUTAGE=1        — enable the 5 graceful-degradation specs
-> #                         (e2e/outage.spec.ts); pair with an
-> #                         E2E_COMMAND whose DATABASE_URL points at an
-> #                         unwritable path, e.g.
-> #                         E2E_COMMAND="PORT=3100 DATABASE_URL=file:./db-outage-missing/custom.db bun run start"
-
-$ rm -rf .next/ db/custom.db
-
+$ rm -rf .next/
+ 
+$ rm -rf db/custom.db 
+ 
 $ bun install
-[0.04ms] ".env"
+[0.09ms] ".env"
 bun install v1.3.14 (0d9b296a)
 
-Checked 623 installs across 720 packages (no changes) [804.00ms]
-
+Checked 623 installs across 720 packages (no changes) [2.44s]
+ 
 $ bunx prisma migrate deploy
 warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
 For more information, see: https://pris.ly/prisma-config
@@ -56,9 +27,9 @@ The following migration(s) have been applied:
 migrations/
   └─ 20260920045009_init/
     └─ migration.sql
-
+      
 All migrations have been successfully applied.
-
+ 
 $ SEED_ADMIN_PASSWORD=P@ssw0rd bun run db:seed
 $ prisma db seed
 warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
@@ -73,22 +44,35 @@ Running seed command `bun prisma/seed.ts` ...
 [seed] project upserted: 05 Vexta
 [seed] owner admin@alexmoreau.design created (OWNER)
 [seed] done — 5 projects
+┌─────────────────────────────────────────────────────────┐
+│  Update available 6.19.3 -> 8.0.0-rc.15                 │
+│                                                         │
+│  This is a major update - please follow the guide at    │
+│  https://pris.ly/d/major-version-upgrade                │
+│                                                         │
+│  Run the following to update                            │
+│    npm i --save-dev prisma@latest                       │
+│    npm i @prisma/client@latest                          │
+└─────────────────────────────────────────────────────────┘
 
 🌱  The seed command has been executed.
-
+ 
+$ ls -l db/custom.db 
+-rw-r--r-- 1 pete pete 94208 Sep 21 07:32 db/custom.db
+ 
 $ bun run build
 $ next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/
 ▲ Next.js 16.3.5 (Turbopack)
 - Environments: .env
-✓ Running next.config.ts took 33ms
+✓ Running next.config.ts took 101ms
 
   Creating an optimized production build ...
-✓ Compiled successfully in 19.6s
+✓ Compiled successfully in 47s
   Skipping validation of types
-✓ Finished TypeScript config validation in 24ms
-✓ Collecting page data using 3 workers in 1806ms
-✓ Generating static pages using 3 workers (17/17) in 1192ms
-✓ Finalizing page optimization in 3.0s
+✓ Finished TypeScript config validation in 87ms    
+✓ Collecting page data using 3 workers in 9.1s    
+✓ Generating static pages using 3 workers (17/17) in 1379ms
+✓ Finalizing page optimization in 12.0s    
 
 Route (app)
 ┌ ○ /
@@ -117,11 +101,11 @@ Route (app)
 ●  (SSG)      prerendered as static HTML (uses generateStaticParams)
 ƒ  (Dynamic)  server-rendered on demand
 
-$ bun run start
+ 
+$ PORT=3009 bun run start
 $ NODE_ENV=production node .next/standalone/server.js
 ▲ Next.js 16.3.5
-- Local:         http://localhost:3000
-- Network:       http://0.0.0.0:3000
+- Local:         http://localhost:3009
+- Network:       http://0.0.0.0:3009
 ✓ Ready in 0ms
-✓ Running next.config took 6ms
-
+✓ Running next.config took 8ms
