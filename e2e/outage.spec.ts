@@ -4,15 +4,23 @@ import { test, expect } from "@playwright/test";
  * Graceful-degradation contract under a DATABASE OUTAGE.
  *
  * This file is skipped in normal runs. To exercise it, point the suite at a
- * server whose DATABASE_URL is unwritable (Prisma cannot even open the file):
+ * server whose DATABASE_URL targets a writable-but-empty location (the
+ * trickiest failure mode: SQLite silently auto-creates a table-less
+ * zero-byte file there, which a naive `SELECT 1` health probe would report
+ * as "ok"):
  *
  *   E2E_OUTAGE=1 E2E_START=1 E2E_PORT=3100 \
- *   E2E_COMMAND="PORT=3100 DATABASE_URL=file:./db-outage-missing/custom.db bun run start" \
+ *   E2E_COMMAND="mkdir -p prisma/db-outage-empty && PORT=3100 DATABASE_URL=file:./db-outage-empty/custom.db bun run start" \
  *   bunx playwright test e2e/outage.spec.ts
+ *
+ * (A relative `file:` URL resolves against <repo>/prisma, matching the
+ * Prisma CLI — hence the mkdir target. Pointing at an unwritable path, e.g.
+ * file:./db-outage-missing/custom.db, exercises the same contract.)
  *
  * The contract (mirrors what a misconfigured production deployment looks
  * like — verified against a real one on 2026-09-20):
- *   1. /api/health detects the outage (503, db:false) — never a false "ok".
+ *   1. /api/health detects the outage (503, db:false) — never a false "ok",
+ *      even when an empty auto-created file answers `SELECT 1`.
  *   2. The static shell (landing, /projects) keeps serving prerendered
  *      content — the outage must not take the whole site down.
  *   3. Server actions never throw across the action boundary (PAD §3.3):
@@ -26,7 +34,7 @@ test.beforeEach(() => {
   test.skip(!OUTAGE, "E2E_OUTAGE not set — run against the outage server (see file header)");
 });
 
-test("health reports degraded with db:false (503)", async ({ request }) => {
+test("health reports degraded with db:false (503) — an auto-created empty file is NOT ok", async ({ request }) => {
   const res = await request.get("/api/health");
   expect(res.status()).toBe(503);
   const body = await res.json();

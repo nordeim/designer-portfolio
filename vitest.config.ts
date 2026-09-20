@@ -20,6 +20,7 @@ export default defineConfig({
         "src/lib/typewriter.ts",
         "src/lib/constellation.ts",
         "src/lib/menu-wheel.ts",
+        "src/lib/db-path.ts",
       ],
       thresholds: {
         statements: 100,

@@ -12,7 +12,16 @@ import { PrismaClient } from "@prisma/client";
 import { randomBytes, scrypt as scryptCb } from "node:crypto";
 import { promisify } from "node:util";
 
-const prisma = new PrismaClient();
+import { findAppRoot, resolveDatabaseUrl } from "../src/lib/db-path";
+
+// Same resolution as the running app: a relative `file:` DATABASE_URL is
+// anchored at the repo root exactly like the Prisma CLI does, so the seed
+// always writes to the database that migrate created (the bare client would
+// resolve relative paths from the process CWD and could seed a different,
+// auto-created empty file elsewhere).
+const seedDatasourceUrl = resolveDatabaseUrl(process.env.DATABASE_URL, findAppRoot());
+
+const prisma = new PrismaClient(seedDatasourceUrl ? { datasourceUrl: seedDatasourceUrl } : undefined);
 const scrypt = promisify(scryptCb) as (p: string, s: Buffer, k: number) => Promise<Buffer>;
 
 interface SeedProject {

@@ -57,16 +57,37 @@ Then sign in at `/login` with the seeded owner credentials and confirm the
 dashboard loads (`/dashboard`), and submit one test inquiry from `/contact`
 to confirm the write path.
 
-## 4. SQLite path resolution (the trap)
+## 4. SQLite path resolution (the trap, and how the app now handles it)
 
-A `file:` URL in `DATABASE_URL` is resolved **relative to the current working
-directory of the process reading it** — not the repo root, not the schema
-directory. The operator's local `.env` uses `file:../db/custom.db`, which
-works when the process runs from the repo checkout but places the database
-*outside* the deployment. On a server:
+**How resolution works.** The Prisma *CLI* (migrate/db push/seed) resolves a
+relative `file:` URL against the **schema directory** (`prisma/`), so the
+documented `file:../db/custom.db` places the database at `<repo>/db/custom.db`.
+Historically the Prisma *runtime* resolved the same value against the process
+CWD instead — so a server started from the repo root looked at the parent
+directory, found nothing there, and SQLite silently **auto-created an empty
+table-less file** at that wrong location. `/api/health`'s old bare `SELECT 1`
+even reported `ok` against that empty file, masking the breakage (this exact
+sequence was observed on the first production deployment and reproduced
+locally on 2026-09-20).
 
-- **Recommended:** `DATABASE_URL=file:/var/lib/designer-portfolio/custom.db`
-  (absolute; the directory exists and is writable by the service user).
+Since session 12, `src/lib/db-path.ts` re-anchors relative `file:` URLs at
+runtime the same way the CLI does (walking up from the CWD to the directory
+owning `package.json` + `prisma/schema.prisma`, skipping `.next` build
+outputs): migrate, seed, `next build`, and the running server now agree on
+one file — `file:../db/custom.db` = `<repo>/db/custom.db` everywhere, and a
+mis-resolved path can no longer silently fork the database. The health probe
+also reads a real table, so an auto-created empty file reports `degraded`.
+
+**What can still override `.env`:** a `DATABASE_URL` exported in the service
+environment (or picked up from a stray parent-directory `.env` by bun's or
+prisma's walk-up) wins over the repo's `.env` — check the process environment
+first when the server connects to an unexpected file:
+`bun -e 'console.log(process.env.DATABASE_URL)'`.
+
+For servers, an absolute path remains the most explicit and recommended form:
+
+- `DATABASE_URL=file:/var/lib/designer-portfolio/custom.db` (absolute; the
+  directory exists and is writable by the service user).
 - Keep the file on a persistent volume; SQLite = the file is the backup
   (`cp` while the service is stopped, or `sqlite3 .backup`).
 

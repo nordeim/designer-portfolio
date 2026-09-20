@@ -163,7 +163,7 @@ Never bundle unrelated changes. Never commit `.env`, `db/*.db`, or `dev.log` (al
 
 | Variable | Purpose | Example |
 |---|---|---|
-| `DATABASE_URL` | SQLite file path or PostgreSQL URL | `file:./db/custom.db` |
+| `DATABASE_URL` | SQLite path (relative `file:` resolves against `prisma/` — `file:../db/custom.db` = repo-root `db/`) or PostgreSQL URL | `file:../db/custom.db` |
 | `AUTH_SECRET` | Session-cookie signing key (≥32 chars) | `openssl rand -base64 32` |
 | `ADMIN_EMAIL` | Seed owner email | `admin@alexmoreau.design` |
 | `SEED_ADMIN_PASSWORD` | First-boot owner password (min 8) | *(generated, never committed)* |

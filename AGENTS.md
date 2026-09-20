@@ -43,6 +43,7 @@ bunx playwright test -g "radial menu"            # E2E tests matching a title
 ## Environment setup
 
 - `cp .env.example .env` — required before `db:push`/`db:seed` (Prisma reads `DATABASE_URL`).
+- **Database location**: the `db/` folder lives at the repo root (git-ignored). A relative `file:` DATABASE_URL is resolved against `prisma/schema.prisma` — the same rule the Prisma CLI uses — so the documented `file:../db/custom.db` points at `<repo>/db/custom.db` for migrate/seed/build/server alike, independent of the process CWD (`src/lib/db-path.ts`, pinned by `tests/db-path.test.ts`). Absolute URLs and PostgreSQL connection strings pass through unchanged. A wrong relative path no longer silently forks the database: the runtime follows the CLI.
 - `AUTH_SECRET`: generate with `openssl rand -base64 32`. A dev fallback exists, but production boot without it is misconfigured.
 - `SEED_ADMIN_PASSWORD` (min 8 chars) is required on first seed to create the OWNER account; it is ignored on later seeds (password is never overwritten). No default credentials ship in the repo.
 - Owner login: `ADMIN_EMAIL` + the password you seeded → `/login` → redirected to `/dashboard`.
@@ -101,6 +102,7 @@ e2e/                   Playwright specs (public pages, project detail, auth, inq
 - **`bun run dev`/`bun run start` hold port 3000**; if EADDRINUSE, free it with `lsof -ti:3000 | xargs -r kill -9` **plus** `pkill -9 -f next-server` — the standalone server renames its process to `next-server (v16.1.3)` and `lsof` may only show the wrapper PID. When in doubt, take the PID from `ss -tlnp | grep :3000`.
 - The gallery supports `{kind: "image" | "video"}` items; videos autoplay muted+looped in the 1-column gallery mode (one seeded example: `/projects/sable-fashion-brand/gallery-01.mp4`).
 - `revalidatePath` is called in every mutating action for `/`, `/projects`, `/dashboard*` — if you add a public page that lists projects, add it to `revalidateProjectPages()`.
-- **Deployment**: production needs a provisioned database (the SQLite file is git-ignored — a repo-only deploy ships no data layer) and an **absolute** `DATABASE_URL`; follow `docs/DEPLOYMENT.md`. The app degrades gracefully while the DB is down (see the outage suite above).
+- **Deployment**: production needs a provisioned database (the SQLite file is git-ignored — a repo-only deploy ships no data layer); follow `docs/DEPLOYMENT.md`. A relative `DATABASE_URL` now resolves identically at runtime and in the CLI, but an **absolute** path is still the recommendation for services. The app degrades gracefully while the DB is down (see the outage suite above).
+- **Env precedence trap**: `DATABASE_URL` exported in the shell (or a stray parent-dir `.env` picked up by bun/prisma walk-up) overrides the repo `.env` at runtime — if the server connects to an unexpected file, check the process environment first (`bun -e 'console.log(process.env.DATABASE_URL)'`), not just `.env`.
 - The landing hero cycles constellation images on random timers (1.5–2.5s show, 1.2–3s gap). All of that is paused under `prefers-reduced-motion`; the SSR markup ships the full list so crawlers see every project.
 - `scripts/dev-watchdog.sh` is a local-dev convenience (not shipped to the repo's CI): it restarts `bun run dev` if BOTH `/api/health` and `/` fail 3 consecutive probes, clearing `.next/` on a cold-start failure.

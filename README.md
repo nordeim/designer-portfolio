@@ -137,7 +137,7 @@ Reads flow through RSC pages → `src/lib/data.ts` → Prisma. Mutations flow th
 
 | Variable | Purpose | Required |
 |---|---|---|
-| `DATABASE_URL` | SQLite path or PostgreSQL connection string | ✅ |
+| `DATABASE_URL` | SQLite path (relative `file:` resolves like the Prisma CLI — against `prisma/`, so `file:../db/custom.db` = repo-root `db/`) or PostgreSQL connection string | ✅ |
 | `AUTH_SECRET` | Session-cookie signing key (`openssl rand -base64 32`) | ✅ in prod |
 | `ADMIN_EMAIL` | Seed owner email (default `admin@alexmoreau.design`) | optional |
 | `SEED_ADMIN_PASSWORD` | First-boot owner password (min 8 chars) | first seed |
