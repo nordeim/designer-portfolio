@@ -48,6 +48,12 @@
   --color-card: var(--card);
   --color-cobalt: var(--cobalt);
   --color-gallery: var(--gallery);
+  /* Brand surface for the radial-menu overlay, contact submit pill, and hero
+     gradients. Without this @theme mapping Tailwind v4 generates NO charcoal
+     utilities — `bg-charcoal` etc. silently render nothing (the session-16
+     invisible-menu defect). Every brand constant must be mapped here, not
+     just declared in :root. */
+  --color-charcoal: var(--charcoal);
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);

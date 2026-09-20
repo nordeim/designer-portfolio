@@ -9,9 +9,12 @@ import {
 } from "@/lib/menu-wheel";
 
 describe("menu wheel geometry (radial navigation overlay)", () => {
-  it("computes the wheel center slightly above the viewport middle", () => {
-    expect(wheelCenter(1440, 900)).toEqual({ x: 720, y: 430 });
-    expect(wheelCenter(390, 844)).toEqual({ x: 195, y: 402 });
+  it("anchors the wheel circle so its right arc passes through the screen center", () => {
+    // Reference bundle: m = innerWidth/2 - radius, g = innerHeight/2 - 20.
+    // The circle's 3-o'clock point is the screen center — items cluster
+    // around it and stay reachable on every viewport, including mobile.
+    expect(wheelCenter(1440, 900)).toEqual({ x: 720 - 765, y: 430 });
+    expect(wheelCenter(390, 844)).toEqual({ x: 195 - 331.5, y: 402 });
   });
 
   it("sizes the radius at 85% of the smaller viewport dimension", () => {
@@ -60,5 +63,24 @@ describe("menu wheel geometry (radial navigation overlay)", () => {
     expect(clampRotation(0, 4, 765)).toBe(0);
     // Values inside the range pass through unchanged.
     expect(clampRotation(12.5, 4, 765)).toBe(12.5);
+  });
+
+  it("keeps every menu item inside a mobile viewport (regression: invisible menu)", () => {
+    // 390x844 phone viewport: the wheel circle is centered off-screen left
+    // (x = 195 - 331.5), so the item cluster around the 3-o'clock point
+    // (the screen center) must stay within [0, 390] x [0, 844]. With the
+    // pre-fix center (x = 195) all four anchors landed at x = 473-526 —
+    // completely off-screen, the "mobile menu is not working" defect.
+    const w = 390;
+    const h = 844;
+    const { x: cx, y: cy } = wheelCenter(w, h);
+    const r = wheelRadius(w, h);
+    for (let i = 0; i < 4; i++) {
+      const pos = itemPosition(i, 4, cx, cy, r);
+      expect(pos.x).toBeGreaterThanOrEqual(0);
+      expect(pos.x).toBeLessThanOrEqual(w);
+      expect(pos.y).toBeGreaterThanOrEqual(0);
+      expect(pos.y).toBeLessThanOrEqual(h);
+    }
   });
 });

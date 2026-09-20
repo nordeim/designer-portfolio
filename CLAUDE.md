@@ -80,9 +80,9 @@ bun run dev                       # http://localhost:3000
 
 ### Test Pyramid
 
-- **Unit (Vitest, `tests/`)**: Zod schemas (inquiry, login, project input — including empty-select prompts), scrypt password hashing, JSON-column parsing degradation, typewriter state machine, constellation layout derivation, radial-menu angle math, database-path resolution, site-config DOM-parity contracts. No mocks — real schema parsing and real crypto.
+- **Unit (Vitest, `tests/`)**: Zod schemas (inquiry, login, project input — including empty-select prompts), scrypt password hashing, JSON-column parsing degradation, typewriter state machine, constellation layout derivation, radial-menu angle math (incl. the mobile in-viewport reachability regression), database-path resolution, site-config DOM-parity contracts. No mocks — real schema parsing and real crypto.
 - **Integration**: the dev server + browser is the integration surface (see Verification below).
-- **E2E (Playwright, `e2e/`)**: 31 specs across six files (plus 5 opt-in outage specs) — public pages content (incl. the contact form's source-parity initial state: placeholder selects + four social links), project detail (hero/gallery/zoom/prev-next/video/404), auth (login, gating, radial menu), inquiry submission → dashboard inbox, dashboard CRUD + inquiry triage + sign-out, and a11y smoke (focus visibility, console errors, mobile overflow, marquee animation, constellation).
+- **E2E (Playwright, `e2e/`)**: 32 specs across six files (plus 5 opt-in outage specs) — public pages content (incl. the contact form's source-parity initial state: placeholder selects + four social links), project detail (hero/gallery/zoom/prev-next/video/404), auth (login, gating, radial menu), inquiry submission → dashboard inbox, dashboard CRUD + inquiry triage + sign-out, and a11y smoke (focus visibility, console errors, mobile overflow, marquee animation, constellation, **mobile radial-menu paint + in-viewport reachability**).
 
 ### Test Commands
 
@@ -132,6 +132,8 @@ Never bundle unrelated changes. Never commit `.env`, `db/*.db`, or `dev.log` (al
 - Dev server log: `dev.log` (tee'd). Turbopack `Failed to restore task data` → delete `.next/` and restart.
 - Prisma client errors like `undefined (reading 'findMany')` → schema changed without a dev-server restart.
 - Tailwind v4 media-order gotcha: a non-default breakpoint utility (e.g. `min-[1440px]:`/`3xl:`) is NOT guaranteed to be emitted after the default `md:`/`lg:` blocks, so it can silently lose the cascade. Rules that must win at higher widths use unlayered CSS (see `.hero-h1-scale` at the bottom of `globals.css`).
+- Tailwind v4 theme-mapping gotcha: a color declared only in `:root` (e.g. `--charcoal`) generates NO utilities — it must also be mapped in `@theme inline` (`--color-charcoal: var(--charcoal)`). A missing mapping renders as dead classes (the invisible radial-menu overlay — session 16).
+- Playwright `toBeVisible()` does NOT require an element to be inside the viewport — off-screen elements pass. Specs guarding on-screen reachability (e.g. the mobile radial menu) must also assert `boundingBox()` geometry.
 
 ## Communication & Documentation
 

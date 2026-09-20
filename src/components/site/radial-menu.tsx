@@ -143,7 +143,9 @@ export function RadialMenu({ projects, onClose }: { projects: MenuProject[]; onC
                 top: center.y,
                 width: radius * 2,
                 height: radius * 2,
-                transform: `translate(-50%, -50%) rotate(${-rotation}deg)`,
+                // The reference keeps the preview fixed (no counter-rotation)
+                // while the wheel spins behind it.
+                transform: "translate(-50%, -50%)",
               }}
               aria-hidden
             >

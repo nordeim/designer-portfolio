@@ -1,9 +1,9 @@
-# Designer Portfolio — Master Project Architecture Document (PAD) v1.5
+# Designer Portfolio — Master Project Architecture Document (PAD) v1.6
 
 **Classification:** Internal Engineering Reference
 **Status:** DEFINITIVE, PRODUCTION-LOCKED BLUEPRINT
 **Companion Document:** [README.md](./README.md) (setup & operations), [CLAUDE.md](./CLAUDE.md) (workflow contract)
-**Last Updated:** 2026-09-20
+**Last Updated:** 2026-09-21
 **Audience:** Senior Engineers, Tech Leads, DevOps, and Onboarding Engineers
 **Rule:** Every architectural decision in this document traces to a specific rationale.
 
@@ -11,6 +11,7 @@
 
 | Version | Date | Author | Type | Summary |
 |---|---|---|---|---|
+| 1.6 | 2026-09-21 | Engineering | [CA] | Invisible radial menu remediated (operator-reported "mobile menu not working"): root causes were (1) `--charcoal` declared in `:root` but never mapped in `@theme inline`, so Tailwind v4 generated no `bg-charcoal`/`text-charcoal` utilities — the overlay, contact submit pill, hero/works gradients, and constellation tint rendered nothing; (2) `wheelCenter` returned `viewportW/2` instead of the reference bundle's `viewportW/2 − radius`, pushing every menu item off the right edge (at 390px all four anchors sat at x = 473–526). Also aligned the hover preview (no counter-rotation, matching the bundle). Unit suites 73 → 74 (mobile in-viewport reachability regression), e2e 36 → 37 (mobile radial-menu paint + geometry spec); stale screenshots 05/12/16 recaptured + 23 added |
 | 1.5 | 2026-09-20 | Engineering | [CA] | Production DB provisioned by the operator (live health `ok db:true`; live E2E 23 passed / 0 failed). Contact/about DOM-parity remediation from the rendered-text drift audit: inquiry selects start empty with reference placeholders (+ friendly Zod select prompts), Social column lists all four networks with `↗` arrows, SKILL_GROUPS titles title-case in DOM (CSS uppercases), toast copy aligned ("Inquiry sent successfully." + required-fields toast), works h2 span-wrapped; unit suites 66 → 73, e2e 35 → 36 (contact parity spec) |
 | 1.4 | 2026-09-20 | Engineering | [CA] | Deterministic SQLite location: `src/lib/db-path.ts` resolves relative `file:` URLs CLI-style (schema-relative, build-output-skipping) so runtime and CLI never fork the database; honest `/api/health` (real-table probe — auto-created empty files report `degraded`); seed.ts wired to the same resolution; unit suites 53 → 66 |
 | 1.3 | 2026-09-20 | Engineering | [CA] | Live-deployment E2E audit (jesspete.shop: visual parity exact, DB outage diagnosed) + graceful-degradation hardening: error boundary + ErrorPanel, action-boundary outage guards (login/contact/dashboard), metadata/layout/page degradation, `e2e/outage.spec.ts` (5 specs, E2E_OUTAGE=1), docs/DEPLOYMENT.md runbook |
@@ -343,7 +344,7 @@ erDiagram
 
 ### 5.3 Component Primitives
 
-Radix-backed shadcn primitives in `src/components/ui/` (accordion, dialog, select, switch, label, button, input, textarea, sonner toaster). Site composites: `SiteHeader` (fixed overlay: breathing A/M logo, center theme toggle, "Start a Project →" bottom-right CTA, color-switch over dark heroes), `RadialMenu` (rotating wheel overlay on charcoal: 22°-arc items, counter-rotated labels, projects submenu, circular hover preview), `HeroConstellation` (floating project imagery + cobalt dot markers + typewriter meta), `WorksSection` (alternating sticky-parallax editorial rows, `01/06` numbering), `GhostMarquee` (giant footer band, hover-blur + pause), `ProjectIndex` (invert-fill archive rows + viewport-coords cursor preview), `ProjectHero`/`ProjectDetailBody` (full-bleed case study + sticky intro + 1↔2-column zoomable gallery), `InquiryForm` (RHF + Zod resolver, underline inputs).
+Radix-backed shadcn primitives in `src/components/ui/` (accordion, dialog, select, switch, label, button, input, textarea, sonner toaster). Site composites: `SiteHeader` (fixed overlay: breathing A/M logo, center theme toggle, "Start a Project →" bottom-right CTA, color-switch over dark heroes), `RadialMenu` (rotating wheel overlay on charcoal: the circle anchors at `viewportW/2 − radius` so its right arc passes through the screen center; 22°-arc items cluster on-screen at every viewport incl. 390px mobile; counter-rotated labels, projects submenu, fixed circular hover preview), `HeroConstellation` (floating project imagery + cobalt dot markers + typewriter meta), `WorksSection` (alternating sticky-parallax editorial rows, `01/06` numbering), `GhostMarquee` (giant footer band, hover-blur + pause), `ProjectIndex` (invert-fill archive rows + viewport-coords cursor preview), `ProjectHero`/`ProjectDetailBody` (full-bleed case study + sticky intro + 1↔2-column zoomable gallery), `InquiryForm` (RHF + Zod resolver, underline inputs).
 
 ### 5.4 Motion
 
@@ -399,7 +400,7 @@ Single role model today: `OWNER` (full mutation rights). `VIEWER` exists in the 
 | Password hashing | 1 | 4 | `tests/password.test.ts` | Vitest |
 | Typewriter state machine | 1 | 9 | `tests/typewriter.test.ts` | Vitest |
 | Constellation layout | 1 | 9 | `tests/constellation.test.ts` | Vitest |
-| Radial-menu geometry | 1 | 6 | `tests/menu-wheel.test.ts` | Vitest |
+| Radial-menu geometry | 1 | 7 | `tests/menu-wheel.test.ts` | Vitest |
 | Database-path resolution | 1 | 13 | `tests/db-path.test.ts` | Vitest |
 | Site-config DOM parity | 1 | 4 | `tests/site-config-parity.test.ts` | Vitest |
 | Public pages content | 1 | 7 | `e2e/public-pages.spec.ts` | Playwright |
@@ -407,9 +408,9 @@ Single role model today: `OWNER` (full mutation rights). `VIEWER` exists in the 
 | Auth + radial menu | 1 | 6 | `e2e/auth.spec.ts` | Playwright |
 | Inquiry → dashboard | 1 | 2 | `e2e/inquiry.spec.ts` | Playwright |
 | Dashboard CRUD/triage | 1 | 5 | `e2e/dashboard.spec.ts` | Playwright |
-| A11y / rendering smoke | 1 | 6 | `e2e/a11y-smoke.spec.ts` | Playwright |
+| A11y / rendering smoke | 1 | 7 | `e2e/a11y-smoke.spec.ts` | Playwright |
 | Outage degradation | 1 | 5 | `e2e/outage.spec.ts` | Playwright (`E2E_OUTAGE=1` only) |
-| **Total** | **14** | **109** | | |
+| **Total** | **14** | **110** | | |
 
 ### 7.2 Test Patterns
 
@@ -417,17 +418,17 @@ Real behavior, no mocks: schemas parse actual payloads (valid, boundary, invalid
 
 ### 7.3 Coverage Thresholds
 
-Pure domain modules (`src/lib/validation.ts`, `src/lib/auth/password.ts`, `src/lib/typewriter.ts`, `src/lib/constellation.ts`, `src/lib/menu-wheel.ts`, `src/lib/db-path.ts`) are held at **100% statements/branches/functions/lines** by a machine-enforced gate: `bunx vitest run --coverage` fails the run below threshold (`coverage.include` in `vitest.config.ts` lists exactly these files — keep it in sync when modules move). The gate ran green at 100% across all six modules with the 73-test suite.
+Pure domain modules (`src/lib/validation.ts`, `src/lib/auth/password.ts`, `src/lib/typewriter.ts`, `src/lib/constellation.ts`, `src/lib/menu-wheel.ts`, `src/lib/db-path.ts`) are held at **100% statements/branches/functions/lines** by a machine-enforced gate: `bunx vitest run --coverage` fails the run below threshold (`coverage.include` in `vitest.config.ts` lists exactly these files — keep it in sync when modules move). The gate ran green at 100% across all six modules with the 74-test suite.
 
 ### 7.4 Pre-PR / Pre-Deploy Checklist
 
 ```bash
 bun run lint          # ESLint — exit 0
 bun run typecheck     # tsc --noEmit — exit 0
-bun run test          # Vitest — 42 passing
+bun run test          # Vitest — 74 passing
 bun run build         # production build — succeeds
 # server running on :3000 (dev or `bun run start`) + E2E_ADMIN_PASSWORD exported:
-bunx playwright test  # Playwright — 30 passing
+bunx playwright test  # Playwright — 32 passing (+5 outage under E2E_OUTAGE=1)
 curl -s localhost:3000/api/health   # {"status":"ok","db":true}
 ```
 

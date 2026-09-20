@@ -11,9 +11,9 @@ Every line here exists because an agent would plausibly miss it without help.
 | `bun run dev` | Dev server on http://localhost:3000 (logs tee'd to `dev.log`) |
 | `bun run lint` | ESLint 9 flat config over `src/`, `prisma/seed.ts`, `tests/`, `e2e/` |
 | `bun run typecheck` | `tsc --noEmit` (strict; **must** pass before commit) |
-| `bun run test` | Vitest unit suites (`tests/*.test.ts`, 73 tests) |
+| `bun run test` | Vitest unit suites (`tests/*.test.ts`, 74 tests) |
 | `bunx vitest run --coverage` | Unit suites + the 100% coverage gate on the pure seam (PAD §7.3) |
-| `bunx playwright test` | E2E suite (`e2e/*.spec.ts`, 36 tests: 31 normal + 5 outage specs that skip unless `E2E_OUTAGE=1`) against an already-running server on :3000 |
+| `bunx playwright test` | E2E suite (`e2e/*.spec.ts`, 37 tests: 32 normal + 5 outage specs that skip unless `E2E_OUTAGE=1`) against an already-running server on :3000 |
 | `E2E_START=1 bunx playwright test` | E2E suite with Playwright managing the server itself (`E2E_COMMAND` overrides the command) |
 | `E2E_OUTAGE=1 E2E_START=1 E2E_PORT=3100 E2E_COMMAND="PORT=3100 DATABASE_URL=file:./db-outage-missing/custom.db bun run start" bunx playwright test e2e/outage.spec.ts` | Graceful-degradation contract against a deliberately broken-DB server (health 503 honesty, static shell survival, non-throwing actions, styled error panel) |
 | `bun run db:push` | Push `prisma/schema.prisma` to the database (schema-declarative; ignores migration files) |
@@ -29,7 +29,7 @@ Every line here exists because an agent would plausibly miss it without help.
 1. After editing `prisma/schema.prisma`: `bun run db:generate` **then** `bun run db:push` — the running dev server caches the Prisma client, so **restart `bun run dev`** after schema changes or you get `Cannot read properties of undefined (reading 'findMany')`.
 2. Clean check before pushing: `bun run lint && bun run typecheck && bun run test` (build optional but recommended).
 3. Fresh database: delete `db/custom.db`, then `bunx prisma migrate deploy && bun run db:seed` (or `bun run db:push && bun run db:seed` for scratch iteration).
-4. The full gate is verified green on a **fresh clone** (`bun install` → `migrate deploy` → `seed`): lint, typecheck, 73 unit tests, coverage 100%, build, 31 E2E tests (+ the 5-spec outage suite under `E2E_OUTAGE=1`). Keep it that way — `tsc --noEmit` must pass with only the dependencies declared in `package.json` (no stale `node_modules` phantom packages).
+4. The full gate is verified green on a **fresh clone** (`bun install` → `migrate deploy` → `seed`): lint, typecheck, 74 unit tests, coverage 100%, build, 32 E2E tests (+ the 5-spec outage suite under `E2E_OUTAGE=1`). Keep it that way — `tsc --noEmit` must pass with only the dependencies declared in `package.json` (no stale `node_modules` phantom packages).
 
 ### Running a single test file
 
@@ -80,6 +80,8 @@ e2e/                   Playwright specs (public pages, project detail, auth, inq
 - **ActionResult envelope**: every action returns `{ ok: true, data } | { ok: false, error, fieldErrors? }`. The client renders errors inline; nothing throws across the boundary.
 - **JSON-in-string columns**: `outcomes`, `deliverables`, `gallery` are JSON strings on SQLite (no native arrays). Parse ONLY with `parseStringList`/`parseGallery` from `src/lib/validation.ts` — they degrade corrupt data to `[]` instead of crashing pages.
 - **Design tokens live in `src/app/globals.css`** (Tailwind v4 `@theme inline` + CSS custom properties). Do not hardcode hex values in components; use `bg-background`, `text-foreground`, `text-cobalt`, `border-border`, `label-mono`.
+- **Every brand color must be mapped in `@theme inline`, not just declared in `:root`** — Tailwind v4 generates utilities only from `@theme` entries. A `--charcoal` custom property without a `--color-charcoal: var(--charcoal)` mapping silently produces dead `bg-charcoal`/`text-charcoal` classes (the session-16 invisible-radial-menu defect: the overlay mounted transparent on every viewport).
+- **The radial wheel anchors off-screen left**: `wheelCenter` (src/lib/menu-wheel.ts) returns `x = viewportW/2 − radius` (reference bundle formula) so the item cluster sits around the screen center and stays reachable at 390px. Centering the circle on the screen instead pushes every item off the right edge — pinned by the "keeps every menu item inside a mobile viewport" regression test.
 - **Hero h1 scaling**: the `9.8vw` size at ≥1440px is applied via the unlayered `.hero-h1-scale` class (bottom of `globals.css`) — NOT via a Tailwind `min-[1440px]:`/`3xl:` utility. Tailwind v4 does not guarantee ascending media-block emission order for non-default breakpoints, so a layered utility can silently lose the cascade to `md:`. Keep this pattern for any rule that must beat a `md:`/`lg:` utility at a higher breakpoint.
 - **Auth**: custom DB sessions (not NextAuth). Password hashing is scrypt via `node:crypto` — no native bindings. Session cookie: HttpOnly, SameSite=Lax, Secure in production.
 - **Route groups**: `(site)` (public, shared header/footer) and `(auth)` (login) are layout-level groupings — no URL prefix.

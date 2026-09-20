@@ -74,3 +74,44 @@ test("hero constellation renders image slots and cobalt dots", async ({ page }) 
   const slots = await hero.locator("[class*='absolute z-20']").count();
   expect(slots).toBeGreaterThanOrEqual(8);
 });
+
+test("mobile radial menu paints, shows every item, and closes (regression: invisible menu)", async ({ page }) => {
+  // Regression spec for the session-16 defect: at phone width the menu opened
+  // but rendered nothing — the overlay's bg-charcoal utility was dead (missing
+  // Tailwind v4 theme mapping) and every item anchor sat off-screen right
+  // (wrong wheel center). This spec pins paint + in-viewport reachability.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.getByRole("button", { name: "Open menu" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Site navigation" });
+  await expect(dialog).toBeVisible();
+
+  // The overlay must actually PAINT (charcoal = rgb(18, 18, 18)), not mount
+  // as a transparent layer over the page.
+  const overlayBg = await dialog.evaluate((el) => getComputedStyle(el).backgroundColor);
+  expect(overlayBg).toBe("rgb(18, 18, 18)");
+
+  // Every route label must be visible INSIDE the viewport — Playwright's
+  // toBeVisible() alone passes for off-screen elements, so assert geometry.
+  for (const label of ["Home", "Projects", "About", "Contact"]) {
+    const link = dialog.getByRole("link", { name: label, exact: true });
+    await expect(link).toBeVisible();
+    const box = await link.boundingBox();
+    expect(box, `${label} missing bounding box`).not.toBeNull();
+    expect(box!.x, `${label} starts left of the viewport`).toBeGreaterThanOrEqual(0);
+    expect(box!.x + box!.width, `${label} ends right of the viewport`).toBeLessThanOrEqual(390);
+  }
+
+  // A link click navigates from the overlay (hasTouch is off in this
+  // project; the touch path was validated separately — both fire the same
+  // React handler).
+  await dialog.getByRole("link", { name: "About", exact: true }).click();
+  await expect(page).toHaveURL(/\/about/);
+
+  // Reopen and close via the X button.
+  await page.getByRole("button", { name: "Open menu" }).click();
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Close menu" }).click();
+  await expect(dialog).toBeHidden({ timeout: 5000 });
+});

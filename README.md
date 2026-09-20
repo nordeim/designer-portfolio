@@ -13,17 +13,17 @@ Captured from the running app (see `docs/screenshots/` — 16 shots covering eve
 | | | |
 |---|---|---|
 | `01-landing-light.png` — constellation hero | `02-landing-dark.png` — dark hero | `13-landing-works.png` — sticky parallax rows |
-| `14-landing-footer-marquee.png` — ghost marquee | `16-radial-menu.png` — radial wheel overlay | `03-projects.png` — archive |
+| `14-landing-footer-marquee.png` — ghost marquee | `16-radial-menu.png` — radial wheel overlay (open, projects submenu + preview) | `03-projects.png` — archive |
 | `07-project-detail.png` — full-bleed case study | `15-project-detail-gallery.png` — gallery + zoom | `04-about.png` — portrait + timeline |
-| `05-contact.png` — underline form | `06-login.png` — sign-in | `08–10` — dashboard views |
-| `11-mobile-landing.png` — 390px hero | `12-mobile-menu.png` — mobile menu | |
+| `05-contact.png` — underline form + charcoal submit pill | `06-login.png` — sign-in | `08–10` — dashboard views |
+| `11-mobile-landing.png` — 390px hero | `12-mobile-menu.png` — mobile radial menu (open) | `23-mobile-menu-projects-submenu.png` — mobile submenu + preview |
 
 ## Key Features
 
 | | Feature | Where |
 |---|---|---|
 | 🖼️ | Landing: constellation hero (floating project imagery + typewriter meta), alternating sticky-parallax Selected Works rows, philosophy, ghost-type footer marquee | `src/app/(site)/page.tsx` |
-| 🧭 | Fixed overlay chrome: breathing A/M logo, center theme toggle, bottom-right "Start a Project →" CTA, rotating radial menu with project previews | `src/components/site/{site-header,radial-menu}.tsx` |
+| 🧭 | Fixed overlay chrome: breathing A/M logo, center theme toggle, bottom-right "Start a Project →" CTA, rotating radial menu with project previews (anchored at the screen center on every viewport) | `src/components/site/{site-header,radial-menu}.tsx` |
 | 🗺️ | Projects archive with invert-fill hover rows, cursor-following previews, mobile imagery | `src/app/(site)/projects` |
 | 📖 | Case-study pages: full-bleed hero, sticky intro + 1↔2-column zoomable gallery (incl. autoplay video), wrapped prev/next | `src/app/(site)/project/[slug]` |
 | 📝 | About: portrait, experience timeline, sage-dot skills matrix | `src/app/(site)/about` |
@@ -32,7 +32,7 @@ Captured from the running app (see `docs/screenshots/` — 16 shots covering eve
 | 📊 | Owner dashboard: stats overview, projects CRUD, inquiry triage workflow | `src/app/dashboard/` |
 | 🌗 | Light/dark themes; reduced-motion aware | `next-themes` + `globals.css` |
 | ♿ | Semantic landmarks, focus states, AA contrast, keyboard operability | throughout |
-| 🧪 | Vitest unit suites (validation, hashing, JSON parsing, typewriter, constellation, menu geometry, db-path resolution, site-config DOM parity) + Playwright E2E (7 spec files, 36 tests) | `tests/`, `e2e/` |
+| 🧪 | Vitest unit suites (validation, hashing, JSON parsing, typewriter, constellation, menu geometry, db-path resolution, site-config DOM parity) + Playwright E2E (7 spec files, 37 tests) | `tests/`, `e2e/` |
 
 ## Quick Start
 

@@ -15,9 +15,19 @@ export interface Point {
   y: number;
 }
 
-/** Center of the wheel: horizontal middle, 20px above the vertical middle. */
+/**
+ * Center of the wheel, matching the reference app's bundle formula:
+ * `m = innerWidth/2 - radius, g = innerHeight/2 - 20`.
+ *
+ * The circle is anchored so its 3-o'clock point sits at the horizontal
+ * screen center — the items (spread ±33° around that axis) cluster around
+ * the screen center and stay reachable on every viewport. Centering the
+ * circle on the screen instead (x = w/2) pushes the whole cluster off the
+ * right edge — at 390px mobile every item lands at x = 473-526, which is
+ * how the "mobile menu is not working" defect manifested (session 16).
+ */
 export function wheelCenter(viewportW: number, viewportH: number): Point {
-  return { x: viewportW / 2, y: viewportH / 2 - 20 };
+  return { x: viewportW / 2 - wheelRadius(viewportW, viewportH), y: viewportH / 2 - 20 };
 }
 
 /** Wheel radius: 85% of the smaller viewport dimension. */
