@@ -70,10 +70,14 @@ test("projects CRUD round-trip: create, verify on public site, delete", async ({
 
   // Delete it again — dashboard row action.
   await page.goto("/dashboard/projects");
-  const row = page.locator("li").filter({ hasText: title });
+  // Scope to non-toast list items: Sonner renders success toasts (e.g.
+  // `Deleted "<title>".`) as <li> elements too, so an unscoped locator
+  // races the toast's mount window and fails with a strict-mode violation
+  // (2 elements) instead of waiting for the row to disappear.
+  const row = page.locator("li:not([data-sonner-toast])").filter({ hasText: title });
   await row.getByRole("button", { name: "Delete" }).click();
   await row.getByRole("button", { name: "Confirm delete" }).click();
-  await expect(page.locator("li").filter({ hasText: title })).toBeHidden({ timeout: 15_000 });
+  await expect(row).toBeHidden({ timeout: 15_000 });
 });
 
 test("inquiry triage: status transitions persist", async ({ page }) => {
