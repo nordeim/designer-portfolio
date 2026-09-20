@@ -63,8 +63,10 @@ test("projects CRUD round-trip: create, verify on public site, delete", async ({
   await expect(page.getByText(title)).toBeVisible({ timeout: 15_000 });
 
   // It appears on the public archive (server action revalidated the page).
+  // Generous timeout: under full-suite load the SSG revalidation of /projects
+  // can take longer than the default budget (observed in CI-style runs).
   await page.goto("/projects");
-  await expect(page.getByText(title)).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText(title)).toBeVisible({ timeout: 20_000 });
 
   // Delete it again — dashboard row action.
   await page.goto("/dashboard/projects");

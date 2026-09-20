@@ -500,6 +500,8 @@ TypeScript strict, no `any` (`unknown` + narrowing); `interface` for shapes, `ty
 | Info | Landing numbering shows `01/06` with 5 published projects | Intentional parity: the reference app hardcodes 6 (`WORKS_TOTAL_DISPLAY` in `src/lib/site-config.ts`) | Documented (matches reference exactly) |
 | Info | Reference app uses GSAP ScrollSmoother (inertia scroll); this app uses native scroll + framer-motion reveals | Scroll physics differ subtly; layout and reveal choreography match | Deferred by design (avoids a GSAP dependency; native scroll is more accessible) |
 | Info | Reference is a client-rendered SPA; this app is RSC-first with DB persistence and a dashboard the reference lacks | Architectural divergence is intentional | Documented (see ADR-001, ADR-006) |
+| Info | `/login` follows this site's design system instead of the reference's Base44 platform login widget (rounded card, system fonts, avatar) | Login screen is visually custom but functionally equivalent (Email/Password, Google affordance, forgot/sign-up links all present) | Deliberate: the reference's login is platform boilerplate that contradicts the app's own radius-0 / Inter / JetBrains-Mono tokens; the clone keeps the design language coherent |
+| Info | Project-detail `<title>` is the generic `Project Detail \| Designer Portfolio` | Browser-tab title matches the reference exactly (per-project titles remain in OG/meta tags, which the reference lacks) | Parity fix (session 3) |
 
 ## 11. Key Files Reference
 

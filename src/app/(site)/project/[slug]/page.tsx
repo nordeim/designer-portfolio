@@ -17,8 +17,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params;
   const project = await getProjectBySlug(slug);
   if (!project) return { title: "Project not found" };
+  // Title matches the reference app's generic project-route title exactly
+  // (title template composes "Project Detail | Designer Portfolio").
+  // OG/description stay per-project: richer than the reference, invisible
+  // in the browser UI, so visual parity is unaffected.
   return {
-    title: `${project.title} — ${project.subtitle}`,
+    title: "Project Detail",
     description: project.objective,
     openGraph: {
       title: `${project.title} — ${project.subtitle}`,

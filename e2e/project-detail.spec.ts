@@ -9,6 +9,8 @@ const SLUG = "kinto-cafe-branding";
 
 test("hero shows the index label, oversized title, subtitle and meta", async ({ page }) => {
   await page.goto(`/project/${SLUG}`);
+  // Title matches the reference app's generic project-route title.
+  await expect(page).toHaveTitle("Project Detail | Designer Portfolio");
   const hero = page.getByLabel("Project hero");
   await expect(hero).toBeVisible();
   await expect(hero.getByText("01/06 — Branding")).toBeVisible();
