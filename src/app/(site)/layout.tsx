@@ -10,7 +10,17 @@ import { SiteFooter } from "@/components/site/site-footer";
  * app's page-wide grid.
  */
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
-  const projects = await getPublishedProjects();
+  // The menu is progressive enhancement: on a data-layer failure (e.g. a
+  // database outage) the header/footer chrome still renders — the shell
+  // degrades to a menu without project entries instead of taking the whole
+  // site down. (Static pages are unaffected either way: they are
+  // prerendered; this only guards dynamic renders.)
+  let projects: Awaited<ReturnType<typeof getPublishedProjects>> = [];
+  try {
+    projects = await getPublishedProjects();
+  } catch {
+    projects = [];
+  }
   const menuProjects = projects.map((p) => ({
     id: p.id,
     slug: p.slug,

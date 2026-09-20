@@ -145,6 +145,7 @@ Reads flow through RSC pages → `src/lib/data.ts` → Prisma. Mutations flow th
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | OAuth (login shows honest "not configured" notice when unset) | optional |
 | `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD` | Playwright login credentials (auth/dashboard specs skip when unset) | optional |
 | `E2E_START` / `E2E_COMMAND` / `E2E_PORT` / `E2E_BASE_URL` | Playwright server-management knobs | optional |
+| `E2E_OUTAGE=1` | Enables the 5 graceful-degradation specs (run against a broken-DB server — see `e2e/outage.spec.ts` header) | optional |
 
 ## Testing
 
@@ -154,13 +155,18 @@ bunx vitest run --coverage                     # + 100% coverage gate on the pur
 bunx vitest run tests/validation.test.ts       # single file
 bunx vitest run -t "rejects a slug"            # single test
 
-E2E_ADMIN_PASSWORD=… bunx playwright test       # all e2e (30 tests; server on :3000)
+E2E_ADMIN_PASSWORD=… bunx playwright test       # all e2e (35 tests: 30 normal + 5 outage-skipped; server on :3000)
 bunx playwright test e2e/auth.spec.ts          # single spec file
+
+# graceful-degradation contract (run against a deliberately broken-DB server):
+E2E_OUTAGE=1 E2E_START=1 E2E_PORT=3100 \
+  E2E_COMMAND="PORT=3100 DATABASE_URL=file:./db-outage-missing/custom.db bun run start" \
+  bunx playwright test e2e/outage.spec.ts
 ```
 
 **Unit (Vitest, 53 tests)**: inquiry/login/project Zod schemas (valid input, boundary values, invalid input, unknown enum values), JSON-column serialization round-trips + parse degradation, the ActionResult envelope, scrypt hashing round-trips + malformed stored hashes, typewriter state machine (typing/pausing/cycling/out-of-bounds guard), constellation layout derivation (positions/sizes/contain flags/source fallbacks), radial-menu angle math (rotation clamping, counter-rotation). Password tests do real key derivation (~200 ms each). The five pure-seam modules are held at 100% coverage by a machine-enforced gate (`bunx vitest run --coverage`).
 
-**E2E (Playwright, 30 tests across 6 files)**: public page content + console cleanliness, project detail (hero labels, sticky intro, gallery zoom toggle, prev/next wrap-around, autoplaying video, 404), auth (login affordances, invalid credentials, dashboard gating, radial menu open/Escape), inquiry submission → dashboard inbox, dashboard flows (CRUD round-trip verified on the public site, inquiry triage, sign-out), a11y smoke (focus visibility, theme toggle, mobile overflow, marquee animation, constellation rendering). Mutating specs use unique payloads and clean up after themselves. On RAM-constrained hosts (< ~6 GB), run the suite against the production build (`E2E_START=1 E2E_COMMAND="bun run start"`) — the Turbopack dev server + Chromium together can exceed the memory budget.
+**E2E (Playwright, 35 tests across 7 files)**: public page content + console cleanliness, project detail (hero labels, sticky intro, gallery zoom toggle, prev/next wrap-around, autoplaying video, 404), auth (login affordances, invalid credentials, dashboard gating, radial menu open/Escape), inquiry submission → dashboard inbox, dashboard flows (CRUD round-trip verified on the public site, inquiry triage, sign-out), a11y smoke (focus visibility, theme toggle, mobile overflow, marquee animation, constellation rendering), and a graceful-degradation suite (`e2e/outage.spec.ts`, 5 specs — health honesty, static shell survival, non-throwing login/inquiry actions, styled error panel instead of a bare 500) that activates only under `E2E_OUTAGE=1` against a server with an unreachable database. Mutating specs use unique payloads and clean up after themselves. On RAM-constrained hosts (< ~6 GB), run the suite against the production build (`E2E_START=1 E2E_COMMAND="bun run start"`) — the Turbopack dev server + Chromium together can exceed the memory budget. The read-only specs also double as a **live-deployment smoke test**: `E2E_BASE_URL=https://your-domain bunx playwright test` (see `docs/DEPLOYMENT.md`).
 
 ## Design System
 
@@ -185,6 +191,10 @@ Typography: **Inter** (300–700, body/display; hero h1 scales 106 → 141px →
 | 1 — Owner dashboard | ✅ Complete | Auth, overview, projects CRUD, inquiry triage |
 | 2 — Polish | ✅ Complete | Dark mode, a11y pass, image optimization, rate limiting, honeypot |
 | 3 — Optional integrations | ⬜ Deferred | Google OAuth (UI present, honest unconfigured state), SMTP notifications |
+
+## Deployment
+
+See **`docs/DEPLOYMENT.md`** — the production runbook (absolute `DATABASE_URL`, `migrate deploy` + seed, `/api/health` contract, the SQLite relative-path trap, post-deploy E2E smoke test). Born from a real incident: a repo-only deploy ships no database, and the app is hardened to degrade gracefully (styled error panel, non-throwing actions, honest health reporting) until the data layer is provisioned.
 
 ## Troubleshooting
 

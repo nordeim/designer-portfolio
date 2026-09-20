@@ -46,7 +46,14 @@ export async function loginAction(input: LoginInput): Promise<ActionResult<{ ema
     return failure("Too many sign-in attempts. Please try again in a few minutes.");
   }
 
-  const user = await db.user.findUnique({ where: { email: normalizedEmail } });
+  // Infrastructure failures (e.g. a database outage) must not throw across
+  // the action boundary — degrade to a generic, non-leaking message.
+  let user;
+  try {
+    user = await db.user.findUnique({ where: { email: normalizedEmail } });
+  } catch {
+    return failure("Sign-in is temporarily unavailable. Please try again in a moment.");
+  }
   if (!user) {
     return failure("Invalid email or password.");
   }
@@ -57,8 +64,12 @@ export async function loginAction(input: LoginInput): Promise<ActionResult<{ ema
   }
 
   clearThrottle(normalizedEmail);
-  await pruneExpiredSessions();
-  await createSession(user.id);
+  try {
+    await pruneExpiredSessions();
+    await createSession(user.id);
+  } catch {
+    return failure("Sign-in is temporarily unavailable. Please try again in a moment.");
+  }
 
   return success({ email: user.email });
 }

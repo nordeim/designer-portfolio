@@ -48,17 +48,24 @@ export async function submitInquiryAction(
     return failure("You've sent several inquiries recently. Please try again later.");
   }
 
-  const inquiry = await db.inquiry.create({
-    data: {
-      name,
-      email: key,
-      company: company || null,
-      projectType,
-      budgetRange,
-      timeline,
-      details,
-    },
-  });
+  // Infrastructure failures (e.g. a database outage) must not throw across
+  // the action boundary — degrade to a generic, non-leaking message.
+  let inquiry;
+  try {
+    inquiry = await db.inquiry.create({
+      data: {
+        name,
+        email: key,
+        company: company || null,
+        projectType,
+        budgetRange,
+        timeline,
+        details,
+      },
+    });
+  } catch {
+    return failure("The form couldn't be submitted right now. Please try again in a moment.");
+  }
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/inquiries");

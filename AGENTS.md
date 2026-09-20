@@ -13,8 +13,9 @@ Every line here exists because an agent would plausibly miss it without help.
 | `bun run typecheck` | `tsc --noEmit` (strict; **must** pass before commit) |
 | `bun run test` | Vitest unit suites (`tests/*.test.ts`, 53 tests) |
 | `bunx vitest run --coverage` | Unit suites + the 100% coverage gate on the pure seam (PAD §7.3) |
-| `bunx playwright test` | E2E suite (`e2e/*.spec.ts`, 30 tests) against an already-running server on :3000 |
+| `bunx playwright test` | E2E suite (`e2e/*.spec.ts`, 35 tests: 30 normal + 5 outage specs that skip unless `E2E_OUTAGE=1`) against an already-running server on :3000 |
 | `E2E_START=1 bunx playwright test` | E2E suite with Playwright managing the server itself (`E2E_COMMAND` overrides the command) |
+| `E2E_OUTAGE=1 E2E_START=1 E2E_PORT=3100 E2E_COMMAND="PORT=3100 DATABASE_URL=file:./db-outage-missing/custom.db bun run start" bunx playwright test e2e/outage.spec.ts` | Graceful-degradation contract against a deliberately broken-DB server (health 503 honesty, static shell survival, non-throwing actions, styled error panel) |
 | `bun run db:push` | Push `prisma/schema.prisma` to the database (schema-declarative; ignores migration files) |
 | `bun run db:migrate` | `prisma migrate dev` — applies the committed baseline + creates migrations on schema change |
 | `bunx prisma migrate deploy` | Apply committed migrations (non-interactive; CI/fresh-clone path) |
@@ -28,7 +29,7 @@ Every line here exists because an agent would plausibly miss it without help.
 1. After editing `prisma/schema.prisma`: `bun run db:generate` **then** `bun run db:push` — the running dev server caches the Prisma client, so **restart `bun run dev`** after schema changes or you get `Cannot read properties of undefined (reading 'findMany')`.
 2. Clean check before pushing: `bun run lint && bun run typecheck && bun run test` (build optional but recommended).
 3. Fresh database: delete `db/custom.db`, then `bunx prisma migrate deploy && bun run db:seed` (or `bun run db:push && bun run db:seed` for scratch iteration).
-4. The full gate is verified green on a **fresh clone** (`bun install` → `migrate deploy` → `seed`): lint, typecheck, 53 unit tests, coverage 100%, build, 30 E2E tests. Keep it that way — `tsc --noEmit` must pass with only the dependencies declared in `package.json` (no stale `node_modules` phantom packages).
+4. The full gate is verified green on a **fresh clone** (`bun install` → `migrate deploy` → `seed`): lint, typecheck, 53 unit tests, coverage 100%, build, 30 E2E tests (+ the 5-spec outage suite under `E2E_OUTAGE=1`). Keep it that way — `tsc --noEmit` must pass with only the dependencies declared in `package.json` (no stale `node_modules` phantom packages).
 
 ### Running a single test file
 
@@ -89,6 +90,8 @@ e2e/                   Playwright specs (public pages, project detail, auth, inq
 - The password tests do real scrypt derivation (~200ms each) — keep the count low; do not loop thousands of iterations.
 - No DB integration tests by design: the suites cover pure domain logic (validation schemas, password hashing, JSON column parsing, typewriter state machine, constellation geometry, radial-menu angle math). If you add DB tests, guard them to skip when `DATABASE_URL` is unset.
 - Playwright: only Chromium is configured (the only runtime installed here). The mutating specs (inquiry submit, project CRUD) run against the real SQLite DB — they use unique payloads and clean up after themselves, so they are safe to re-run against a seeded database.
+- **Outage specs are opt-in**: `e2e/outage.spec.ts` skips itself unless `E2E_OUTAGE=1` — it must target a server whose `DATABASE_URL` points at an unwritable path (see its file header). It validates the graceful-degradation contract from session 10: never a false "ok" from `/api/health`, static shell survives, actions return failure envelopes (never throw), unknown dynamic slugs render the styled panel.
+- **Playwright + live deployments**: read-only specs run verbatim against any origin via `E2E_BASE_URL=https://… bunx playwright test` (password-gated specs skip) — the post-deploy smoke test documented in `docs/DEPLOYMENT.md`. Always clear stale ports before `E2E_START` runs (a leftover server from a previous round makes the whole suite fail spuriously with ECONNREFUSED).
 - **Playwright + dev server memory**: the Turbopack dev server (~2.3 GB RSS) plus Chromium (~2 GB) can exceed a small host's RAM and the kernel OOM-kills the server mid-run (seen on a 4 GB host). If the suite fails with connection-refused mid-run, run it against the production build instead: `bun run build && E2E_START=1 E2E_COMMAND="bun run start" bunx playwright test`.
 
 ## Known gotchas
@@ -98,5 +101,6 @@ e2e/                   Playwright specs (public pages, project detail, auth, inq
 - **`bun run dev`/`bun run start` hold port 3000**; if EADDRINUSE, free it with `lsof -ti:3000 | xargs -r kill -9` **plus** `pkill -9 -f next-server` — the standalone server renames its process to `next-server (v16.1.3)` and `lsof` may only show the wrapper PID. When in doubt, take the PID from `ss -tlnp | grep :3000`.
 - The gallery supports `{kind: "image" | "video"}` items; videos autoplay muted+looped in the 1-column gallery mode (one seeded example: `/projects/sable-fashion-brand/gallery-01.mp4`).
 - `revalidatePath` is called in every mutating action for `/`, `/projects`, `/dashboard*` — if you add a public page that lists projects, add it to `revalidateProjectPages()`.
+- **Deployment**: production needs a provisioned database (the SQLite file is git-ignored — a repo-only deploy ships no data layer) and an **absolute** `DATABASE_URL`; follow `docs/DEPLOYMENT.md`. The app degrades gracefully while the DB is down (see the outage suite above).
 - The landing hero cycles constellation images on random timers (1.5–2.5s show, 1.2–3s gap). All of that is paused under `prefers-reduced-motion`; the SSR markup ships the full list so crawlers see every project.
 - `scripts/dev-watchdog.sh` is a local-dev convenience (not shipped to the repo's CI): it restarts `bun run dev` if BOTH `/api/health` and `/` fail 3 consecutive probes, clearing `.next/` on a cold-start failure.

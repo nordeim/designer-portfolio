@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { getProjectBySlug, getProjectNeighbours, getPublishedProjects } from "@/lib/data";
 import { ProjectHero, ProjectMeta } from "@/components/site/project-hero";
 import { ProjectDetailBody } from "@/components/site/project-detail-body";
+import { ErrorPanel } from "@/components/site/error-panel";
+import Link from "next/link";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -15,7 +17,16 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const project = await getProjectBySlug(slug);
+  // Metadata errors are NOT caught by error.tsx (Next bypasses the React
+  // error boundary for generateMetadata) and would surface as a bare 500 —
+  // degrade to generic metadata and let the page render decide the outcome
+  // (styled error boundary on outage, 404 on unknown slug).
+  let project;
+  try {
+    project = await getProjectBySlug(slug);
+  } catch {
+    return { title: "Project Detail" };
+  }
   if (!project) return { title: "Project not found" };
   // Title matches the reference app's generic project-route title exactly
   // (title template composes "Project Detail | Designer Portfolio").
@@ -36,13 +47,52 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
  * Case-study page: full-bleed hero, meta grid, sticky intro column with the
  * zoomable gallery, and circular prev/next navigation — matching the
  * reference app's project route structure.
+ *
+ * Outage note: errors thrown from the dynamicParams fallback render path
+ * bypass React error boundaries (Next serves a bare 500), so this page
+ * guards its own data calls and renders the styled ErrorPanel directly.
  */
 export default async function ProjectDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const project = await getProjectBySlug(slug);
+
+  const errorPanel = (
+    <ErrorPanel
+      actions={
+        <>
+          <Link
+            href={`/project/${slug}`}
+            className="font-mono text-xs tracking-widest uppercase text-foreground hover:text-cobalt transition-colors border-b border-foreground/20 hover:border-cobalt pb-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt"
+          >
+            Try again
+          </Link>
+          <Link
+            href="/"
+            className="font-mono text-xs tracking-widest uppercase text-foreground hover:text-cobalt transition-colors border-b border-foreground/20 hover:border-cobalt pb-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt"
+          >
+            Back to home
+          </Link>
+        </>
+      }
+    />
+  );
+
+  // Guards are deliberately split: notFound() signals by THROWING a
+  // framework sentinel, so it must stay outside the try/catch blocks.
+  let project;
+  try {
+    project = await getProjectBySlug(slug);
+  } catch {
+    return errorPanel;
+  }
   if (!project) notFound();
 
-  const { prev, next } = await getProjectNeighbours(slug);
+  let neighbours;
+  try {
+    neighbours = await getProjectNeighbours(slug);
+  } catch {
+    return errorPanel;
+  }
+  const { prev, next } = neighbours;
 
   const detail = {
     slug: project.slug,
