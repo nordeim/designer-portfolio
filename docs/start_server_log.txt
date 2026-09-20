@@ -316,3 +316,10 @@ Route (app)
 ●  (SSG)      prerendered as static HTML (uses generateStaticParams)
 ƒ  (Dynamic)  server-rendered on demand
 
+$ bun run start
+$ NODE_ENV=production node .next/standalone/server.js
+▲ Next.js 16.3.5
+- Local:         http://localhost:3000
+- Network:       http://0.0.0.0:3000
+✓ Ready in 0ms
+✓ Running next.config took 6ms
