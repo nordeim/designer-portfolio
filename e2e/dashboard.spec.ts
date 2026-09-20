@@ -92,6 +92,13 @@ test("inquiry triage: status transitions persist", async ({ page }) => {
   const form = page.getByLabel("Project inquiry form");
   await form.getByLabel("Name *").fill(name);
   await form.getByLabel("Email *").fill(`e2e-triage-${stamp}@example.com`);
+  // The form starts with empty selects (source parity) — pick values first.
+  await form.getByRole("combobox", { name: "Project Type" }).click();
+  await page.getByRole("option", { name: "Brand Identity", exact: true }).click();
+  await form.getByRole("combobox", { name: "Budget Range" }).click();
+  await page.getByRole("option", { name: "$10K – $25K", exact: true }).click();
+  await form.getByRole("combobox", { name: "Timeline" }).click();
+  await page.getByRole("option", { name: "1 – 2 months", exact: true }).click();
   await form.getByLabel("Project Details *").fill(
     "Inquiry submitted by the triage spec so the status-transition flow can be verified against a guaranteed row.",
   );

@@ -67,6 +67,14 @@ test("inquiry submission degrades gracefully", async ({ page }) => {
   const form = page.getByLabel("Project inquiry form");
   await form.getByLabel("Name *").fill("Outage Probe");
   await form.getByLabel("Email *").fill("outage-probe@example.com");
+  // Pass client-side validation (the selects now start empty — source
+  // parity) so the spec exercises the SERVER-side degradation path.
+  await form.getByRole("combobox", { name: "Project Type" }).click();
+  await page.getByRole("option", { name: "Brand Identity", exact: true }).click();
+  await form.getByRole("combobox", { name: "Budget Range" }).click();
+  await page.getByRole("option", { name: "$10K – $25K", exact: true }).click();
+  await form.getByRole("combobox", { name: "Timeline" }).click();
+  await page.getByRole("option", { name: "1 – 2 months", exact: true }).click();
   await form.getByLabel("Project Details *").fill(
     "A syntactically valid inquiry submitted while the database is unreachable.",
   );

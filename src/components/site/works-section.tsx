@@ -119,7 +119,7 @@ export function WorksSection({ projects }: { projects: WorkRowProject[] }) {
           Selected Works
         </span>
         <h2 className="font-body text-4xl md:text-6xl font-light tracking-tight text-foreground max-w-[60%]">
-          Selected projects that define my design perspective
+          Selected projects that define <span>my design perspective</span>
         </h2>
       </motion.div>
 

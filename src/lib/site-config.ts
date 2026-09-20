@@ -126,7 +126,10 @@ export const EXPERIENCE = [
 
 export const SKILL_GROUPS = [
   {
-    title: "BRAND IDENTITY",
+    // Titles are title-case in the DOM — the reference app uppercases via
+    // CSS (the about page's label class), so screen readers and text
+    // extraction see the same DOM text as the source.
+    title: "Brand Identity",
     skills: [
       "Logo & Mark Design",
       "Brand Systems",
@@ -136,7 +139,7 @@ export const SKILL_GROUPS = [
     ],
   },
   {
-    title: "PRINT & PACKAGING",
+    title: "Print & Packaging",
     skills: [
       "Packaging Design",
       "Editorial & Print",
@@ -146,7 +149,7 @@ export const SKILL_GROUPS = [
     ],
   },
   {
-    title: "DIGITAL BRANDING",
+    title: "Digital Branding",
     skills: [
       "Web Visual Direction",
       "Social Media Systems",
@@ -156,7 +159,7 @@ export const SKILL_GROUPS = [
     ],
   },
   {
-    title: "TOOLS",
+    title: "Tools",
     skills: ["Figma", "Adobe Illustrator", "InDesign", "Photoshop", "Glyphs"],
   },
 ] as const;

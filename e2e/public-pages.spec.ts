@@ -67,6 +67,23 @@ test("contact page renders headline, underline form, FAQ, and info columns", asy
   await expect(page.getByLabel("Contact information").getByText("Berlin, Germany")).toBeVisible();
 });
 
+test("contact form starts with placeholder selects and four social links (source parity)", async ({ page }) => {
+  // The reference app's form state starts empty: the three select triggers
+  // show their placeholders until the visitor picks a value — ours must not
+  // pre-fill defaults. The Social column lists all four networks with the
+  // "↗" arrow suffix, like the reference.
+  await page.goto("/contact");
+  const form = page.getByLabel("Project inquiry form");
+  await expect(form.getByRole("combobox", { name: "Project Type" })).toHaveText("Select a type");
+  await expect(form.getByRole("combobox", { name: "Budget Range" })).toHaveText("Select range");
+  await expect(form.getByRole("combobox", { name: "Timeline" })).toHaveText("Select timeline");
+
+  const social = page.getByLabel("Contact information").getByRole("link").filter({ hasText: "↗" });
+  await expect(social).toHaveCount(4);
+  await expect(social.filter({ hasText: "X / Twitter ↗" })).toBeVisible();
+  await expect(social.filter({ hasText: "Dribbble ↗" })).toBeVisible();
+});
+
 test("legal pages render", async ({ page }) => {
   await page.goto("/privacy");
   await expect(page.getByRole("heading", { name: /privacy/i }).first()).toBeVisible();

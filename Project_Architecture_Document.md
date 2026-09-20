@@ -1,4 +1,4 @@
-# Designer Portfolio — Master Project Architecture Document (PAD) v1.1
+# Designer Portfolio — Master Project Architecture Document (PAD) v1.5
 
 **Classification:** Internal Engineering Reference
 **Status:** DEFINITIVE, PRODUCTION-LOCKED BLUEPRINT
@@ -11,6 +11,7 @@
 
 | Version | Date | Author | Type | Summary |
 |---|---|---|---|---|
+| 1.5 | 2026-09-20 | Engineering | [CA] | Production DB provisioned by the operator (live health `ok db:true`; live E2E 23 passed / 0 failed). Contact/about DOM-parity remediation from the rendered-text drift audit: inquiry selects start empty with reference placeholders (+ friendly Zod select prompts), Social column lists all four networks with `↗` arrows, SKILL_GROUPS titles title-case in DOM (CSS uppercases), toast copy aligned ("Inquiry sent successfully." + required-fields toast), works h2 span-wrapped; unit suites 66 → 73, e2e 35 → 36 (contact parity spec) |
 | 1.4 | 2026-09-20 | Engineering | [CA] | Deterministic SQLite location: `src/lib/db-path.ts` resolves relative `file:` URLs CLI-style (schema-relative, build-output-skipping) so runtime and CLI never fork the database; honest `/api/health` (real-table probe — auto-created empty files report `degraded`); seed.ts wired to the same resolution; unit suites 53 → 66 |
 | 1.3 | 2026-09-20 | Engineering | [CA] | Live-deployment E2E audit (jesspete.shop: visual parity exact, DB outage diagnosed) + graceful-degradation hardening: error boundary + ErrorPanel, action-boundary outage guards (login/contact/dashboard), metadata/layout/page degradation, `e2e/outage.spec.ts` (5 specs, E2E_OUTAGE=1), docs/DEPLOYMENT.md runbook |
 | 1.2 | 2026-09-20 | Engineering | [CA] | Fresh-clone hardening: dependency refresh (Next 16.3.5, Prisma 6.19.3, React 19.3), Prisma migration baseline, numeric coverage gate (100% on the pure seam), registry prune (39 unused shadcn components + dead toast hook), e2e triage-spec self-sufficiency fix; unit suites 42 → 53 |
@@ -394,20 +395,21 @@ Single role model today: `OWNER` (full mutation rights). `VIEWER` exists in the 
 
 | Category | Files | Tests | Location | Framework |
 |---|---|---|---|---|
-| Validation schemas | 1 | 25 | `tests/validation.test.ts` | Vitest |
+| Validation schemas | 1 | 28 | `tests/validation.test.ts` | Vitest |
 | Password hashing | 1 | 4 | `tests/password.test.ts` | Vitest |
 | Typewriter state machine | 1 | 9 | `tests/typewriter.test.ts` | Vitest |
 | Constellation layout | 1 | 9 | `tests/constellation.test.ts` | Vitest |
 | Radial-menu geometry | 1 | 6 | `tests/menu-wheel.test.ts` | Vitest |
 | Database-path resolution | 1 | 13 | `tests/db-path.test.ts` | Vitest |
-| Public pages content | 1 | 6 | `e2e/public-pages.spec.ts` | Playwright |
+| Site-config DOM parity | 1 | 4 | `tests/site-config-parity.test.ts` | Vitest |
+| Public pages content | 1 | 7 | `e2e/public-pages.spec.ts` | Playwright |
 | Project detail flows | 1 | 5 | `e2e/project-detail.spec.ts` | Playwright |
 | Auth + radial menu | 1 | 6 | `e2e/auth.spec.ts` | Playwright |
 | Inquiry → dashboard | 1 | 2 | `e2e/inquiry.spec.ts` | Playwright |
 | Dashboard CRUD/triage | 1 | 5 | `e2e/dashboard.spec.ts` | Playwright |
 | A11y / rendering smoke | 1 | 6 | `e2e/a11y-smoke.spec.ts` | Playwright |
 | Outage degradation | 1 | 5 | `e2e/outage.spec.ts` | Playwright (`E2E_OUTAGE=1` only) |
-| **Total** | **13** | **101** | | |
+| **Total** | **14** | **109** | | |
 
 ### 7.2 Test Patterns
 
@@ -415,7 +417,7 @@ Real behavior, no mocks: schemas parse actual payloads (valid, boundary, invalid
 
 ### 7.3 Coverage Thresholds
 
-Pure domain modules (`src/lib/validation.ts`, `src/lib/auth/password.ts`, `src/lib/typewriter.ts`, `src/lib/constellation.ts`, `src/lib/menu-wheel.ts`, `src/lib/db-path.ts`) are held at **100% statements/branches/functions/lines** by a machine-enforced gate: `bunx vitest run --coverage` fails the run below threshold (`coverage.include` in `vitest.config.ts` lists exactly these files — keep it in sync when modules move). The gate ran green at 100% across all six modules with the 66-test suite.
+Pure domain modules (`src/lib/validation.ts`, `src/lib/auth/password.ts`, `src/lib/typewriter.ts`, `src/lib/constellation.ts`, `src/lib/menu-wheel.ts`, `src/lib/db-path.ts`) are held at **100% statements/branches/functions/lines** by a machine-enforced gate: `bunx vitest run --coverage` fails the run below threshold (`coverage.include` in `vitest.config.ts` lists exactly these files — keep it in sync when modules move). The gate ran green at 100% across all six modules with the 73-test suite.
 
 ### 7.4 Pre-PR / Pre-Deploy Checklist
 
@@ -509,7 +511,7 @@ TypeScript strict, no `any` (`unknown` + narrowing); `interface` for shapes, `ty
 | Info | `/login` follows this site's design system instead of the reference's Base44 platform login widget (rounded card, system fonts, avatar) | Login screen is visually custom but functionally equivalent (Email/Password, Google affordance, forgot/sign-up links all present) | Deliberate: the reference's login is platform boilerplate that contradicts the app's own radius-0 / Inter / JetBrains-Mono tokens; the clone keeps the design language coherent |
 | Info | Project-detail `<title>` is the generic `Project Detail \| Designer Portfolio` | Browser-tab title matches the reference exactly (per-project titles remain in OG/meta tags, which the reference lacks) | Parity fix (session 3) |
 | Info | Computed `font-family` reports `Inter, "Inter Fallback"` / `"JetBrains Mono", "<name> Fallback"` (Next 16.3+ metric-fallback stacks) vs the reference's plain `Inter, sans-serif` | Extraction-level string only; rendered glyphs identical (live pixel diff: mean 0.36/255, 98.9% identical) | Documented artifact (session 8) — ignore in computed-style diffs |
-| High | **Production deployment (`jesspete.shop`) has no reachable database** — health 503 `db:false`, auth/inquiry flows degrade gracefully, unknown slugs render the error panel. Root cause refined in session 12: the CLI created the schema at `<repo>/db` (schema-relative resolution) while the runtime looked at `<CWD>/../db` and SQLite auto-created an empty table-less file there — which the old `SELECT 1` health probe reported as `ok`. Both defects are now fixed in code (deterministic runtime resolution + honest health), but production still needs the data layer provisioned | All dynamic functionality broken in production; static shell serves fine | **Open — operator action**: follow `docs/DEPLOYMENT.md` (provision DB with `DATABASE_URL` — relative `file:../db/custom.db` now works too since session 12, absolute still recommended; `migrate deploy` + seed; health verify) and redeploy `main` |
+| ~~High~~ Resolved | **Production deployment (`jesspete.shop`) database** — resolved session 14: the operator provisioned the production data layer and redeployed; live `/api/health` reports `ok db:true` and the read-only live E2E smoke passes 23/23 applicable specs (12 password-gated specs skip). Root cause history: session 12 pinned the runtime SQLite resolution to CLI semantics and made health probe a real table; the operator then followed `docs/DEPLOYMENT.md` | Live site fully functional (auth, inquiries, dashboard, SSG pages from real data) | **Closed** — future drift detection: re-run `E2E_BASE_URL=https://designer-portfolio.jesspete.shop bunx playwright test` after each deploy |
 | Info | `error.tsx` cannot catch errors from `generateMetadata` or the dynamicParams **fallback render path** (Next bypasses React error boundaries there) | A naive unguarded data call in those paths still yields a bare 500 | Mitigated in code: metadata/layout/page-level guards render the styled ErrorPanel (session 10); keep new SSG pages' data calls guarded the same way |
 
 ## 11. Key Files Reference

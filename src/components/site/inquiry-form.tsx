@@ -34,6 +34,10 @@ export function InquiryForm() {
   const [sent, setSent] = useState(false);
   const [pending, startTransition] = useTransition();
   const [serverError, setServerError] = useState<string | null>(null);
+  // Remount key: after a successful submit (or reset), the Radix Selects are
+  // uncontrolled — remounting the form subtree restores their placeholder
+  // state alongside the react-hook-form reset.
+  const [formKey, setFormKey] = useState(0);
 
   const {
     register,
@@ -43,13 +47,13 @@ export function InquiryForm() {
     formState: { errors },
   } = useForm<InquiryInput>({
     resolver: zodResolver(inquirySchema),
+    // The three selects deliberately start EMPTY (source-app parity: the
+    // triggers show their "Select a type"-style placeholders); Zod reports
+    // a friendly prompt if the form is submitted without a selection.
     defaultValues: {
       name: "",
       email: "",
       company: "",
-      projectType: "Brand Identity",
-      budgetRange: "$10K – $25K",
-      timeline: "1 – 2 months",
       details: "",
     },
   });
@@ -61,12 +65,19 @@ export function InquiryForm() {
       if (result.ok) {
         setSent(true);
         reset();
-        toast.success("Inquiry sent — I'll get back to you within 48 hours.");
+        setFormKey((k) => k + 1);
+        toast.success("Inquiry sent successfully.");
       } else {
         setServerError(result.error);
         toast.error(result.error);
       }
     });
+  }
+
+  // Parity with the reference app's error path: a destructive toast for
+  // missing required fields (inline field errors render as well).
+  function onInvalid() {
+    toast.error("Please fill in all required fields.");
   }
 
   if (sent) {
@@ -89,6 +100,7 @@ export function InquiryForm() {
           onClick={() => {
             setSent(false);
             reset();
+            setFormKey((k) => k + 1);
           }}
         >
           Send another inquiry →
@@ -98,7 +110,7 @@ export function InquiryForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-8" aria-label="Project inquiry form">
+    <form key={formKey} onSubmit={handleSubmit(onSubmit, onInvalid)} noValidate className="space-y-8" aria-label="Project inquiry form">
       {/* Honeypot — hidden from users, irresistible to bots. */}
       <div className="hidden" aria-hidden="true">
         <label htmlFor="website" className={FIELD_LABEL}>
@@ -143,10 +155,7 @@ export function InquiryForm() {
           <label htmlFor="projectType" className={FIELD_LABEL}>
             Project Type
           </label>
-          <Select
-            onValueChange={(v) => setValue("projectType", v as InquiryInput["projectType"])}
-            defaultValue="Brand Identity"
-          >
+          <Select onValueChange={(v) => setValue("projectType", v as InquiryInput["projectType"])}>
             <SelectTrigger id="projectType" className={`${FIELD_INPUT} w-full`}>
               <SelectValue placeholder="Select a type" />
             </SelectTrigger>
@@ -167,7 +176,6 @@ export function InquiryForm() {
           </label>
           <Select
             onValueChange={(v) => setValue("budgetRange", v as InquiryInput["budgetRange"])}
-            defaultValue="$10K – $25K"
           >
             <SelectTrigger id="budgetRange" className={`${FIELD_INPUT} w-full`}>
               <SelectValue placeholder="Select range" />
@@ -187,7 +195,7 @@ export function InquiryForm() {
           <label htmlFor="timeline" className={FIELD_LABEL}>
             Timeline
           </label>
-          <Select onValueChange={(v) => setValue("timeline", v as InquiryInput["timeline"])} defaultValue="1 – 2 months">
+          <Select onValueChange={(v) => setValue("timeline", v as InquiryInput["timeline"])}>
             <SelectTrigger id="timeline" className={`${FIELD_INPUT} w-full`}>
               <SelectValue placeholder="Select timeline" />
             </SelectTrigger>

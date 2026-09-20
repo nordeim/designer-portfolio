@@ -51,6 +51,28 @@ describe("inquirySchema", () => {
     expect(result.success).toBe(false);
   });
 
+  // The public form now starts with empty selects (source-app parity: the
+  // triggers show "Select a type" / "Select range" / "Select timeline"), so
+  // the empty-submit failure mode must speak in the same voice as the UI.
+  it("rejects an empty project type with a select prompt", () => {
+    const result = inquirySchema.safeParse({ ...validInquiry, projectType: "" });
+    expect(result.success).toBe(false);
+    expect(zodFieldErrors(result.error!)).toHaveProperty("projectType", "Please select a project type");
+  });
+
+  it("rejects a missing budget range with a select prompt", () => {
+    const { budgetRange, ...rest } = validInquiry;
+    const result = inquirySchema.safeParse(rest);
+    expect(result.success).toBe(false);
+    expect(zodFieldErrors(result.error!)).toHaveProperty("budgetRange", "Please select a budget range");
+  });
+
+  it("rejects an empty timeline with a select prompt", () => {
+    const result = inquirySchema.safeParse({ ...validInquiry, timeline: "" });
+    expect(result.success).toBe(false);
+    expect(zodFieldErrors(result.error!)).toHaveProperty("timeline", "Please select a timeline");
+  });
+
   it("rejects details under the minimum length", () => {
     const result = inquirySchema.safeParse({ ...validInquiry, details: "too short" });
     expect(result.success).toBe(false);

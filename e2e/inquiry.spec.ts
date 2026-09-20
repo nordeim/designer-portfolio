@@ -16,6 +16,11 @@ test("inquiry validation blocks short details client-side", async ({ page }) => 
   await form.getByLabel("Project Details *").fill("too short");
   await form.getByRole("button", { name: "Send Inquiry" }).click();
   await expect(form.getByText(/min. 20 characters/i)).toBeVisible();
+  // The selects start empty (source parity) — submitting without picking
+  // surfaces the select prompts, not a raw enum error.
+  await expect(form.getByText("Please select a project type")).toBeVisible();
+  await expect(form.getByText("Please select a budget range")).toBeVisible();
+  await expect(form.getByText("Please select a timeline")).toBeVisible();
 });
 
 test("inquiry submits and appears in the dashboard inbox", async ({ page }) => {
@@ -28,6 +33,14 @@ test("inquiry submits and appears in the dashboard inbox", async ({ page }) => {
   await form.getByLabel("Name *").fill(name);
   await form.getByLabel("Email *").fill(`e2e-${stamp}@example.com`);
   await form.getByLabel("Company").fill("E2E Test Co");
+  // The form starts with empty selects (source parity) — pick real values
+  // through the Radix UI exactly like a visitor would.
+  await form.getByRole("combobox", { name: "Project Type" }).click();
+  await page.getByRole("option", { name: "Brand Identity", exact: true }).click();
+  await form.getByRole("combobox", { name: "Budget Range" }).click();
+  await page.getByRole("option", { name: "$10K – $25K", exact: true }).click();
+  await form.getByRole("combobox", { name: "Timeline" }).click();
+  await page.getByRole("option", { name: "1 – 2 months", exact: true }).click();
   await form.getByLabel("Project Details *").fill(
     "End-to-end inquiry submitted by the Playwright suite to verify the public form persists into the owner dashboard inbox.",
   );

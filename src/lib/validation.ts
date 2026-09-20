@@ -56,16 +56,12 @@ export const inquirySchema = z.object({
   name: z.string().trim().min(2, "Please enter your full name").max(120),
   email: z.string().trim().email("Please enter a valid email address").max(254),
   company: z.string().trim().max(160).optional().or(z.literal("")),
-  projectType: z.enum([
-    "Brand Identity",
-    "Digital Product",
-    "Spatial Design",
-    "Motion Design",
-    "Typography",
-    "Other",
-  ]),
-  budgetRange: z.enum(["$10K – $25K", "$25K – $50K", "$50K – $100K", "$100K+"]),
-  timeline: z.enum(["1 – 2 months", "3 – 6 months", "6+ months", "Flexible"]),
+  projectType: z.enum(
+    ["Brand Identity", "Digital Product", "Spatial Design", "Motion Design", "Typography", "Other"],
+    "Please select a project type",
+  ),
+  budgetRange: z.enum(["$10K – $25K", "$25K – $50K", "$50K – $100K", "$100K+"], "Please select a budget range"),
+  timeline: z.enum(["1 – 2 months", "3 – 6 months", "6+ months", "Flexible"], "Please select a timeline"),
   details: z.string().trim().min(20, "Please tell me a little more about your project (min. 20 characters)").max(5000),
 });
 

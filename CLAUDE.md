@@ -80,9 +80,9 @@ bun run dev                       # http://localhost:3000
 
 ### Test Pyramid
 
-- **Unit (Vitest, `tests/`)**: Zod schemas (inquiry, login, project input), scrypt password hashing, JSON-column parsing degradation, typewriter state machine, constellation layout derivation, radial-menu angle math. No mocks — real schema parsing and real crypto.
+- **Unit (Vitest, `tests/`)**: Zod schemas (inquiry, login, project input — including empty-select prompts), scrypt password hashing, JSON-column parsing degradation, typewriter state machine, constellation layout derivation, radial-menu angle math, database-path resolution, site-config DOM-parity contracts. No mocks — real schema parsing and real crypto.
 - **Integration**: the dev server + browser is the integration surface (see Verification below).
-- **E2E (Playwright, `e2e/`)**: 30 specs across six files — public pages content, project detail (hero/gallery/zoom/prev-next/video/404), auth (login, gating, radial menu), inquiry submission → dashboard inbox, dashboard CRUD + inquiry triage + sign-out, and a11y smoke (focus visibility, console errors, mobile overflow, marquee animation, constellation).
+- **E2E (Playwright, `e2e/`)**: 31 specs across six files (plus 5 opt-in outage specs) — public pages content (incl. the contact form's source-parity initial state: placeholder selects + four social links), project detail (hero/gallery/zoom/prev-next/video/404), auth (login, gating, radial menu), inquiry submission → dashboard inbox, dashboard CRUD + inquiry triage + sign-out, and a11y smoke (focus visibility, console errors, mobile overflow, marquee animation, constellation).
 
 ### Test Commands
 

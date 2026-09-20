@@ -109,7 +109,7 @@ export default function ContactPage() {
                 Social
               </span>
               <div className="flex flex-col gap-2">
-                {SOCIAL_LINKS.slice(0, 3).map((link) => (
+                {SOCIAL_LINKS.map((link) => (
                   <a
                     key={link.href}
                     href={link.href}
@@ -117,7 +117,7 @@ export default function ContactPage() {
                     rel="noopener noreferrer"
                     className="font-body text-base text-foreground hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:ring-offset-4"
                   >
-                    {link.label}
+                    {`${link.label} ↗`}
                   </a>
                 ))}
               </div>
