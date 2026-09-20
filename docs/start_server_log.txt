@@ -1,39 +1,10 @@
-$ diff .env .env.example
-8c8,10
-< # SQLite by default (zero-config local dev). To use PostgreSQL instead:
----
-> # SQLite by default (zero-config local dev). Relative `file:` paths resolve
-> # from the directory you run commands from (the repo root), so
-> # `file:./db/custom.db` lives in <repo>/db/ (git-ignored). To use PostgreSQL:
-12c14
-< DATABASE_URL=file:../db/custom.db
----
-> DATABASE_URL=file:./db/custom.db
-19c21
-< AUTH_SECRET="nt1GXmZOy6tB+gUmdn77ppwHzC0zgsGuKfKb8mSxWQU="
----
-> AUTH_SECRET=set-me-openssl-rand-base64-32
-32,34c34
-< # NEXT_PUBLIC_SITE_URL=http://localhost:3000
-< NEXT_PUBLIC_SITE_URL=https://designer-portfolio.jesspete.shop
-< SITE_URL=https://designer-portfolio.jesspete.shop
----
-> NEXT_PUBLIC_SITE_URL=http://localhost:3000
-57a58,62
-> #   E2E_OUTAGE=1        — enable the 5 graceful-degradation specs
-> #                         (e2e/outage.spec.ts); pair with an
-> #                         E2E_COMMAND whose DATABASE_URL points at an
-> #                         unwritable path, e.g.
-> #                         E2E_COMMAND="PORT=3100 DATABASE_URL=file:./db-outage-missing/custom.db bun run start"
-
-$ rm db/custom.db
-
-$ bun install                                  # or: npm install
-bunx prisma migrate deploy
+$ bun install
 [0.04ms] ".env"
 bun install v1.3.14 (0d9b296a)
 
-Checked 623 installs across 720 packages (no changes) [19.00ms]
+Checked 623 installs across 720 packages (no changes) [874.00ms]
+
+$ bunx prisma migrate deploy
 warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
 For more information, see: https://pris.ly/prisma-config
 
@@ -55,9 +26,6 @@ migrations/
 
 All migrations have been successfully applied.
 
-$ ls -l db/custom.db
--rw-r--r-- 1 pete pete 73728 Sep 20 14:45 db/custom.db
-
 $ SEED_ADMIN_PASSWORD=P@ssw0rd bun run db:seed
 $ prisma db seed
 warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
@@ -74,20 +42,20 @@ Running seed command `bun prisma/seed.ts` ...
 [seed] done — 5 projects
 
 🌱  The seed command has been executed.
-(venv) pete@pop-os:/Home1/project/designer-portfolio
+
 $ bun run build
 $ next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/
 ▲ Next.js 16.3.5 (Turbopack)
 - Environments: .env
-✓ Running next.config.ts took 30ms
+✓ Running next.config.ts took 35ms
 
   Creating an optimized production build ...
-✓ Compiled successfully in 19.8s
+✓ Compiled successfully in 17.2s
   Skipping validation of types
-✓ Finished TypeScript config validation in 29ms
-✓ Collecting page data using 3 workers in 1573ms
-✓ Generating static pages using 3 workers (17/17) in 932ms
-✓ Finalizing page optimization in 6.2s
+✓ Finished TypeScript config validation in 38ms
+✓ Collecting page data using 3 workers in 3.4s
+✓ Generating static pages using 3 workers (17/17) in 1405ms
+✓ Finalizing page optimization in 4.3s
 
 Route (app)
 ┌ ○ /
@@ -123,3 +91,4 @@ $ NODE_ENV=production node .next/standalone/server.js
 - Network:       http://0.0.0.0:3000
 ✓ Ready in 0ms
 ✓ Running next.config took 6ms
+
