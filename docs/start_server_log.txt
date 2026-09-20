@@ -1,27 +1,39 @@
-$ rm -rf .next/
+$ diff .env .env.example
+8c8,10
+< # SQLite by default (zero-config local dev). To use PostgreSQL instead:
+---
+> # SQLite by default (zero-config local dev). Relative `file:` paths resolve
+> # from the directory you run commands from (the repo root), so
+> # `file:./db/custom.db` lives in <repo>/db/ (git-ignored). To use PostgreSQL:
+12c14
+< DATABASE_URL=file:../db/custom.db
+---
+> DATABASE_URL=file:./db/custom.db
+19c21
+< AUTH_SECRET="nt1GXmZOy6tB+gUmdn77ppwHzC0zgsGuKfKb8mSxWQU="
+---
+> AUTH_SECRET=set-me-openssl-rand-base64-32
+32,34c34
+< # NEXT_PUBLIC_SITE_URL=http://localhost:3000
+< NEXT_PUBLIC_SITE_URL=https://designer-portfolio.jesspete.shop
+< SITE_URL=https://designer-portfolio.jesspete.shop
+---
+> NEXT_PUBLIC_SITE_URL=http://localhost:3000
+57a58,62
+> #   E2E_OUTAGE=1        — enable the 5 graceful-degradation specs
+> #                         (e2e/outage.spec.ts); pair with an
+> #                         E2E_COMMAND whose DATABASE_URL points at an
+> #                         unwritable path, e.g.
+> #                         E2E_COMMAND="PORT=3100 DATABASE_URL=file:./db-outage-missing/custom.db bun run start"
 
-$ ls -l db/
+$ rm db/custom.db
 
-$ grep -v '^#' .env
-DATABASE_URL=file:../db/custom.db
-AUTH_SECRET="nt1GXmZOy6tB+gUmdn77ppwHzC0zgsGuKfKb8mSxWQU="
-ADMIN_EMAIL=admin@alexmoreau.design
-SEED_ADMIN_PASSWORD=set-me-min-8-chars
-NEXT_PUBLIC_SITE_URL=https://designer-portfolio.jesspete.shop
-SITE_URL=https://designer-portfolio.jesspete.shop
-E2E_ADMIN_EMAIL=admin@alexmoreau.design
-E2E_ADMIN_PASSWORD=
-
-$ bun install
+$ bun install                                  # or: npm install
+bunx prisma migrate deploy
 [0.04ms] ".env"
 bun install v1.3.14 (0d9b296a)
 
-+ @vitest/coverage-v8@3.2.7
-
-51 packages installed [7.26s]
-
-$ bun run db:migrate
-$ prisma migrate dev
+Checked 623 installs across 720 packages (no changes) [19.00ms]
 warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
 For more information, see: https://pris.ly/prisma-config
 
@@ -31,6 +43,8 @@ Datasource "db": SQLite database "custom.db" at "file:../db/custom.db"
 
 SQLite database custom.db created at file:../db/custom.db
 
+1 migration found in prisma/migrations
+
 Applying migration `20260920045009_init`
 
 The following migration(s) have been applied:
@@ -39,23 +53,12 @@ migrations/
   └─ 20260920045009_init/
     └─ migration.sql
 
-Your database is now in sync with your schema.
+All migrations have been successfully applied.
 
-✔ Generated Prisma Client (v6.19.3) to ./node_modules/@prisma/client in 251ms
+$ ls -l db/custom.db
+-rw-r--r-- 1 pete pete 73728 Sep 20 14:45 db/custom.db
 
-
-Running seed command `bun prisma/seed.ts` ...
-[seed] project upserted: 01 Kinto
-[seed] project upserted: 02 The Blue Shift
-[seed] project upserted: 03 ST.Lab
-[seed] project upserted: 04 Squeez'd
-[seed] project upserted: 05 Vexta
-[seed] owner admin@alexmoreau.design created (OWNER)
-[seed] done — 5 projects
-
-🌱  The seed command has been executed.
-
-$ bun run db:seed
+$ SEED_ADMIN_PASSWORD=P@ssw0rd bun run db:seed
 $ prisma db seed
 warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
 For more information, see: https://pris.ly/prisma-config
@@ -67,24 +70,24 @@ Running seed command `bun prisma/seed.ts` ...
 [seed] project upserted: 03 ST.Lab
 [seed] project upserted: 04 Squeez'd
 [seed] project upserted: 05 Vexta
-[seed] owner admin@alexmoreau.design already exists — skipping (password unchanged)
+[seed] owner admin@alexmoreau.design created (OWNER)
 [seed] done — 5 projects
 
 🌱  The seed command has been executed.
-
+(venv) pete@pop-os:/Home1/project/designer-portfolio
 $ bun run build
 $ next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/
 ▲ Next.js 16.3.5 (Turbopack)
 - Environments: .env
-✓ Running next.config.ts took 209ms
+✓ Running next.config.ts took 30ms
 
   Creating an optimized production build ...
-✓ Compiled successfully in 42s
+✓ Compiled successfully in 19.8s
   Skipping validation of types
-✓ Finished TypeScript config validation in 39ms
-✓ Collecting page data using 3 workers in 4.2s
-✓ Generating static pages using 3 workers (17/17) in 1395ms
-✓ Finalizing page optimization in 5.0s
+✓ Finished TypeScript config validation in 29ms
+✓ Collecting page data using 3 workers in 1573ms
+✓ Generating static pages using 3 workers (17/17) in 932ms
+✓ Finalizing page optimization in 6.2s
 
 Route (app)
 ┌ ○ /
