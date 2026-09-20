@@ -24,13 +24,13 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: `${SITE.name} — ${SITE.role}`,
+    default: SITE.title,
     template: `%s | ${SITE.title}`,
   },
   description: SITE.description,
   keywords: ["graphic design", "brand identity", "portfolio", "Berlin", "Alex Moreau"],
   openGraph: {
-    title: `${SITE.name} — ${SITE.role}`,
+    title: SITE.title,
     description: SITE.description,
     url: siteUrl,
     siteName: SITE.title,
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: `${SITE.name} — ${SITE.role}`,
+    title: SITE.title,
     description: SITE.description,
   },
   robots: { index: true, follow: true },

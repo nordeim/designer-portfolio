@@ -16,6 +16,7 @@ export const SITE = {
   email: "hello@alexmoreau.design",
   location: "Berlin, Germany",
   availability: "Available for remote & on-site",
+  copyrightYear: new Date().getFullYear(),
   copyright: `© ${new Date().getFullYear()} Alex Moreau.`,
   philosophy:
     "I believe design is not decoration — it is the deliberate structuring of meaning. Every project begins with listening, continues with questioning, and resolves through relentless iteration. The goal is never novelty. The goal is clarity.",
@@ -34,7 +35,7 @@ export const NAV_LINKS = [
   { label: "Contact", href: "/contact" },
 ] as const;
 
-/** The endlessly-scrolling marquee band rendered between page sections. */
+/** The giant ghost marquee band rendered at the top of the site footer. */
 export const MARQUEE_ITEMS = [
   "BRAND IDENTITY",
   "DIGITAL PRODUCT",
@@ -43,6 +44,13 @@ export const MARQUEE_ITEMS = [
   "TYPOGRAPHY",
   "ART DIRECTION",
 ] as const;
+
+/**
+ * The denominator of the landing/case-study "01/06" numbering. The reference
+ * app hardcodes 6 (String(6).padStart(2, "0")) even though its catalog holds
+ * 5 published projects — we reproduce the constant for visual parity.
+ */
+export const WORKS_INDEX_TOTAL = "06";
 
 export const PROJECT_TYPES = [
   "Brand Identity",

@@ -37,3 +37,6 @@ coverage/
 # IDE
 .idea/
 .vscode/
+test-results/
+playwright-report/
+playwright/.cache

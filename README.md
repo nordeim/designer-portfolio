@@ -1,25 +1,38 @@
 # Designer Portfolio
 
-![Next.js](https://img.shields.io/badge/Next.js-16.1.3-000000) ![React](https://img.shields.io/badge/React-19.2-61DAFB) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9--strict-3178C6) ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4.1-06B6D4) ![Prisma](https://img.shields.io/badge/Prisma-6.19-2D3748) ![Vitest](https://img.shields.io/badge/Vitest-3.2-6E9F18)
+![Next.js](https://img.shields.io/badge/Next.js-16.1.3-000000) ![React](https://img.shields.io/badge/React-19.2-61DAFB) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9--strict-3178C6) ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4.1-06B6D4) ![Prisma](https://img.shields.io/badge/Prisma-6.19-2D3748) ![Vitest](https://img.shields.io/badge/Vitest-3.2-6E9F18) ![Playwright](https://img.shields.io/badge/Playwright-1.63-2EAD33)
 
 **A high-impact, spatial portfolio gallery with precision minimalism and cinematic storytelling — public showcase plus an owner dashboard, in one Next.js app.**
 
-The public site presents selected works through a numbered project index with cursor-following previews, editorial case-study pages with zoomable galleries, an about page, and an inquiry-driven contact flow. Behind `/login`, an owner dashboard manages the project catalog and triages incoming inquiries. Every mutation is Zod-validated on the server, every session is database-backed, and the whole thing runs on a zero-config SQLite file that upgrades to PostgreSQL by changing two lines.
+The public site opens on a cinematic hero: the designer's name in oversized display type beside a floating "constellation" of project imagery with animated cobalt markers and a typewriter meta line, over a faint sage six-column grid. Selected Works render as alternating editorial rows with sticky parallax imagery and giant ghost numbering (01/06), followed by a design-philosophy statement and the giant ghost-type footer marquee. A rotating radial menu overlays the whole site, and a persistent "Start a Project →" affordance anchors the bottom-right corner. Case-study pages pair full-bleed heroes with a sticky intro column and a zoomable 1↔2-column gallery (autoplaying muted video where present). Behind `/login`, an owner dashboard manages the project catalog and triages incoming inquiries. Every mutation is Zod-validated on the server, every session is database-backed, and the whole thing runs on a zero-config SQLite file that upgrades to PostgreSQL by changing two lines.
+
+## Screenshots
+
+Captured from the running app (see `docs/screenshots/` — 16 shots covering every page, both themes, desktop + mobile, and the radial menu):
+
+| | | |
+|---|---|---|
+| `01-landing-light.png` — constellation hero | `02-landing-dark.png` — dark hero | `13-landing-works.png` — sticky parallax rows |
+| `14-landing-footer-marquee.png` — ghost marquee | `16-radial-menu.png` — radial wheel overlay | `03-projects.png` — archive |
+| `07-project-detail.png` — full-bleed case study | `15-project-detail-gallery.png` — gallery + zoom | `04-about.png` — portrait + timeline |
+| `05-contact.png` — underline form | `06-login.png` — sign-in | `08–10` — dashboard views |
+| `11-mobile-landing.png` — 390px hero | `12-mobile-menu.png` — mobile menu | |
 
 ## Key Features
 
 | | Feature | Where |
 |---|---|---|
-| 🖼️ | Landing: hero, numbered Selected Works, design philosophy, marquee band | `src/app/(site)/page.tsx` |
-| 🗂️ | Projects index with hover image previews + full project archive | `src/app/(site)/projects` |
-| 📖 | Case-study pages: meta grid, zoomable gallery (incl. video), outcomes, prev/next | `src/app/(site)/project/[slug]` |
-| 📝 | About: experience timeline, skills matrix | `src/app/(site)/about` |
-| ✉️ | Contact: inquiry form (Zod + honeypot + rate limit), FAQ accordion | `src/app/(site)/contact` |
+| 🖼️ | Landing: constellation hero (floating project imagery + typewriter meta), alternating sticky-parallax Selected Works rows, philosophy, ghost-type footer marquee | `src/app/(site)/page.tsx` |
+| 🧭 | Fixed overlay chrome: breathing A/M logo, center theme toggle, bottom-right "Start a Project →" CTA, rotating radial menu with project previews | `src/components/site/{site-header,radial-menu}.tsx` |
+| 🗺️ | Projects archive with invert-fill hover rows, cursor-following previews, mobile imagery | `src/app/(site)/projects` |
+| 📖 | Case-study pages: full-bleed hero, sticky intro + 1↔2-column zoomable gallery (incl. autoplay video), wrapped prev/next | `src/app/(site)/project/[slug]` |
+| 📝 | About: portrait, experience timeline, sage-dot skills matrix | `src/app/(site)/about` |
+| ✉️ | Contact: underline-style inquiry form (Zod + honeypot + rate limit), FAQ accordion, info columns | `src/app/(site)/contact` |
 | 🔐 | Credentials auth: scrypt hashing, DB-backed sessions, signed HttpOnly cookie | `src/lib/auth/` |
 | 📊 | Owner dashboard: stats overview, projects CRUD, inquiry triage workflow | `src/app/dashboard/` |
 | 🌗 | Light/dark themes; reduced-motion aware | `next-themes` + `globals.css` |
 | ♿ | Semantic landmarks, focus states, AA contrast, keyboard operability | throughout |
-| 🧪 | Vitest unit suites for validation, hashing, JSON-column parsing | `tests/` |
+| 🧪 | Vitest unit suites (validation, hashing, JSON parsing, typewriter, constellation, menu geometry) + Playwright E2E (6 spec files, 30 tests) | `tests/`, `e2e/` |
 
 ## Quick Start
 
@@ -47,6 +60,8 @@ SEED_ADMIN_PASSWORD="at-least-8-chars"        # first-boot owner password
 ```bash
 curl -s localhost:3000/api/health            # {"status":"ok","db":true,...}
 bun run lint && bun run typecheck && bun run test   # all green
+# E2E (optional; needs a running server + the seeded admin password):
+E2E_ADMIN_PASSWORD="your-seed-password" bunx playwright test
 ```
 
 Open http://localhost:3000 — the landing page shows the seeded catalog (Kinto, The Blue Shift, ST.Lab, …). Sign in at `/login` with `ADMIN_EMAIL` + the seeded password to reach `/dashboard`.
@@ -67,7 +82,7 @@ Production: `bun run build && bun run start`.
 | ORM | Prisma | 6.19.2 | Typed schema, push-based migrations |
 | Validation | Zod | 4.3.5 | Every action/route boundary |
 | Auth | Custom: scrypt + DB sessions | — | No third-party auth dependency |
-| Testing | Vitest | 3.2.7 | Unit suites for pure domain logic |
+| Testing | Vitest · Playwright | 3.2.7 · 1.58 | Unit suites for pure domain logic + browser E2E |
 
 ```mermaid
 flowchart TB
@@ -99,19 +114,22 @@ Reads flow through RSC pages → `src/lib/data.ts` → Prisma. Mutations flow th
  │  └─ 📄 layout.tsx, globals.css   Fonts, theme provider, design tokens
  ├─ 📂 actions                ALL mutations ("use server", Zod, ActionResult)
  ├─ 📂 components
- │  ├─ 📂 site                Header/menu, footer, marquee, project index, gallery, inquiry form
+ │  ├─ 📂 site                Header/radial menu, constellation hero, works rows, philosophy, ghost marquee footer, project index, detail body, inquiry form
  │  ├─ 📂 dashboard           Shell/sidebar, projects manager, inquiries manager, forms
  │  └─ 📂 ui                  shadcn/Radix primitives
  └─ 📂 lib
     ├─ 📄 data.ts             Read-side queries
     ├─ 📄 validation.ts       Zod schemas + JSON-column helpers
+    ├─ 📄 typewriter.ts       Pure typewriter state machine (unit-tested)
+    ├─ 📄 constellation.ts    Pure constellation layout derivation (unit-tested)
     ├─ 📄 site-config.ts      Brand copy, links, FAQ, skills content
     └─ 📂 auth/               password.ts (scrypt), session.ts (DB sessions)
 📂 prisma
  ├─ 📄 schema.prisma          User, Session, Project, Inquiry
  └─ 📄 seed.ts                Idempotent seed (5 projects + owner)
 📂 public/projects/<slug>/    Optimized project media (11 MB total, incl. 1 video)
-📂 tests                      Vitest suites (validation, password)
+📂 tests                      Vitest suites (validation, password, typewriter, constellation, menu-wheel)
+📂 e2e                        Playwright specs (public pages, project detail, auth, inquiry, dashboard, a11y)
 📄 .env.example               Documented env manifest
 ```
 
@@ -125,16 +143,23 @@ Reads flow through RSC pages → `src/lib/data.ts` → Prisma. Mutations flow th
 | `SEED_ADMIN_PASSWORD` | First-boot owner password (min 8 chars) | first seed |
 | `NEXT_PUBLIC_SITE_URL` | Canonical origin for metadata/sitemap/robots | ✅ in prod |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | OAuth (login shows honest "not configured" notice when unset) | optional |
+| `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD` | Playwright login credentials (auth/dashboard specs skip when unset) | optional |
+| `E2E_START` / `E2E_COMMAND` / `E2E_PORT` / `E2E_BASE_URL` | Playwright server-management knobs | optional |
 
 ## Testing
 
 ```bash
-bun run test                                   # all suites (21 tests)
+bun run test                                   # all unit suites (42 tests)
 bunx vitest run tests/validation.test.ts       # single file
 bunx vitest run -t "rejects a slug"            # single test
+
+E2E_ADMIN_PASSWORD=… bunx playwright test       # all e2e (30 tests; server on :3000)
+bunx playwright test e2e/auth.spec.ts          # single spec file
 ```
 
-Covered: inquiry/login/project Zod schemas (valid input, boundary values, invalid input, unknown enum values), scrypt hashing round-trips + malformed stored hashes, JSON-column parse degradation. Password tests do real key derivation (~200 ms each).
+**Unit (Vitest, 42 tests)**: inquiry/login/project Zod schemas (valid input, boundary values, invalid input, unknown enum values), scrypt hashing round-trips + malformed stored hashes, JSON-column parse degradation, typewriter state machine (typing/pausing/cycling), constellation layout derivation (positions/sizes/contain flags), radial-menu angle math (rotation clamping, counter-rotation). Password tests do real key derivation (~200 ms each).
+
+**E2E (Playwright, 30 tests across 6 files)**: public page content + console cleanliness, project detail (hero labels, sticky intro, gallery zoom toggle, prev/next wrap-around, autoplaying video, 404), auth (login affordances, invalid credentials, dashboard gating, radial menu open/Escape), inquiry submission → dashboard inbox, dashboard flows (CRUD round-trip verified on the public site, inquiry triage, sign-out), a11y smoke (focus visibility, theme toggle, mobile overflow, marquee animation, constellation rendering). Mutating specs use unique payloads and clean up after themselves. On RAM-constrained hosts (< ~6 GB), run the suite against the production build (`E2E_START=1 E2E_COMMAND="bun run start"`) — the Turbopack dev server + Chromium together can exceed the memory budget.
 
 ## Design System
 
@@ -144,11 +169,12 @@ Defined once in `src/app/globals.css` (Tailwind v4 tokens + CSS custom propertie
 |---|---|---|
 | `--background` | `hsl(0 0% 96.5%)` / dark `7%` | Page paper (#F6F6F6) / ink (#121212) |
 | `--foreground` | `hsl(0 0% 7%)` / dark `96.5%` | Primary text |
-| `--cobalt` | `#2E5BFF` / dark `#6C86FF` | Interactive accent — hovers, links, focus |
+| `--cobalt` | `#2E5BFF` (light & dark) | Interactive accent — hovers, links, dots, focus |
+| `--sage` | `#A3B18A` | Ghost grid lines + skills dots |
 | `--border` | `hsl(0 0% 85%)` / dark `18%` | Hairline rules, editorial grid |
-| `--radius` | `0.125rem` | Near-sharp editorial corners |
+| `--radius` | `0` | Sharp editorial corners |
 
-Typography: **Inter** (300–700, body/display) · **JetBrains Mono** (300–500, the `label-mono` micro-label style — 10–12px, 0.25em tracking, uppercase). Motion: marquee keyframes, `prefers-reduced-motion` aware; Framer transitions on menu/preview/gallery with `ease-out-expo`.
+Typography: **Inter** (300–700, body/display; hero h1 scales 106 → 141px → 9.8vw at ≥1440px) · **JetBrains Mono** (300–500, the `label-mono` micro-label style — 12–14px, 0.1em tracking, uppercase; ghost marquee up to 96px `font-light`). Motion: 60s marquee, breathing logo (letter-spacing 0.05em ↔ 0.7em), gradient-shift on the "All Projects →" link — all `prefers-reduced-motion` aware; Framer transitions on menu/rows/gallery with `ease-out-expo`.
 
 ## Project Status
 
@@ -165,7 +191,9 @@ Typography: **Inter** (300–700, body/display) · **JetBrains Mono** (300–500
 |---|---|
 | `Cannot read properties of undefined (reading 'findMany')` | Prisma client is stale — restart `bun run dev` after schema edits (`db:generate` + `db:push` first) |
 | Turbopack `Failed to restore task data` | Corrupted cache — delete `.next/` and restart the dev server |
-| `EADDRINUSE :::3000` | `lsof -ti:3000 \| xargs -r kill -9`, then `bun run dev` |
+| One route hangs while `/api/health` is 200 | Hung route compile — restart and clear `.next/` |
+| `EADDRINUSE :::3000` | `lsof -ti:3000 \| xargs -r kill -9` **plus** `pkill -9 -f next-server` (the standalone server renames its process; take the PID from `ss -tlnp \| grep :3000` when in doubt) |
+| Playwright fails with connection-refused mid-run on a small host | The kernel OOM-killed the dev server (Turbopack ~2.3 GB + Chromium ~2 GB). Run the suite against the production build: `bun run build && E2E_START=1 E2E_COMMAND="bun run start" bunx playwright test` |
 | Seed refuses to create owner | `SEED_ADMIN_PASSWORD` unset or shorter than 8 chars — set it and re-run `bun run db:seed` |
 | Login says "Invalid email or password" | 5 attempts / 10 minutes per email (in-memory throttle); verify the seeded password hash with a fresh DB |
 | Images 404 on a fresh clone | Media ships in `public/projects/` — ensure it wasn't excluded by a partial clone or LFS config |

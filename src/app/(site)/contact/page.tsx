@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
-import { FAQ_ITEMS, SITE, SOCIAL_LINKS } from "@/lib/site-config";
+import { FadeIn } from "@/components/site/fade-in";
 import { InquiryForm } from "@/components/site/inquiry-form";
-import { MarqueeBand } from "@/components/site/marquee-band";
+import { FAQ_ITEMS, SOCIAL_LINKS, SITE } from "@/lib/site-config";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { ExternalLink, Mail, MapPin } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -16,93 +15,116 @@ export const metadata: Metadata = {
     "Start a project with Alex Moreau — submit a project inquiry and get a detailed response within 48 hours.",
 };
 
+/**
+ * Contact page: display headline, the inquiry form, the collaboration FAQ,
+ * and the contact information columns — matching the reference app's
+ * /contact route.
+ */
 export default function ContactPage() {
   return (
-    <>
-      <section className="mx-auto max-w-[1400px] px-6 md:px-10 pt-28 md:pt-40 pb-16 md:pb-24" aria-label="Contact">
-        <p className="label-mono text-muted-foreground mb-6">CONTACT</p>
-        <h1 className="font-body text-[clamp(2.5rem,7vw,5.5rem)] font-light tracking-[-0.02em] leading-[1.02] text-foreground max-w-4xl">
-          Let&apos;s build something
-          <br />
-          remarkable together.
-        </h1>
-        <p className="mt-8 font-body text-base md:text-lg text-muted-foreground max-w-2xl leading-relaxed">
-          Whether you have a detailed brief or just an idea, I&apos;d love to hear about your project. Fill out the
-          form below and I&apos;ll get back to you within 48 hours.
-        </p>
-
-        <div className="mt-12 md:mt-16 grid grid-cols-12 gap-10 md:gap-16">
-          {/* ---------------------------------------- Form */}
-          <div className="col-span-12 lg:col-span-7" aria-label="Project inquiry">
-            <p className="label-mono text-cobalt mb-8">PROJECT INQUIRY</p>
-            <InquiryForm />
-          </div>
-
-          {/* ---------------------------------------- FAQ + contact info */}
-          <div className="col-span-12 lg:col-span-5 flex flex-col gap-14">
-            <section aria-label="Frequently asked questions">
-              <p className="label-mono text-muted-foreground mb-6">COLLABORATION FAQ</p>
-              <Accordion type="single" collapsible className="w-full">
-                {FAQ_ITEMS.map((item, i) => (
-                  <AccordionItem key={item.q} value={`faq-${i}`} className="border-border">
-                    <AccordionTrigger className="text-left font-body text-sm md:text-base font-normal hover:no-underline hover:text-cobalt [&[data-state=open]]:text-cobalt">
-                      {item.q}
-                    </AccordionTrigger>
-                    <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-                      {item.a}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            </section>
-
-            <section aria-label="Contact information" className="flex flex-col gap-8">
-              <div className="flex items-start gap-4">
-                <Mail className="h-4 w-4 mt-1 text-muted-foreground shrink-0" aria-hidden />
-                <div>
-                  <p className="label-mono text-muted-foreground mb-1">EMAIL</p>
-                  <a
-                    href={`mailto:${SITE.email}`}
-                    className="font-body text-sm text-foreground hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  >
-                    {SITE.email}
-                  </a>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <MapPin className="h-4 w-4 mt-1 text-muted-foreground shrink-0" aria-hidden />
-                <div>
-                  <p className="label-mono text-muted-foreground mb-1">LOCATION</p>
-                  <p className="font-body text-sm text-foreground">{SITE.location}</p>
-                  <p className="font-body text-sm text-muted-foreground">{SITE.availability}</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <ExternalLink className="h-4 w-4 mt-1 text-muted-foreground shrink-0" aria-hidden />
-                <div>
-                  <p className="label-mono text-muted-foreground mb-1">SOCIAL</p>
-                  <ul className="space-y-2">
-                    {SOCIAL_LINKS.map((link) => (
-                      <li key={link.href}>
-                        <a
-                          href={link.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-body text-sm text-foreground hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                        >
-                          {link.label} ↗
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </section>
-          </div>
+    <div className="pt-24 md:pt-32">
+      {/* ---------------------------------------------------- Headline */}
+      <section className="px-6 md:px-8 pb-16 md:pb-24" aria-label="Contact">
+        <div className="max-w-7xl mx-auto">
+          <FadeIn>
+            <span className="font-mono text-xs tracking-widest uppercase text-muted-foreground block mb-4">
+              Contact
+            </span>
+            <h1 className="font-body text-4xl md:text-6xl lg:text-7xl font-light tracking-tight text-foreground mb-6 leading-tight">
+              Let&apos;s build something
+              <br />
+              <span className="text-muted-foreground">remarkable together.</span>
+            </h1>
+            <p className="font-body text-lg text-muted-foreground max-w-2xl">
+              Whether you have a detailed brief or just an idea, I&apos;d love to hear about your project. Fill out
+              the form below and I&apos;ll get back to you within 48 hours.
+            </p>
+          </FadeIn>
         </div>
       </section>
 
-      <MarqueeBand />
-    </>
+      {/* ---------------------------------------------------- Inquiry */}
+      <section className="px-6 md:px-8 py-16 md:py-24 border-t border-border" aria-label="Project inquiry form">
+        <div className="max-w-7xl mx-auto">
+          <FadeIn>
+            <span className="font-mono text-xs tracking-widest uppercase text-muted-foreground block mb-8">
+              Project Inquiry
+            </span>
+          </FadeIn>
+          <FadeIn delay={0.1}>
+            <InquiryForm />
+          </FadeIn>
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------- FAQ */}
+      <section className="px-6 md:px-8 py-16 md:py-24 border-t border-border" aria-label="Frequently asked questions">
+        <div className="max-w-7xl mx-auto">
+          <FadeIn>
+            <span className="font-mono text-xs tracking-widest uppercase text-muted-foreground block mb-8">
+              Collaboration FAQ
+            </span>
+          </FadeIn>
+          <FadeIn delay={0.1}>
+            <Accordion type="single" collapsible className="w-full">
+              {FAQ_ITEMS.map((item) => (
+                <AccordionItem key={item.q} value={item.q}>
+                  <AccordionTrigger className="font-body text-lg font-light text-foreground hover:no-underline text-left">
+                    {item.q}
+                  </AccordionTrigger>
+                  <AccordionContent className="font-body text-base text-muted-foreground leading-relaxed">
+                    {item.a}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </FadeIn>
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------- Info */}
+      <section className="px-6 md:px-8 pt-16 md:pt-24 pb-16 md:pb-24 border-t border-border" aria-label="Contact information">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
+            <FadeIn>
+              <span className="font-mono text-xs tracking-widest uppercase text-muted-foreground block mb-4">
+                Email
+              </span>
+              <a
+                href={`mailto:${SITE.email}`}
+                className="font-body text-lg text-foreground hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:ring-offset-4"
+              >
+                {SITE.email}
+              </a>
+            </FadeIn>
+            <FadeIn delay={0.1}>
+              <span className="font-mono text-xs tracking-widest uppercase text-muted-foreground block mb-4">
+                Location
+              </span>
+              <p className="font-body text-lg text-foreground">Berlin, Germany</p>
+              <p className="font-body text-sm text-muted-foreground mt-1">Available for remote &amp; on-site</p>
+            </FadeIn>
+            <FadeIn delay={0.2}>
+              <span className="font-mono text-xs tracking-widest uppercase text-muted-foreground block mb-4">
+                Social
+              </span>
+              <div className="flex flex-col gap-2">
+                {SOCIAL_LINKS.slice(0, 3).map((link) => (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-body text-base text-foreground hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:ring-offset-4"
+                  >
+                    {link.label}
+                  </a>
+                ))}
+              </div>
+            </FadeIn>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }

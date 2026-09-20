@@ -1,38 +1,102 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion } from "framer-motion";
+import { usePathname } from "next/navigation";
+import { AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
-import { Moon, Sun, X } from "lucide-react";
-import { SITE } from "@/lib/site-config";
-import { cn } from "@/lib/utils";
+import { Moon, Sun } from "lucide-react";
+import { RadialMenu, type MenuProject } from "@/components/site/radial-menu";
 
-export interface MenuProject {
-  id: string;
-  slug: string;
-  order: number;
-  title: string;
+/**
+ * Fixed header overlay, matching the reference app's chrome:
+ * - A/M "breathing" logo (letter-spacing expands to 0.7em and settles back
+ *   on a ~7s loop) top-left;
+ * - theme toggle at top-center (desktop) / inline (mobile);
+ * - Menu button top-right opening the radial wheel overlay;
+ * - "Start a Project →" pinned to the bottom-right corner.
+ * Over the full-bleed dark hero of a project page the chrome switches to
+ * gallery (#F5F5F7) until the visitor scrolls past 80% of the viewport.
+ *
+ * The reference sets aria-hidden on this overlay container, which would hide
+ * focusable links from assistive tech — a WCAG violation we deliberately do
+ * not replicate; the chrome stays in the accessibility tree.
+ */
+
+type LogoPhase = "idle" | "spacing" | "reset";
+
+function BreathingLogo({ light }: { light: boolean }) {
+  const [phase, setPhase] = useState<LogoPhase>("idle");
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let t: ReturnType<typeof setTimeout>;
+    const schedule = (fn: () => void, ms: number) => {
+      t = setTimeout(fn, ms);
+    };
+    // idle 3s → spacing 0.5s → reset 3s → idle 0.4s → repeat (reference cadence)
+    const start = () => {
+      schedule(() => {
+        setPhase("spacing");
+        schedule(() => {
+          setPhase("reset");
+          schedule(() => {
+            setPhase("idle");
+            schedule(start, 400);
+          }, 3000);
+        }, 500);
+      }, 3000);
+    };
+    start();
+    return () => clearTimeout(t);
+  }, []);
+
+  const letterSpacing = phase === "spacing" ? "0.7em" : "0.05em";
+  return (
+    <span
+      className="font-mono text-xs md:text-sm uppercase"
+      style={{
+        letterSpacing,
+        transition:
+          phase === "spacing"
+            ? "letter-spacing 0.4s cubic-bezier(0.65, 0, 0.35, 1)"
+            : phase === "reset"
+              ? "letter-spacing 0.35s cubic-bezier(0.65, 0, 0.35, 1)"
+              : "none",
+      }}
+    >
+      A/M
+    </span>
+  );
 }
 
 /**
- * Fixed site header: initials (left), theme toggle (center), MENU (right).
- * The MENU button opens a full-screen overlay navigation with the public
- * routes plus the project list (server-provided via props). Links close the
- * overlay in their click handlers (not in an effect). Theme icons swap via
- * CSS (`.dark:` variants) so there is no hydration-time state mismatch.
+ * Whether the visitor is still within the dark hero band of a project page
+ * (top 80% of the viewport) — read via useSyncExternalStore so the scroll
+ * source of truth lives outside React and re-renders are change-driven.
  */
+function useAtViewportTop(enabled: boolean): boolean {
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => {
+      if (!enabled) return () => {};
+      window.addEventListener("scroll", onStoreChange, { passive: true });
+      return () => window.removeEventListener("scroll", onStoreChange);
+    },
+    [enabled],
+  );
+  const getSnapshot = useCallback(
+    () => (enabled ? window.scrollY < window.innerHeight * 0.8 : true),
+    [enabled],
+  );
+  return useSyncExternalStore(subscribe, getSnapshot, () => true);
+}
+
 export function SiteHeader({ projects }: { projects: MenuProject[] }) {
   const [open, setOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const { resolvedTheme, setTheme } = useTheme();
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  const pathname = usePathname();
+  const isProjectPage = pathname?.startsWith("/project/") ?? false;
+  const atTop = useAtViewportTop(isProjectPage);
 
   // Lock body scroll while the overlay is open.
   useEffect(() => {
@@ -42,159 +106,99 @@ export function SiteHeader({ projects }: { projects: MenuProject[] }) {
     };
   }, [open]);
 
-  const menuProjects = projects;
-  const close = () => setOpen(false);
+  const overDarkHero = isProjectPage && atTop;
+  const chrome = overDarkHero ? "text-gallery" : "text-foreground";
+  const mobileBarDim = !atTop && typeof window !== "undefined" && window.innerWidth < 768;
 
   return (
     <>
-      <header
-        className={cn(
-          "fixed top-0 inset-x-0 z-40 transition-colors duration-300",
-          scrolled ? "bg-background/90 backdrop-blur-sm border-b border-border/60" : "bg-transparent",
-        )}
-      >
-        <div className="mx-auto max-w-[1400px] px-6 md:px-10 h-16 md:h-20 flex items-center justify-between">
+      <div className="fixed inset-0 z-40 pointer-events-none">
+        {/* Mobile top bar */}
+        <div
+          className="pointer-events-none md:hidden fixed top-6 left-6 right-6 flex justify-between items-center"
+          style={
+            mobileBarDim
+              ? {
+                  backgroundColor: "rgba(255, 255, 255, 0.6)",
+                  backdropFilter: "blur(10px)",
+                  borderRadius: "8px",
+                  padding: "8px",
+                  height: "40px",
+                  transition: "all 0.3s ease",
+                }
+              : { transition: "all 0.3s ease" }
+          }
+        >
           <Link
             href="/"
-            className="label-mono text-foreground hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            aria-label={`${SITE.name} — home`}
+            className={`pointer-events-auto hover:text-cobalt transition-colors duration-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt ${chrome}`}
+            aria-label="Alex Moreau — home"
           >
-            {SITE.initials}
+            <BreathingLogo light={overDarkHero} />
           </Link>
-
           <button
             type="button"
             onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-            className="text-foreground/70 hover:text-foreground transition-colors p-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            aria-label={resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            className={`pointer-events-auto p-1.5 hover:text-cobalt transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt ${chrome}`}
+            aria-label="Toggle dark mode"
           >
-            {resolvedTheme === "dark" ? <Sun className="hidden h-4 w-4 dark:block" /> : <Moon className="h-4 w-4 dark:hidden" />}
+            {resolvedTheme === "dark" ? (
+              <Sun className="w-5 h-5 scale-90 dark:block" aria-hidden />
+            ) : (
+              <Moon className="w-5 h-5 scale-90 dark:hidden" aria-hidden />
+            )}
           </button>
-
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="label-mono text-foreground hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className={`pointer-events-auto font-mono text-xs tracking-widest uppercase hover:text-cobalt transition-colors duration-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt ${chrome}`}
+            aria-label="Open menu"
           >
-            MENU
+            Menu
           </button>
         </div>
-      </header>
 
-      <AnimatePresence>
-        {open && <MenuOverlay projects={menuProjects} onClose={close} />}
-      </AnimatePresence>
-    </>
-  );
-}
-
-function MenuOverlay({ projects, onClose }: { projects: MenuProject[]; onClose: () => void }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.25 }}
-      className="fixed inset-0 z-50 bg-background grid-lines"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Site navigation"
-    >
-      <div className="mx-auto max-w-[1400px] px-6 md:px-10 h-full flex flex-col py-8">
-        <div className="flex items-center justify-between h-12">
-          <span className="label-mono text-muted-foreground">NAVIGATION</span>
+        {/* Desktop chrome */}
+        <div className="hidden md:block">
+          <Link
+            href="/"
+            className={`pointer-events-auto absolute top-6 left-6 md:top-8 md:left-8 hover:text-cobalt transition-colors duration-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt ${chrome}`}
+            aria-label="Alex Moreau — home"
+          >
+            <BreathingLogo light={overDarkHero} />
+          </Link>
           <button
             type="button"
-            onClick={onClose}
-            className="label-mono text-foreground hover:text-cobalt transition-colors inline-flex items-center gap-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+            className={`pointer-events-auto absolute top-6 left-1/2 -translate-x-1/2 md:top-8 p-1.5 hover:text-cobalt transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt ${chrome}`}
+            aria-label="Toggle dark mode"
           >
-            <X className="h-4 w-4" aria-hidden /> CLOSE MENU
+            {resolvedTheme === "dark" ? (
+              <Sun className="w-5 h-5 scale-90 dark:block" aria-hidden />
+            ) : (
+              <Moon className="w-5 h-5 scale-90 dark:hidden" aria-hidden />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className={`pointer-events-auto absolute top-6 right-6 md:top-8 md:right-8 font-mono text-xs md:text-sm tracking-widest uppercase hover:text-cobalt transition-colors duration-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt ${chrome}`}
+            aria-label="Open menu"
+          >
+            Menu
           </button>
         </div>
 
-        <nav className="flex-1 flex flex-col justify-center gap-2 md:gap-3" aria-label="Menu">
-          <motion.div initial={{ y: 24, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.05 }}>
-            <MenuLink href="/" index="01" onClose={onClose}>
-              Home
-            </MenuLink>
-          </motion.div>
-          <motion.div initial={{ y: 24, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}>
-            <div className="flex items-baseline gap-8">
-              <MenuLink href="/projects" index="02" onClose={onClose}>
-                Projects
-              </MenuLink>
-              <button
-                type="button"
-                className="label-mono text-muted-foreground hover:text-cobalt transition-colors md:hidden"
-                aria-expanded
-              >
-                all works
-              </button>
-            </div>
-          </motion.div>
-          <motion.ul
-            initial={{ y: 24, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.15 }}
-            className="md:pl-24 md:gap-1 gap-1 flex flex-col"
-            aria-label="All projects"
-          >
-            {projects.map((p) => (
-              <li key={p.id}>
-                <Link
-                  href={`/project/${p.slug}`}
-                  onClick={onClose}
-                  className="group inline-flex items-baseline gap-4 py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  <span className="label-mono text-muted-foreground group-hover:text-cobalt transition-colors">
-                    {String(p.order).padStart(2, "0")}
-                  </span>
-                  <span className="text-lg md:text-xl font-light tracking-tight group-hover:text-cobalt transition-colors">
-                    {p.title}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </motion.ul>
-          <motion.div initial={{ y: 24, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}>
-            <MenuLink href="/about" index="03" onClose={onClose}>
-              About
-            </MenuLink>
-          </motion.div>
-          <motion.div initial={{ y: 24, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.25 }}>
-            <MenuLink href="/contact" index="04" onClose={onClose}>
-              Contact
-            </MenuLink>
-          </motion.div>
-        </nav>
-
-        <div className="label-mono text-muted-foreground pb-4">{SITE.email}</div>
+        {/* Persistent corner call-to-action */}
+        <Link
+          href="/contact"
+          className={`pointer-events-auto absolute bottom-[26px] right-[26px] font-mono text-xs md:text-sm tracking-widest uppercase hover:text-cobalt transition-colors duration-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:ring-offset-4 ${chrome}`}
+        >
+          Start a Project →
+        </Link>
       </div>
-    </motion.div>
-  );
-}
 
-function MenuLink({
-  href,
-  index,
-  onClose,
-  children,
-}: {
-  href: string;
-  index: string;
-  onClose: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      onClick={onClose}
-      className="group inline-flex items-baseline gap-8 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-    >
-      <span className="label-mono text-muted-foreground group-hover:text-cobalt transition-colors">{index}</span>
-      <span className="text-3xl md:text-5xl font-light tracking-tight group-hover:text-cobalt transition-colors">
-        {children}
-      </span>
-    </Link>
+      <AnimatePresence>{open && <RadialMenu projects={projects} onClose={() => setOpen(false)} />}</AnimatePresence>
+    </>
   );
 }

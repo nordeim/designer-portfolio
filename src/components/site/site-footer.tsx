@@ -1,91 +1,92 @@
 import Link from "next/link";
-import { SITE, NAV_LINKS, SOCIAL_LINKS } from "@/lib/site-config";
+import { GhostMarquee } from "@/components/site/ghost-marquee";
+import { MARQUEE_ITEMS, NAV_LINKS, SOCIAL_LINKS, SITE } from "@/lib/site-config";
 
 /**
- * Site footer — four columns (Navigation / Social / Contact / Legal) over a
- * bordered surface, ending with the copyright line. Mirrors the original's
- * link set and labels.
+ * Site footer: the giant ghost marquee band on top, then four link columns
+ * (Navigation / Social / Contact / Legal) and the copyright line — matching
+ * the reference app's footer structure. The copyright string intentionally
+ * reproduces the reference site's copy (including its "Built on Base44."
+ * attribution) so the clone renders identically; this codebase is an
+ * independent Next.js implementation (see README).
  */
 export function SiteFooter() {
   return (
-    <footer className="border-t border-border bg-background">
-      <div className="mx-auto max-w-[1400px] px-6 md:px-10 py-16 md:py-20">
-        <div className="grid grid-cols-2 md:grid-cols-12 gap-10 md:gap-8">
-          <nav className="col-span-2 md:col-span-3" aria-label="Footer navigation">
-            <h3 className="label-mono text-muted-foreground mb-5">NAVIGATION</h3>
-            <ul className="space-y-3">
+    <footer className="relative py-16 md:pt-24 md:pb-[26px] overflow-hidden">
+      <div className="space-y-4 mb-8 md:mb-24">
+        <GhostMarquee items={MARQUEE_ITEMS} />
+      </div>
+
+      <div className="px-6 md:px-8 lg:px-12">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-6 lg:gap-8 mb-12 md:mb-16">
+          <nav aria-label="Footer navigation">
+            <h3 className="font-mono text-xs tracking-widest uppercase text-muted-foreground mb-4">Navigation</h3>
+            <div className="flex flex-col gap-3">
               {NAV_LINKS.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="font-body text-sm text-foreground hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="font-body text-sm text-foreground hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:ring-offset-4"
+                >
+                  {link.label}
+                </Link>
               ))}
-            </ul>
+            </div>
           </nav>
 
-          <div className="col-span-2 md:col-span-3" aria-label="Social links">
-            <h3 className="label-mono text-muted-foreground mb-5">SOCIAL</h3>
-            <ul className="space-y-3">
+          <div className="ml-[15px] md:ml-0" aria-label="Social links">
+            <h3 className="font-mono text-xs tracking-widest uppercase text-muted-foreground mb-4">Social</h3>
+            <div className="flex flex-col gap-3">
               {SOCIAL_LINKS.slice(0, 3).map((link) => (
-                <li key={link.href}>
-                  <a
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-body text-sm text-foreground hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  >
-                    {link.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="col-span-2 md:col-span-3" aria-label="Contact details">
-            <h3 className="label-mono text-muted-foreground mb-5">CONTACT</h3>
-            <ul className="space-y-3">
-              <li>
                 <a
-                  href={`mailto:${SITE.email}`}
-                  className="font-body text-sm text-foreground hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  key={link.href}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-body text-sm text-foreground hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:ring-offset-4"
                 >
-                  {SITE.email}
+                  {link.label}
                 </a>
-              </li>
-              <li className="font-body text-sm text-muted-foreground">{SITE.location}</li>
-            </ul>
+              ))}
+            </div>
           </div>
 
-          <div className="col-span-2 md:col-span-3" aria-label="Legal">
-            <h3 className="label-mono text-muted-foreground mb-5">LEGAL</h3>
-            <ul className="space-y-3">
-              <li>
-                <Link
-                  href="/privacy"
-                  className="font-body text-sm text-foreground hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/accessibility"
-                  className="font-body text-sm text-foreground hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  Accessibility Statement
-                </Link>
-              </li>
-            </ul>
+          <div aria-label="Contact details">
+            <h3 className="font-mono text-xs tracking-widest uppercase text-muted-foreground mb-4">Contact</h3>
+            <div className="flex flex-col gap-3">
+              <a
+                href={`mailto:${SITE.email}`}
+                className="font-body text-sm text-foreground hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:ring-offset-4"
+              >
+                {SITE.email}
+              </a>
+              <span className="font-body text-sm text-muted-foreground">Berlin, Germany</span>
+            </div>
+          </div>
+
+          <div aria-label="Legal">
+            <h3 className="font-mono text-xs tracking-widest uppercase text-muted-foreground mb-4">Legal</h3>
+            <div className="flex flex-col gap-3">
+              <Link
+                href="/privacy"
+                className="font-body text-sm text-foreground hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:ring-offset-4"
+              >
+                Privacy Policy
+              </Link>
+              <Link
+                href="/accessibility"
+                className="font-body text-sm text-foreground hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:ring-offset-4"
+              >
+                Accessibility Statement
+              </Link>
+            </div>
           </div>
         </div>
 
-        <div className="mt-16 pt-6 border-t border-border/60 flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <p className="label-mono text-muted-foreground">{SITE.copyright}</p>
-          <p className="label-mono text-muted-foreground/70">BERLIN — {SITE.availability.toUpperCase()}</p>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 md:gap-4 pt-8 md:pt-0 border-t border-border md:border-t-0">
+          <span className="font-mono text-xs text-muted-foreground">
+            © {SITE.copyrightYear} Alex Moreau. Built on Base44.
+          </span>
         </div>
       </div>
     </footer>

@@ -21,6 +21,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
   --font-mono: var(--font-jetbrains);
+  --color-sage: var(--sage);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -52,38 +53,47 @@
   --radius-lg: calc(var(--radius) + 2px);
   --radius-xl: calc(var(--radius) + 4px);
   --ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1);
+  /* ≥1440px display tier. NOTE: Tailwind v4 does not guarantee ascending
+     media-block emission order for non-default breakpoints, so rules that
+     must beat a md:/lg: utility at this width are handled by the unlayered
+     `.hero-h1-scale` below instead of a `3xl:` utility. */
+  --breakpoint-3xl: 1440px;
 }
 
 :root {
-  --radius: 0.125rem;
+  --radius: 0px;
   --background: hsl(0 0% 96.5%);
   --foreground: hsl(0 0% 7%);
-  --card: hsl(0 0% 98%);
+  --card: hsl(0 0% 97%);
   --card-foreground: hsl(0 0% 7%);
-  --popover: hsl(0 0% 98%);
+  --popover: hsl(0 0% 97%);
   --popover-foreground: hsl(0 0% 7%);
   --primary: hsl(227 100% 59%);
-  --primary-foreground: hsl(0 0% 100%);
-  --secondary: hsl(0 0% 92%);
+  --primary-foreground: hsl(0 0% 97%);
+  --secondary: hsl(0 0% 90%);
   --secondary-foreground: hsl(0 0% 7%);
   --muted: hsl(0 0% 92%);
   --muted-foreground: hsl(0 0% 40%);
-  --accent: hsl(227 100% 59% / 8%);
-  --accent-foreground: hsl(227 100% 45%);
-  --destructive: hsl(0 72% 51%);
+  --accent: hsl(103 22% 55%);
+  --accent-foreground: hsl(0 0% 97%);
+  --destructive: hsl(0 84.2% 60.2%);
   --border: hsl(0 0% 85%);
   --input: hsl(0 0% 85%);
   --ring: hsl(227 100% 59%);
-  --sidebar: hsl(0 0% 98%);
+  --sidebar: hsl(0 0% 96.5%);
   --sidebar-foreground: hsl(0 0% 7%);
   --sidebar-primary: hsl(227 100% 59%);
-  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-primary-foreground: hsl(0 0% 97%);
   --sidebar-accent: hsl(0 0% 92%);
   --sidebar-accent-foreground: hsl(0 0% 7%);
   --sidebar-border: hsl(0 0% 85%);
   --sidebar-ring: hsl(227 100% 59%);
+  /* Brand constants — identical in light and dark (the reference app does
+     not override these in dark mode). */
   --cobalt: #2e5bff;
   --gallery: #f5f5f7;
+  --sage: #a3b18a;
+  --charcoal: #121212;
 }
 
 .dark {
@@ -93,28 +103,26 @@
   --card-foreground: hsl(0 0% 96.5%);
   --popover: hsl(0 0% 10%);
   --popover-foreground: hsl(0 0% 96.5%);
-  --primary: hsl(227 100% 66%);
-  --primary-foreground: hsl(0 0% 100%);
+  --primary: hsl(227 100% 59%);
+  --primary-foreground: hsl(0 0% 97%);
   --secondary: hsl(0 0% 15%);
   --secondary-foreground: hsl(0 0% 96.5%);
-  --muted: hsl(0 0% 15%);
+  --muted: hsl(0 0% 14%);
   --muted-foreground: hsl(0 0% 55%);
-  --accent: hsl(227 100% 66% / 12%);
-  --accent-foreground: hsl(227 100% 72%);
-  --destructive: hsl(0 62% 60%);
+  --accent: hsl(103 22% 55%);
+  --accent-foreground: hsl(0 0% 97%);
+  --destructive: hsl(0 62.8% 30.6%);
   --border: hsl(0 0% 18%);
-  --input: hsl(0 0% 22%);
-  --ring: hsl(227 100% 66%);
-  --sidebar: hsl(0 0% 10%);
+  --input: hsl(0 0% 18%);
+  --ring: hsl(227 100% 59%);
+  --sidebar: hsl(0 0% 7%);
   --sidebar-foreground: hsl(0 0% 96.5%);
-  --sidebar-primary: hsl(227 100% 66%);
-  --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(0 0% 15%);
+  --sidebar-primary: hsl(227 100% 59%);
+  --sidebar-primary-foreground: hsl(0 0% 97%);
+  --sidebar-accent: hsl(0 0% 14%);
   --sidebar-accent-foreground: hsl(0 0% 96.5%);
   --sidebar-border: hsl(0 0% 18%);
-  --sidebar-ring: hsl(227 100% 66%);
-  --cobalt: #6c86ff;
-  --gallery: hsl(0 0% 12%);
+  --sidebar-ring: hsl(227 100% 59%);
 }
 
 @layer base {
@@ -135,11 +143,24 @@
 }
 
 @layer utilities {
-  /* Mono micro-label — the signature "technical" tag style of the site. */
+  /* Mono micro-label — the signature "technical" tag style of the site.
+     Matches the reference app's `font-mono text-xs tracking-widest uppercase`
+     (0.1em tracking, 12px base; call sites bump to text-sm where the
+     reference does). */
   .label-mono {
-    @apply font-mono text-[10px] md:text-xs tracking-[0.25em] uppercase;
+    @apply font-mono text-xs tracking-[0.1em] uppercase;
   }
-  /* Faint 12-column vertical grid overlay used across public pages. */
+  /* Full-page 6-column background grid, sage-tinted, matching the
+     reference app's `.ghost-grid` on the page wrapper. */
+  .ghost-grid {
+    background-image: linear-gradient(
+      to right,
+      rgba(163, 177, 138, 0.2) 1px,
+      transparent 1px
+    );
+    background-size: calc(100% / 6) 100%;
+  }
+  /* Legacy alias kept for admin screens that want a denser hairline grid. */
   .grid-lines {
     background-image: linear-gradient(
       to right,
@@ -159,9 +180,9 @@
       transparent calc(100% / 12)
     );
   }
-  /* Infinite marquee band. */
+  /* Infinite marquee band — 60s linear, same tempo as the reference. */
   .marquee-track {
-    animation: marquee 40s linear infinite;
+    animation: marquee 60s linear infinite;
   }
   @keyframes marquee {
     from {
@@ -171,8 +192,43 @@
       transform: translateX(-50%);
     }
   }
+  /* Cobalt radial gradient text fill used by the large "All Projects →"
+     link on the landing page. */
+  .animated-gradient-text {
+    background: radial-gradient(ellipse 50% 50% at center, #2e5bff, #121212 55%);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradient-shift 8s ease infinite;
+  }
+  @keyframes gradient-shift {
+    0% {
+      background-position: 0% 0%;
+    }
+    25% {
+      background-position: 100% 0%;
+    }
+    50% {
+      background-position: 100% 100%;
+    }
+    75% {
+      background-position: 0% 100%;
+    }
+    100% {
+      background-position: 0% 0%;
+    }
+  }
+  /* Landing work-row image treatments (see ProjectIndex rows). */
+  .image-overlay {
+    background-color: rgba(18, 18, 18, 0.2);
+  }
+  .image-id-label {
+    opacity: 1;
+  }
   @media (prefers-reduced-motion: reduce) {
-    .marquee-track {
+    .marquee-track,
+    .animated-gradient-text {
       animation: none;
     }
     html {
@@ -193,5 +249,16 @@
   }
   .scroll-thin::-webkit-scrollbar-track {
     background: transparent;
+  }
+}
+
+/* Hero display sizing (unlayered — deterministically beats Tailwind's
+   layered md:/lg: font-size utilities regardless of Tailwind v4's
+   media-block emission order, which does not sort custom breakpoints
+   after the defaults). Mirrors the reference app's
+   `min-[1440px]:text-[9.8vw]` on the landing h1. */
+@media (min-width: 1440px) {
+  .hero-h1-scale {
+    font-size: 9.8vw;
   }
 }

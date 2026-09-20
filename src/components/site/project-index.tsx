@@ -1,104 +1,123 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import type { ProjectView } from "@/lib/data";
+
+export interface IndexProject {
+  id: string;
+  slug: string;
+  order: number;
+  title: string;
+  category: string;
+  year: string;
+  image: string;
+}
 
 /**
- * The numbered project index with cursor-following image previews — the
- * signature interaction of the Selected Works list. On desktop, hovering a
- * row floats a preview card near the cursor; on touch devices the rows are
- * plain links.
+ * The project archive rows. On desktop, hovering a row sweeps a foreground
+ * fill across it from the left (scaleX 0→1) while the text inverts to the
+ * page background color; a preview image follows the cursor. On mobile each
+ * row leads with its cover image. Mirrors the reference app's archive list.
+ *
+ * Note: the preview card is `fixed`, so it positions with viewport
+ * coordinates (clientX/clientY) — not container-relative ones.
  */
-export function ProjectIndex({ projects }: { projects: ProjectView[] }) {
+export function ProjectIndex({ projects }: { projects: IndexProject[] }) {
   const [hovered, setHovered] = useState<number | null>(null);
   const [pos, setPos] = useState({ x: 0, y: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  function onMouseMove(e: React.MouseEvent) {
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    setPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-  }
-
-  const total = projects.length;
 
   return (
-    <div ref={containerRef} onMouseMove={onMouseMove} onMouseLeave={() => setHovered(null)} className="relative">
-      <ul className="divide-y divide-border border-y border-border" aria-label="Project list">
-        {projects.map((p, i) => (
-          <li key={p.id}>
-            <Link
-              href={`/project/${p.slug}`}
-              onMouseEnter={() => setHovered(i)}
-              onFocus={() => setHovered(i)}
-              className="group grid grid-cols-12 gap-4 md:gap-8 items-start md:items-center py-6 md:py-10 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring -mx-2 px-2"
-            >
-              {/* Row number */}
-              <span className="col-span-3 md:col-span-1 label-mono text-muted-foreground transition-colors group-hover:text-cobalt">
-                {String(p.order).padStart(2, "0")}
-              </span>
+    <div
+      className="min-h-screen"
+      onMouseMove={(e) => setPos({ x: e.clientX, y: e.clientY })}
+    >
+      <div className="border-t border-border">
+        {projects.map((project, i) => (
+          <Link
+            key={project.id}
+            href={`/project/${project.slug}`}
+            className="group block border-b border-border relative overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cobalt"
+            onMouseEnter={() => setHovered(i)}
+            onMouseLeave={() => setHovered(null)}
+            onFocus={() => setHovered(i)}
+            onBlur={() => setHovered(null)}
+          >
+            {/* Desktop hover fill */}
+            <motion.div
+              className="hidden md:block absolute inset-0 bg-foreground"
+              initial={false}
+              animate={{ scaleX: hovered === i ? 1 : 0 }}
+              transition={{ duration: 0.5, ease: [0.65, 0, 0.35, 1] }}
+              style={{ originX: 0 }}
+              aria-hidden
+            />
 
-              {/* Title + subtitle */}
-              <span className="col-span-9 md:col-span-5 flex flex-col gap-1">
-                <span className="font-body text-xl md:text-2xl font-light tracking-tight text-foreground transition-colors group-hover:text-cobalt">
-                  {p.title}
+            {/* Mobile cover image */}
+            <div className="md:hidden relative z-10">
+              {/* Raw <img>: row cover imagery with intrinsic sizing. */}
+              <img src={project.image} alt={project.title} className="w-full h-48 object-cover" loading="lazy" />
+            </div>
+
+            <div className="relative z-10 px-6 md:px-8 py-7 md:py-8 grid grid-cols-12 items-center gap-4">
+              <div className="col-span-2 md:col-span-1">
+                <span className="font-mono text-xs tracking-widest text-muted-foreground md:group-hover:text-background transition-colors duration-300">
+                  {String(project.order).padStart(2, "0")}
                 </span>
-                <span className="font-body text-sm text-muted-foreground md:hidden">{p.subtitle}</span>
-              </span>
-
-              {/* Category (desktop) */}
-              <span className="hidden md:block md:col-span-3 label-mono text-muted-foreground transition-colors group-hover:text-cobalt">
-                {p.category}
-              </span>
-
-              {/* Year (desktop) */}
-              <span className="hidden md:block md:col-span-2 label-mono text-muted-foreground transition-colors group-hover:text-cobalt">
-                {p.year}
-              </span>
-
-              {/* Arrow */}
-              <span className="hidden md:flex md:col-span-1 justify-end">
-                <span className="font-mono text-sm text-muted-foreground transition-all duration-300 group-hover:text-cobalt group-hover:translate-x-1">
+              </div>
+              <div className="col-span-7 md:col-span-5">
+                <span className="font-body text-xl md:text-2xl font-light tracking-tight text-foreground md:group-hover:text-background transition-colors duration-300">
+                  {project.title}
+                </span>
+              </div>
+              <div className="hidden md:block col-span-3">
+                <span className="font-mono text-xs tracking-widest uppercase text-muted-foreground md:group-hover:text-background/60 transition-colors duration-300">
+                  {project.category}
+                </span>
+              </div>
+              <div className="hidden md:block col-span-2">
+                <span className="font-mono text-xs tracking-widest text-muted-foreground md:group-hover:text-background transition-colors duration-300">
+                  {project.year}
+                </span>
+              </div>
+              <div className="col-span-3 md:col-span-1 flex justify-end">
+                <motion.span
+                  className="font-mono text-sm text-muted-foreground md:group-hover:text-background transition-colors duration-300"
+                  animate={{ x: hovered === i ? 4 : 0 }}
+                  transition={{ duration: 0.3 }}
+                  aria-hidden
+                >
                   →
-                </span>
-              </span>
-            </Link>
-          </li>
+                </motion.span>
+              </div>
+            </div>
+          </Link>
         ))}
-      </ul>
+      </div>
 
       {/* Cursor-following preview card (desktop only) */}
       <AnimatePresence>
         {hovered !== null && typeof window !== "undefined" && window.innerWidth >= 768 && (
           <motion.div
             key="preview"
-            initial={{ opacity: 0, scale: 0.92 }}
+            initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.96 }}
-            transition={{ duration: 0.22 }}
-            className="pointer-events-none fixed z-30 hidden md:block w-56 h-72 overflow-hidden border border-border bg-card shadow-xl"
-            style={{ left: pos.x + 28, top: pos.y - 140 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.25 }}
+            className="fixed pointer-events-none z-50 w-56 h-72 overflow-hidden shadow-2xl"
+            style={{ left: pos.x + 24, top: pos.y - 100 }}
             aria-hidden
           >
             {projects[hovered] && (
-              <img
-                src={projects[hovered].coverImage}
-                alt=""
-                className="w-full h-full object-cover"
-                loading="eager"
-                decoding="async"
-              />
+              // Raw <img>: decorative cursor preview.
+              <img src={projects[hovered].image} alt="" className="w-full h-full object-cover" loading="eager" />
             )}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {total === 0 && (
-        <p className="py-16 text-center font-body text-muted-foreground">
-          No projects here yet — check back soon.
-        </p>
+      {projects.length === 0 && (
+        <p className="py-16 text-center font-body text-muted-foreground">No projects here yet — check back soon.</p>
       )}
     </div>
   );

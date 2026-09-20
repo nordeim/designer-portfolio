@@ -22,6 +22,7 @@ export function LoginForm() {
   const [pending, startTransition] = useTransition();
   const [serverError, setServerError] = useState<string | null>(null);
   const [googleHint, setGoogleHint] = useState(false);
+  const [authHint, setAuthHint] = useState<"forgot" | "signup" | null>(null);
 
   const {
     register,
@@ -92,6 +93,13 @@ export function LoginForm() {
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
+            <button
+              type="button"
+              className="font-body text-xs text-muted-foreground hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              onClick={() => setAuthHint("forgot")}
+            >
+              Forgot password?
+            </button>
           </div>
           <Input
             id="password"
@@ -109,12 +117,33 @@ export function LoginForm() {
           </p>
         )}
 
-        <Button type="submit" disabled={pending} className="label-mono tracking-[0.25em] py-6">
+        <Button type="submit" disabled={pending} className="label-mono py-6">
           {pending ? "SIGNING IN…" : "SIGN IN"}
         </Button>
 
+        {authHint === "forgot" && (
+          <p className="font-body text-xs text-muted-foreground" role="note">
+            Password reset is not configured on this deployment (no SMTP). Email{" "}
+            <a href="mailto:hello@alexmoreau.design" className="text-cobalt hover:underline">
+              hello@alexmoreau.design
+            </a>{" "}
+            from your owner address to request a reset.
+          </p>
+        )}
+        {authHint === "signup" && (
+          <p className="font-body text-xs text-muted-foreground" role="note">
+            This portfolio accepts a single owner account (seeded on first boot) — sign-up is disabled by design.
+          </p>
+        )}
+
         <p className="font-body text-xs text-muted-foreground text-center">
-          Owner access only. Contact the site administrator if you need credentials.
+          <button
+            type="button"
+            className="hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            onClick={() => setAuthHint("signup")}
+          >
+            Need an account? Sign up
+          </button>
         </p>
       </form>
     </div>

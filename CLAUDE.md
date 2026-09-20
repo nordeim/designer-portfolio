@@ -8,7 +8,7 @@ IMPORTANT: This file is read fresh at the start of every conversation. Be brief 
 
 A self-contained, production-grade designer portfolio: a precision-minimalist public gallery (selected works, project case studies, about, contact) plus an owner-only dashboard for managing projects and incoming inquiries. It is a faithful, independent re-implementation of the reference application's content and design language, rebuilt on a conventional, auditable Next.js stack.
 
-**Tech Stack:** Next.js 16 (App Router, RSC) · React 19 · TypeScript 5.9 (strict) · Tailwind CSS 4 · shadcn/ui (Radix) · Prisma 6 + SQLite (PostgreSQL-portable) · Zod 4 · Framer Motion · Vitest.
+**Tech Stack:** Next.js 16 (App Router, RSC) · React 19 · TypeScript 5.9 (strict) · Tailwind CSS 4 · shadcn/ui (Radix) · Prisma 6 + SQLite (PostgreSQL-portable) · Zod 4 · Framer Motion · Vitest · Playwright.
 
 **Maintainers:** portfolio owner (single OWNER account) — see `AGENTS.md` for agent-facing commands.
 
@@ -20,7 +20,7 @@ A self-contained, production-grade designer portfolio: a precision-minimalist pu
 2. **PLAN** — state the smallest correct change that satisfies the request.
 3. **VALIDATE** — confirm the plan against boundaries that carry data or auth (forms, actions, schema).
 4. **IMPLEMENT** — typed, test-backed increments; one logical change per commit.
-5. **VERIFY** — run the gate (`bun run lint && bun run typecheck && bun run test`), then exercise the feature in the browser.
+5. **VERIFY** — run the gate (`bun run lint && bun run typecheck && bun run test && bunx playwright test`), then exercise the feature in the browser.
 6. **DELIVER** — summarize what was executed vs. reasoned; flag anything unverified explicitly.
 
 ### Project-Specific Principles
@@ -73,23 +73,29 @@ bun run dev                       # http://localhost:3000
 | `bun run lint` | ESLint (flat config) |
 | `bun run typecheck` | TypeScript strict check |
 | `bun run test` | Vitest unit suites |
+| `bunx playwright test` | E2E suites (Chromium; reuses a running server on :3000) |
 | `bun run db:push` / `db:generate` / `db:seed` | Schema push / client codegen / idempotent seed |
 
 ## Testing Strategy
 
 ### Test Pyramid
 
-- **Unit (Vitest, `tests/`)**: Zod schemas (inquiry, login, project input), scrypt password hashing, JSON-column parsing degradation. No mocks — real schema parsing and real crypto.
+- **Unit (Vitest, `tests/`)**: Zod schemas (inquiry, login, project input), scrypt password hashing, JSON-column parsing degradation, typewriter state machine, constellation layout derivation, radial-menu angle math. No mocks — real schema parsing and real crypto.
 - **Integration**: the dev server + browser is the integration surface (see Verification below).
-- **E2E**: manual/agent-browser flows — submit inquiry → appears in dashboard; login → dashboard; theme toggle.
+- **E2E (Playwright, `e2e/`)**: 30 specs across six files — public pages content, project detail (hero/gallery/zoom/prev-next/video/404), auth (login, gating, radial menu), inquiry submission → dashboard inbox, dashboard CRUD + inquiry triage + sign-out, and a11y smoke (focus visibility, console errors, mobile overflow, marquee animation, constellation).
 
 ### Test Commands
 
 ```bash
-bun run test                      # all suites
+bun run test                      # all unit suites
 bunx vitest run tests/validation.test.ts
 bunx vitest run -t "slug"
+E2E_ADMIN_PASSWORD=… bunx playwright test    # full e2e (server must be running on :3000)
+bunx playwright test e2e/auth.spec.ts        # one file
+E2E_START=1 E2E_COMMAND="bun run start" bunx playwright test   # vs production build
 ```
+
+Auth/dashboard/inquiry specs skip themselves when `E2E_ADMIN_PASSWORD` is unset. On hosts with < ~6 GB RAM, prefer the production-server variant above — the Turbopack dev server + Chromium together can exceed the memory budget (kernel OOM-kills the server mid-run).
 
 ## Code Quality Standards
 
@@ -122,9 +128,10 @@ Never bundle unrelated changes. Never commit `.env`, `db/*.db`, or `dev.log` (al
 
 - Server actions return `ActionResult` failures with `fieldErrors` — forms render them inline and mirror them as toasts.
 - `parseGallery`/`parseStringList` degrade corrupt JSON columns to empty arrays — pages never crash on bad data rows.
-- `/api/health` reports app + DB status (`200 ok` / `503 degraded`); check it first when something feels wrong.
+- `/api/health` reports app + DB status (`200 ok` / `503 degraded`); check it first when something feels wrong. A hung route compile can coexist with a healthy `/api/health` — if one route hangs, restart and clear `.next/`.
 - Dev server log: `dev.log` (tee'd). Turbopack `Failed to restore task data` → delete `.next/` and restart.
 - Prisma client errors like `undefined (reading 'findMany')` → schema changed without a dev-server restart.
+- Tailwind v4 media-order gotcha: a non-default breakpoint utility (e.g. `min-[1440px]:`/`3xl:`) is NOT guaranteed to be emitted after the default `md:`/`lg:` blocks, so it can silently lose the cascade. Rules that must win at higher widths use unlayered CSS (see `.hero-h1-scale` at the bottom of `globals.css`).
 
 ## Communication & Documentation
 
@@ -162,6 +169,8 @@ Never bundle unrelated changes. Never commit `.env`, `db/*.db`, or `dev.log` (al
 | `SEED_ADMIN_PASSWORD` | First-boot owner password (min 8) | *(generated, never committed)* |
 | `NEXT_PUBLIC_SITE_URL` | Canonical origin for metadata/sitemap | `https://example.com` |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Optional OAuth (renders honest unconfigured notice when unset) | *(optional)* |
+| `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD` | Playwright login credentials (specs skip when password unset) | *(optional)* |
+| `E2E_START` / `E2E_COMMAND` / `E2E_PORT` / `E2E_BASE_URL` | Playwright server-management knobs | *(optional)* |
 
 ## Anti-Patterns to Avoid
 

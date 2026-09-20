@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { getPublishedProjects } from "@/lib/data";
 import { ProjectIndex } from "@/components/site/project-index";
-import { MarqueeBand } from "@/components/site/marquee-band";
 
 export const metadata: Metadata = {
   title: "Projects",
@@ -9,21 +8,29 @@ export const metadata: Metadata = {
     "Selected works — brand identity, print & merchandise, packaging, and web projects by Alex Moreau.",
 };
 
+/**
+ * The project archive: label + display heading over the interactive index
+ * rows. Structure matches the reference app's /projects route.
+ */
 export default async function ProjectsPage() {
   const projects = await getPublishedProjects();
+  const rows = projects.map((p) => ({
+    id: p.id,
+    slug: p.slug,
+    order: p.order,
+    title: p.title,
+    category: p.category,
+    year: p.year,
+    image: p.coverImage,
+  }));
 
   return (
-    <>
-      <section className="mx-auto max-w-[1400px] px-6 md:px-10 pt-28 md:pt-40 pb-8 md:pb-12" aria-label="Selected Works">
-        <h1 className="label-mono text-muted-foreground mb-6">SELECTED WORKS</h1>
-        <h2 className="font-body text-3xl md:text-5xl font-light tracking-tight text-foreground mb-10 md:mb-16">
-          Projects
-        </h2>
-        <ProjectIndex projects={projects} />
+    <div>
+      <section className="px-6 md:px-8 pt-32 pb-12" aria-label="Selected Works">
+        <span className="font-mono text-xs tracking-widest uppercase text-muted-foreground">Selected Works</span>
+        <h1 className="font-body text-4xl md:text-6xl font-light tracking-tight text-foreground mt-3">Projects</h1>
       </section>
-      <div className="mt-16 md:mt-24">
-        <MarqueeBand />
-      </div>
-    </>
+      <ProjectIndex projects={rows} />
+    </div>
   );
 }

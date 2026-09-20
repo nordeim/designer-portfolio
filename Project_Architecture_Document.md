@@ -1,9 +1,9 @@
-# Designer Portfolio — Master Project Architecture Document (PAD) v1.0
+# Designer Portfolio — Master Project Architecture Document (PAD) v1.1
 
 **Classification:** Internal Engineering Reference
 **Status:** DEFINITIVE, PRODUCTION-LOCKED BLUEPRINT
 **Companion Document:** [README.md](./README.md) (setup & operations), [CLAUDE.md](./CLAUDE.md) (workflow contract)
-**Last Updated:** 2026-09-19
+**Last Updated:** 2026-09-20
 **Audience:** Senior Engineers, Tech Leads, DevOps, and Onboarding Engineers
 **Rule:** Every architectural decision in this document traces to a specific rationale.
 
@@ -11,6 +11,7 @@
 
 | Version | Date | Author | Type | Summary |
 |---|---|---|---|---|
+| 1.1 | 2026-09-20 | Engineering | [CA] | Parity remediation: cinematic hero (constellation + typewriter), radial menu, ghost marquee footer, full-bleed case studies, token corrections (radius 0, cobalt/sage, 60s marquee, label-mono 0.1em), Playwright E2E suite (30 tests) + new pure-logic Vitest suites (42 total) |
 | 1.0 | 2026-09-19 | Engineering | [SYN] | Initial architecture locked after full-stack build + verification |
 
 Legend: [RES] Requirements · [SR] Security · [CA] Corrective Action · [SYN] Synthesis · [SAN] Sanity Check · [AUTH] Authorization
@@ -51,7 +52,7 @@ This PAD is the canonical architecture record for the Designer Portfolio applica
 | Database | SQLite (default), PostgreSQL-ready | — | Zero-config local/self-hosted operation; provider-portable schema |
 | Validation | Zod | 4.3.5 | Single schema definition shared by client forms and server actions |
 | Auth | Custom scrypt + DB sessions | — | No third-party auth dependency; portable, auditable, ~120 lines of owned code |
-| Testing | Vitest | 3.2.7 | Fast, ESM-native, runs pure TS domain suites with zero config |
+| Testing | Vitest · Playwright | 3.2.7 · 1.63 | Fast ESM-native unit suites + real-browser E2E against the running app |
 | Fonts | next/font (Inter, JetBrains Mono) | — | Self-hosted; no render-blocking external font requests |
 
 ### 1.3 Architecture Decision Records
@@ -85,11 +86,18 @@ This PAD is the canonical architecture record for the Designer Portfolio applica
 - **Alternatives Rejected:** REST route handlers per resource (boilerplate + client fetch state management).
 
 **ADR-005 — Design system: Tailwind v4 `@theme` tokens extracted from the reference app**
-- **Context:** The visual language (paper/ink/cobalt, Inter + JetBrains Mono mono-labels, 12-col grid lines, marquee) must be consistent and themable (light/dark).
+- **Context:** The visual language (paper/ink/cobalt, Inter + JetBrains Mono mono-labels, sage ghost grid, marquee) must be consistent and themable (light/dark).
 - **Decision:** Tokens live once in `src/app/globals.css` as CSS custom properties mapped through `@theme inline`; components consume semantic classes only.
 - **Rationale:** Single source of truth for color/radius/motion; dark mode is a variable swap, not a component rewrite; audit-friendly.
-- **Consequences:** Hardcoding hex in components is a review-blocking violation.
+- **Consequences:** Hardcoding hex in components is a review-blocking violation. One documented exception: rules that must beat a `md:`/`lg:` utility at ≥1440px use unlayered CSS (`.hero-h1-scale`) because Tailwind v4 does not guarantee ascending media-block emission order for non-default breakpoints.
 - **Alternatives Rejected:** CSS-in-JS (runtime cost); a separate tokens package (monorepo overhead for a single app).
+
+**ADR-006 — Parity source of truth: the reference app's DOM + app bundle, not screenshots**
+- **Context:** The public site must visually match the reference application; screenshots alone hide typography, timing, and structural detail.
+- **Decision:** Every parity-sensitive class string, timer, and structure comes from the reference app's live computed styles and compiled component source; landing numbering (`01/06`) mirrors the reference's hardcoded denominator via `WORKS_TOTAL_DISPLAY`.
+- **Rationale:** Computed styles are ground truth for what users see; bundle source is ground truth for why it renders that way. Sub-pixel differences (141px vs 141.12px at the exact 1440px boundary) were closed against the live app, not approximated.
+- **Consequences:** When the reference changes, re-run the extraction (`scripts/extract-styles.js` pattern) and diff (see `docs/remediation-plan.md` for the method and the residual-artifact list).
+- **Alternatives Rejected:** Screenshot-driven cloning (VLM-only) — misses cascade, animation timing, and a11y structure.
 
 ---
 
@@ -142,11 +150,11 @@ Runtime notes: single Node process serves SSR + actions; static assets are immut
 ```
 src/
 ├── app/
-│   ├── (site)/                  ← public route group (shared header/footer layout)
+│   ├── (site)/                  ← public route group (shared header/footer + ghost-grid wrapper)
 │   │   ├── layout.tsx           ← fetches project list for the menu; renders chrome
-│   │   ├── page.tsx             ← landing: hero, Selected Works, philosophy
-│   │   ├── projects/page.tsx    ← archive with ProjectIndex client island
-│   │   ├── project/[slug]/      ← case study (generateStaticParams + metadata)
+│   │   ├── page.tsx             ← landing: HeroConstellation, WorksSection, PhilosophySection, footer ghost marquee
+│   │   ├── projects/page.tsx    ← archive with ProjectIndex client island (invert-fill rows)
+│   │   ├── project/[slug]/      ← case study: ProjectHero + ProjectDetailBody (SSG + metadata)
 │   │   ├── about|contact|privacy|accessibility/
 │   ├── (auth)/login/page.tsx    ← sign-in (redirects authenticated users)
 │   ├── dashboard/
@@ -155,16 +163,20 @@ src/
 │   │   ├── projects/page.tsx    ← CRUD manager
 │   │   └── inquiries/page.tsx   ← triage inbox
 │   ├── api/health/route.ts      ← liveness/readiness probe
-│   ├── globals.css              ← design tokens + utilities (marquee, grid-lines)
+│   ├── globals.css              ← design tokens + utilities (ghost-grid, marquee, animated-gradient-text, hero-h1-scale)
 │   ├── layout.tsx               ← fonts, theme provider, metadata, toaster
 │   ├── not-found.tsx, sitemap.ts, robots.ts, icon.svg
 ├── actions/                     ← auth.ts, contact.ts, dashboard.ts ("use server")
 ├── components/
-│   ├── site/                    ← header/menu, footer, marquee, particles, index, gallery, inquiry form
+│   ├── site/                    ← site-header + radial-menu, hero-constellation, works-section,
+│   │                              philosophy-section, ghost-marquee, site-footer, project-index,
+│   │                              project-hero, project-detail-body, inquiry-form, fade-in
 │   ├── dashboard/               ← shell/sidebar, projects manager, inquiries manager, status meta
 │   ├── auth/                    ← login form
 │   └── ui/                      ← shadcn/Radix primitives
-└── lib/                         ← data.ts, validation.ts, site-config.ts, db.ts, auth/
+└── lib/                         ← data.ts, validation.ts, typewriter.ts, constellation.ts,
+                                   site-config.ts, db.ts, auth/
+e2e/                            ← Playwright specs (6 files, 30 tests)
 ```
 
 ### 3.3 Critical Code Patterns
@@ -211,14 +223,18 @@ await db.session.create({ data: { tokenHash: sha256(token), userId, expiresAt } 
 
 *Why this pattern:* a stolen database cannot be replayed as sessions (only hashes stored); a forged cookie fails the signature check before any DB hit.
 
-**Pattern 4 — Deterministic SSR-safe randomness (no hydration mismatch):**
+**Pattern 4 — Pure interaction state machines for testable motion (typewriter, constellation, menu wheel):**
 
 ```typescript
-// src/components/site/particle-field.tsx — seeded PRNG (mulberry32)
-const rand = mulberry32(0x2e5b);
+// src/lib/typewriter.ts — pure state machine; the component only schedules timers
+export type TypewriterState = { phase: "waiting" | "typing" | "pausing" | "finished"; … };
+export function typewriterTick(state: TypewriterState): TypewriterState { … }
+
+// src/lib/constellation.ts — deterministic layout derivation from project data
+export function buildConstellation(sources: ConstellationSource[], …): ConstellationItem[] { … }
 ```
 
-*Why this pattern:* `Math.random()` in render produces server/client markup divergence; a seeded PRNG renders identical particles on both sides.
+*Why this pattern:* animation logic (what to type next, where images sit, how the wheel rotates) is pure data-in/data-out — unit-tested in `tests/` without a browser or jsdom. Components only own effects (timers, listeners) and rendering. SSR ships the full markup so crawlers see the content; runtime timers enhance on top (`prefers-reduced-motion` collapses all cycling to a static, complete state).
 
 ---
 
@@ -302,8 +318,9 @@ erDiagram
 
 | Role | Family | Weights | Notes |
 |---|---|---|---|
-| Display/body | Inter (`next/font`) | 300–700 | `font-light tracking-tight` headlines; `clamp()` fluid sizes |
-| Mono labels | JetBrains Mono (`next/font`) | 300–500 | `.label-mono`: 10–12px, 0.25em tracking, uppercase — the site's signature voice |
+| Display/body | Inter (`next/font`) | 300–700 | Hero h1: 106px → 141px (md) → 9.8vw (≥1440px, `.hero-h1-scale`), `lineHeight: 0.82` |
+| Mono labels | JetBrains Mono (`next/font`) | 300–500 | `.label-mono`: 12–14px, 0.1em tracking, uppercase — the site's signature voice |
+| Ghost marquee | JetBrains Mono | 300 | 36/60/96px (`text-4xl/6xl/8xl`), uppercase, 10% opacity, `-0.025em` tracking |
 
 ### 5.2 Color Tokens (with WCAG contrast on `--background`)
 
@@ -312,17 +329,19 @@ erDiagram
 | `--background` | `hsl(0 0% 96.5%)` #F6F6F6 | `hsl(0 0% 7%)` | Page surface | — |
 | `--foreground` | `hsl(0 0% 7%)` #121212 | `hsl(0 0% 96.5%)` | Text | 15.3:1 AAA |
 | `--muted-foreground` | `hsl(0 0% 40%)` | `hsl(0 0% 55%)` | Secondary text | 7.1:1 AA |
-| `--cobalt` | `#2E5BFF` | `#6C86FF` | Interactive accent | 4.6:1 AA |
+| `--cobalt` | `#2E5BFF` | `#2E5BFF` (unchanged) | Interactive accent, constellation dots, focus | 4.6:1 AA |
+| `--sage` | `#A3B18A` | `#A3B18A` | Ghost-grid lines (20% alpha), skills dots | — |
 | `--border` | `hsl(0 0% 85%)` | `hsl(0 0% 18%)` | Hairlines, editorial rules | — |
-| `--destructive` | `hsl(0 72% 51%)` | `hsl(0 62% 60%)` | Error text | 4.5:1 AA |
+| `--destructive` | `hsl(0 84.2% 60.2%)` | `hsl(0 72% 62%)` | Error text | 4.5:1 AA |
+| `--radius` | `0` | `0` | Sharp editorial corners | — |
 
 ### 5.3 Component Primitives
 
-Radix-backed shadcn primitives in `src/components/ui/` (accordion, dialog, select, switch, label, button, input, textarea, sonner toaster). Site composites: `SiteHeader` (fixed, menu overlay), `ProjectIndex` (numbered rows + cursor-following preview), `ProjectGallery` (zoomable hero + stagger grid + `<video>`), `MarqueeBand` (CSS keyframes), `InquiryForm` (RHF + Zod resolver).
+Radix-backed shadcn primitives in `src/components/ui/` (accordion, dialog, select, switch, label, button, input, textarea, sonner toaster). Site composites: `SiteHeader` (fixed overlay: breathing A/M logo, center theme toggle, "Start a Project →" bottom-right CTA, color-switch over dark heroes), `RadialMenu` (rotating wheel overlay on charcoal: 22°-arc items, counter-rotated labels, projects submenu, circular hover preview), `HeroConstellation` (floating project imagery + cobalt dot markers + typewriter meta), `WorksSection` (alternating sticky-parallax editorial rows, `01/06` numbering), `GhostMarquee` (giant footer band, hover-blur + pause), `ProjectIndex` (invert-fill archive rows + viewport-coords cursor preview), `ProjectHero`/`ProjectDetailBody` (full-bleed case study + sticky intro + 1↔2-column zoomable gallery), `InquiryForm` (RHF + Zod resolver, underline inputs).
 
 ### 5.4 Motion
 
-CSS `marquee` keyframes (40s linear, disabled under `prefers-reduced-motion`); Framer Motion `ease-out-expo` transitions for menu reveal (250ms), hover previews (220ms), gallery stagger (500ms, −80px viewport margin, once).
+CSS: `marquee` keyframes (60s linear, pause on hover, disabled under `prefers-reduced-motion`), `gradient-shift` (8s, on "All Projects →"), breathing logo letter-spacing (0.05em ↔ 0.7em, ~7s cycle). Framer Motion: `ease-out-expo` transitions for radial-menu reveal, works-row parallax (y 100→−100 with scroll, opacity fade band), gallery stagger (500ms, −80px viewport margin, once), typewriter cursor blink. Randomized constellation cycling (show 1.5–2.5s every 1.2–3s) collapses to a static state under `prefers-reduced-motion`.
 
 ---
 
@@ -372,27 +391,38 @@ Single role model today: `OWNER` (full mutation rights). `VIEWER` exists in the 
 |---|---|---|---|---|
 | Validation schemas | 1 | 17 | `tests/validation.test.ts` | Vitest |
 | Password hashing | 1 | 4 | `tests/password.test.ts` | Vitest |
-| **Total** | **2** | **21** | | |
+| Typewriter state machine | 1 | 8 | `tests/typewriter.test.ts` | Vitest |
+| Constellation layout | 1 | 7 | `tests/constellation.test.ts` | Vitest |
+| Radial-menu geometry | 1 | 6 | `tests/menu-wheel.test.ts` | Vitest |
+| Public pages content | 1 | 6 | `e2e/public-pages.spec.ts` | Playwright |
+| Project detail flows | 1 | 5 | `e2e/project-detail.spec.ts` | Playwright |
+| Auth + radial menu | 1 | 6 | `e2e/auth.spec.ts` | Playwright |
+| Inquiry → dashboard | 1 | 2 | `e2e/inquiry.spec.ts` | Playwright |
+| Dashboard CRUD/triage | 1 | 5 | `e2e/dashboard.spec.ts` | Playwright |
+| A11y / rendering smoke | 1 | 6 | `e2e/a11y-smoke.spec.ts` | Playwright |
+| **Total** | **11** | **72** | | |
 
 ### 7.2 Test Patterns
 
-Real behavior, no mocks: schemas parse actual payloads (valid, boundary, invalid, unknown-enum); hashing performs actual scrypt derivation and verifies round-trips, wrong passwords, and malformed stored hashes. Corrupt-JSON degradation is asserted explicitly.
+Real behavior, no mocks: schemas parse actual payloads (valid, boundary, invalid, unknown-enum); hashing performs actual scrypt derivation and verifies round-trips, wrong passwords, and malformed stored hashes. Corrupt-JSON degradation is asserted explicitly. Interaction logic (typewriter phases, constellation positions, menu rotation clamping/counter-rotation) is extracted into pure modules so the suites drive them as data-in/data-out functions. E2E specs drive the real Chromium browser against the real server + SQLite database: mutating specs (inquiry submit, project CRUD) use unique payloads and clean up after themselves; auth-dependent specs skip when `E2E_ADMIN_PASSWORD` is unset (opt-in, no secrets in CI).
 
 ### 7.3 Coverage Thresholds
 
-Pure domain modules (`src/lib/validation.ts`, `src/lib/auth/password.ts`) are exercised at 100% of their public surface by the current suites. There is no numeric coverage gate yet (see §10).
+Pure domain modules (`src/lib/validation.ts`, `src/lib/auth/password.ts`, `src/lib/typewriter.ts`, `src/lib/constellation.ts`, menu-wheel geometry) are exercised at 100% of their public surface by the current suites. There is no numeric coverage gate yet (see §10).
 
 ### 7.4 Pre-PR / Pre-Deploy Checklist
 
 ```bash
-bun run lint         # ESLint — exit 0
-bun run typecheck    # tsc --noEmit — exit 0
-bun run test         # Vitest — 21 passing
-bun run build        # production build — succeeds
+bun run lint          # ESLint — exit 0
+bun run typecheck     # tsc --noEmit — exit 0
+bun run test          # Vitest — 42 passing
+bun run build         # production build — succeeds
+# server running on :3000 (dev or `bun run start`) + E2E_ADMIN_PASSWORD exported:
+bunx playwright test  # Playwright — 30 passing
 curl -s localhost:3000/api/health   # {"status":"ok","db":true}
 ```
 
-Browser smoke (agent or manual): landing renders projects; inquiry submits and appears in `/dashboard/inquiries`; login → dashboard; theme toggle; mobile width has no horizontal overflow.
+Browser smoke is covered by the Playwright suite itself (public pages, console cleanliness, focus visibility, mobile overflow, theme toggle). Memory-constrained hosts (< ~6 GB) should run E2E against the production server (`E2E_START=1 E2E_COMMAND="bun run start"`) — the Turbopack dev server (~2.3 GB RSS) + Chromium (~2 GB) can exceed the budget and the kernel OOM-kills the server mid-run (observed and documented).
 
 ---
 
@@ -415,6 +445,8 @@ bun run start     # node .next/standalone/server.js
 | `SEED_ADMIN_PASSWORD` | first seed | Owner password, ≥8 chars | — |
 | `NEXT_PUBLIC_SITE_URL` | ✅ (prod) | Canonical origin (metadata/sitemap) | `http://localhost:3000` |
 | `GOOGLE_CLIENT_ID/SECRET` | — | OAuth keys for the Google button | unset → honest notice |
+| `E2E_ADMIN_EMAIL/E2E_ADMIN_PASSWORD` | — | Playwright login credentials (specs skip when unset) | — |
+| `E2E_START`/`E2E_COMMAND`/`E2E_PORT`/`E2E_BASE_URL` | — | Playwright server-management knobs | dev server on :3000 |
 
 ### 8.3 Docker
 
@@ -443,8 +475,9 @@ bun run dev
 |---|---|---|
 | `bun run dev` | repo root | Dev server :3000 (log → `dev.log`) |
 | `bun run lint` / `typecheck` / `test` | repo root | Quality gate |
+| `bunx playwright test` | repo root | E2E suite (server on :3000; `E2E_ADMIN_PASSWORD` to unlock auth specs) |
 | `bun run db:push` / `db:generate` / `db:seed` | repo root | Schema + client + seed |
-| `bunx vitest run -t "<name>"` | repo root | Single test |
+| `bunx vitest run -t "<name>"` | repo root | Single unit test |
 
 ### 9.3 Code Style Rules
 
@@ -464,6 +497,9 @@ TypeScript strict, no `any` (`unknown` + narrowing); `interface` for shapes, `ty
 | Low | No numeric coverage gate | Coverage regression not machine-blocked | Deferred (public surface is 100% exercised; add `vitest --coverage` thresholds when the suite grows) |
 | Low | Google OAuth affordance is inert | Owner must use email/password | By design (honest-unconfigured pattern; wire `GOOGLE_*` env + provider to activate) |
 | Info | One gallery item is a 720p MP4 | ~0.8 MB, lazy `preload="metadata"` | Accepted |
+| Info | Landing numbering shows `01/06` with 5 published projects | Intentional parity: the reference app hardcodes 6 (`WORKS_TOTAL_DISPLAY` in `src/lib/site-config.ts`) | Documented (matches reference exactly) |
+| Info | Reference app uses GSAP ScrollSmoother (inertia scroll); this app uses native scroll + framer-motion reveals | Scroll physics differ subtly; layout and reveal choreography match | Deferred by design (avoids a GSAP dependency; native scroll is more accessible) |
+| Info | Reference is a client-rendered SPA; this app is RSC-first with DB persistence and a dashboard the reference lacks | Architectural divergence is intentional | Documented (see ADR-001, ADR-006) |
 
 ## 11. Key Files Reference
 
@@ -472,13 +508,21 @@ TypeScript strict, no `any` (`unknown` + narrowing); `interface` for shapes, `ty
 | `src/lib/validation.ts` | ~170 | Zod schemas, ActionResult, JSON-column helpers — the domain contract |
 | `src/lib/auth/session.ts` | ~120 | Session create/resolve/destroy, cookie signing |
 | `src/lib/auth/password.ts` | ~40 | scrypt hash/verify |
+| `src/lib/typewriter.ts` | ~60 | Pure typewriter state machine (hero meta line) |
+| `src/lib/constellation.ts` | ~90 | Pure constellation layout derivation (hero imagery) |
 | `src/lib/data.ts` | ~160 | All read queries + view models |
 | `src/actions/auth.ts` | ~75 | Login/logout (+ throttle) |
 | `src/actions/contact.ts` | ~75 | Public inquiry submission (+ honeypot, rate limit) |
 | `src/actions/dashboard.ts` | ~160 | Projects CRUD + inquiry triage (owner-gated) |
-| `src/app/globals.css` | ~200 | Design tokens, marquee/grid/scroll utilities |
+| `src/app/globals.css` | ~260 | Design tokens, ghost-grid, marquee, animated-gradient-text, hero-h1-scale |
 | `prisma/schema.prisma` | ~100 | Data model |
 | `prisma/seed.ts` | ~300 | Idempotent seed (content + owner) |
-| `src/components/site/site-header.tsx` | ~200 | Header + menu overlay |
-| `src/components/site/project-gallery.tsx` | ~150 | Zoomable gallery (image + video) |
+| `src/components/site/site-header.tsx` | ~110 | Fixed overlay chrome: breathing logo, center toggle, CTA |
+| `src/components/site/radial-menu.tsx` | ~200 | Rotating radial menu wheel overlay |
+| `src/components/site/hero-constellation.tsx` | ~260 | Constellation hero + typewriter meta |
+| `src/components/site/works-section.tsx` | ~120 | Alternating sticky-parallax rows |
+| `src/components/site/ghost-marquee.tsx` | ~60 | Giant footer marquee band |
+| `src/components/site/project-index.tsx` | ~200 | Archive rows: invert-fill + cursor preview |
+| `src/components/site/project-detail-body.tsx` | ~180 | Sticky intro + 1↔2-col zoomable gallery |
+| `playwright.config.ts` | ~55 | E2E config (chromium-only, reuse-or-manage server, OOM guidance) |
 | `src/components/dashboard/dashboard-shell.tsx` | ~170 | Sidebar + sign-out chrome |

@@ -162,7 +162,7 @@ const PROJECTS: SeedProject[] = [
     slug: "squeezd-juice-brand",
     order: 4,
     title: "Squeez'd",
-    subtitle: "Juice Brand & Packaging",
+    subtitle: "Premium Juice Brand Identity",
     role: "Brand Designer",
     year: "2035",
     category: "Branding",
