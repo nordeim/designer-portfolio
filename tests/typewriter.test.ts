@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createTypewriter, startTyping, typewriterTick } from "@/lib/typewriter";
+import { createTypewriter, startTyping, typewriterTick, TypewriterState } from "@/lib/typewriter";
 
 describe("hero typewriter state machine", () => {
   it("starts waiting with nothing typed", () => {
@@ -67,5 +67,20 @@ describe("hero typewriter state machine", () => {
     expect(s.current).toBe("B");
     s = typewriterTick(s);
     expect(s.current).toBe("BA");
+  });
+
+  it("falls back to an empty item when the index runs past the end", () => {
+    // Defensive branch: a state whose index is out of bounds types an empty
+    // item and moves straight into the pause.
+    const s: TypewriterState = {
+      items: ["ab"],
+      completed: [],
+      current: "",
+      index: 3,
+      phase: "typing",
+    };
+    const next = typewriterTick(s);
+    expect(next.current).toBe("");
+    expect(next.phase).toBe("pausing");
   });
 });

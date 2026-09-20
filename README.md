@@ -43,7 +43,7 @@ git clone https://github.com/nordeim/designer-portfolio.git
 cd designer-portfolio
 bun install                       # or: npm install
 cp .env.example .env              # set AUTH_SECRET + SEED_ADMIN_PASSWORD (see below)
-bun run db:push                   # create the SQLite schema
+bunx prisma migrate deploy        # apply the committed schema baseline (or: bun run db:push)
 bun run db:seed                   # seed 5 projects + the OWNER account
 bun run dev                       # → http://localhost:3000
 ```
@@ -149,7 +149,8 @@ Reads flow through RSC pages → `src/lib/data.ts` → Prisma. Mutations flow th
 ## Testing
 
 ```bash
-bun run test                                   # all unit suites (42 tests)
+bun run test                                   # all unit suites (53 tests)
+bunx vitest run --coverage                     # + 100% coverage gate on the pure seam
 bunx vitest run tests/validation.test.ts       # single file
 bunx vitest run -t "rejects a slug"            # single test
 
@@ -157,7 +158,7 @@ E2E_ADMIN_PASSWORD=… bunx playwright test       # all e2e (30 tests; server on
 bunx playwright test e2e/auth.spec.ts          # single spec file
 ```
 
-**Unit (Vitest, 42 tests)**: inquiry/login/project Zod schemas (valid input, boundary values, invalid input, unknown enum values), scrypt hashing round-trips + malformed stored hashes, JSON-column parse degradation, typewriter state machine (typing/pausing/cycling), constellation layout derivation (positions/sizes/contain flags), radial-menu angle math (rotation clamping, counter-rotation). Password tests do real key derivation (~200 ms each).
+**Unit (Vitest, 53 tests)**: inquiry/login/project Zod schemas (valid input, boundary values, invalid input, unknown enum values), JSON-column serialization round-trips + parse degradation, the ActionResult envelope, scrypt hashing round-trips + malformed stored hashes, typewriter state machine (typing/pausing/cycling/out-of-bounds guard), constellation layout derivation (positions/sizes/contain flags/source fallbacks), radial-menu angle math (rotation clamping, counter-rotation). Password tests do real key derivation (~200 ms each). The five pure-seam modules are held at 100% coverage by a machine-enforced gate (`bunx vitest run --coverage`).
 
 **E2E (Playwright, 30 tests across 6 files)**: public page content + console cleanliness, project detail (hero labels, sticky intro, gallery zoom toggle, prev/next wrap-around, autoplaying video, 404), auth (login affordances, invalid credentials, dashboard gating, radial menu open/Escape), inquiry submission → dashboard inbox, dashboard flows (CRUD round-trip verified on the public site, inquiry triage, sign-out), a11y smoke (focus visibility, theme toggle, mobile overflow, marquee animation, constellation rendering). Mutating specs use unique payloads and clean up after themselves. On RAM-constrained hosts (< ~6 GB), run the suite against the production build (`E2E_START=1 E2E_COMMAND="bun run start"`) — the Turbopack dev server + Chromium together can exceed the memory budget.
 

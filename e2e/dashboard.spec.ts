@@ -81,16 +81,32 @@ test("projects CRUD round-trip: create, verify on public site, delete", async ({
 });
 
 test("inquiry triage: status transitions persist", async ({ page }) => {
+  // Self-sufficient: a pristine database seeds no inquiries, so the spec
+  // submits its own before triaging (the public form persists straight to
+  // the owner inbox). Scoping to the submitted row also avoids depending
+  // on list ordering or rows left over from earlier runs.
+  const stamp = Date.now();
+  const name = `E2E Triage ${stamp}`;
+
+  await page.goto("/contact");
+  const form = page.getByLabel("Project inquiry form");
+  await form.getByLabel("Name *").fill(name);
+  await form.getByLabel("Email *").fill(`e2e-triage-${stamp}@example.com`);
+  await form.getByLabel("Project Details *").fill(
+    "Inquiry submitted by the triage spec so the status-transition flow can be verified against a guaranteed row.",
+  );
+  await form.getByRole("button", { name: "Send Inquiry" }).click();
+  await expect(form.getByText("Thank you for reaching out.")).toBeVisible({ timeout: 15_000 });
+
   await page.goto("/dashboard/inquiries");
-  // Any row with a status combobox works; flip to READ and confirm the
-  // trigger reflects it (the value is server-persisted).
-  const combobox = page.getByRole("combobox", { name: /^Status for / }).first();
-  await expect(combobox).toBeVisible({ timeout: 10_000 });
-  const before = await combobox.textContent();
+  const row = page.locator("li:not([data-sonner-toast])").filter({ hasText: name });
+  await expect(row).toBeVisible({ timeout: 10_000 });
+  // Fresh inquiries start as NEW; flip to READ and confirm the trigger
+  // reflects it (the value is server-persisted).
+  const combobox = row.getByRole("combobox", { name: `Status for ${name}` });
   await combobox.click();
-  const target = before?.includes("READ") ? "REPLIED" : "READ";
-  await page.getByRole("option", { name: target, exact: true }).click();
-  await expect(combobox).toContainText(target, { timeout: 10_000 });
+  await page.getByRole("option", { name: "READ", exact: true }).click();
+  await expect(combobox).toContainText("READ", { timeout: 10_000 });
 });
 
 test("sign out returns to the public site", async ({ page }) => {

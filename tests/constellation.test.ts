@@ -74,4 +74,25 @@ describe("hero constellation layout", () => {
     expect(dotFloatPattern(9)).toBe("deep"); // 9 % 3 === 0
     expect(dotFloatPattern(11)).toBe("shallow");
   });
+
+  it("falls back to the first cover when fewer than five sources are given", () => {
+    // 10 desktop spots but only one source: slots beyond the natural list
+    // reuse the first project's cover instead of crashing.
+    const items = buildConstellation([{ cover: "/c1.jpg", first: "/f1.jpg" }], extras, false);
+    expect(items).toHaveLength(10);
+    expect(items[2].src).toBe("/c1.jpg");
+    expect(items[7].src).toBe("/c1.jpg");
+    expect(items[9].src).toBe("/c1.jpg");
+    expect(items[4].src).toBe(extras.slot4);
+    expect(items[6].src).toBe(extras.slot6);
+  });
+
+  it("degrades to an empty src when no sources exist", () => {
+    // Defensive branch: an empty catalog still renders all spots.
+    const items = buildConstellation([], extras, false);
+    expect(items).toHaveLength(10);
+    expect(items[0].src).toBe("");
+    expect(items[4].src).toBe(extras.slot4);
+    expect(items[6].src).toBe(extras.slot6);
+  });
 });

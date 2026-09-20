@@ -11,10 +11,13 @@ Every line here exists because an agent would plausibly miss it without help.
 | `bun run dev` | Dev server on http://localhost:3000 (logs tee'd to `dev.log`) |
 | `bun run lint` | ESLint 9 flat config over `src/`, `prisma/seed.ts`, `tests/`, `e2e/` |
 | `bun run typecheck` | `tsc --noEmit` (strict; **must** pass before commit) |
-| `bun run test` | Vitest unit suites (`tests/*.test.ts`) |
-| `bunx playwright test` | E2E suite (`e2e/*.spec.ts`) against an already-running server on :3000 |
+| `bun run test` | Vitest unit suites (`tests/*.test.ts`, 53 tests) |
+| `bunx vitest run --coverage` | Unit suites + the 100% coverage gate on the pure seam (PAD §7.3) |
+| `bunx playwright test` | E2E suite (`e2e/*.spec.ts`, 30 tests) against an already-running server on :3000 |
 | `E2E_START=1 bunx playwright test` | E2E suite with Playwright managing the server itself (`E2E_COMMAND` overrides the command) |
-| `bun run db:push` | Push `prisma/schema.prisma` to the database (no migration files) |
+| `bun run db:push` | Push `prisma/schema.prisma` to the database (schema-declarative; ignores migration files) |
+| `bun run db:migrate` | `prisma migrate dev` — applies the committed baseline + creates migrations on schema change |
+| `bunx prisma migrate deploy` | Apply committed migrations (non-interactive; CI/fresh-clone path) |
 | `bun run db:generate` | Regenerate the Prisma client after schema edits |
 | `bun run db:seed` | Idempotent seed: 5 projects + owner account (`prisma/seed.ts`) |
 | `bun run build` | Production build (standalone output in `.next/standalone`) |
@@ -24,7 +27,8 @@ Every line here exists because an agent would plausibly miss it without help.
 
 1. After editing `prisma/schema.prisma`: `bun run db:generate` **then** `bun run db:push` — the running dev server caches the Prisma client, so **restart `bun run dev`** after schema changes or you get `Cannot read properties of undefined (reading 'findMany')`.
 2. Clean check before pushing: `bun run lint && bun run typecheck && bun run test` (build optional but recommended).
-3. Fresh database: delete `db/custom.db`, then `bun run db:push && bun run db:seed`.
+3. Fresh database: delete `db/custom.db`, then `bunx prisma migrate deploy && bun run db:seed` (or `bun run db:push && bun run db:seed` for scratch iteration).
+4. The full gate is verified green on a **fresh clone** (`bun install` → `migrate deploy` → `seed`): lint, typecheck, 53 unit tests, coverage 100%, build, 30 E2E tests. Keep it that way — `tsc --noEmit` must pass with only the dependencies declared in `package.json` (no stale `node_modules` phantom packages).
 
 ### Running a single test file
 
@@ -80,7 +84,7 @@ e2e/                   Playwright specs (public pages, project detail, auth, inq
 
 ## Testing quirks
 
-- Vitest runs in the `node` environment; tests import from `@/` via the alias in `vitest.config.ts`.
+- Vitest runs in the `node` environment; tests import from `@/` via the alias in `vitest.config.ts` (removing the alias breaks all 5 suites — it must stay in sync with `tsconfig.json` `paths`).
 - `testTimeout: 30_000` is deliberate (cold workspace imports under parallel runs); do not lower it.
 - The password tests do real scrypt derivation (~200ms each) — keep the count low; do not loop thousands of iterations.
 - No DB integration tests by design: the suites cover pure domain logic (validation schemas, password hashing, JSON column parsing, typewriter state machine, constellation geometry, radial-menu angle math). If you add DB tests, guard them to skip when `DATABASE_URL` is unset.

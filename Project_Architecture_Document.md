@@ -11,6 +11,7 @@
 
 | Version | Date | Author | Type | Summary |
 |---|---|---|---|---|
+| 1.2 | 2026-09-20 | Engineering | [CA] | Fresh-clone hardening: dependency refresh (Next 16.3.5, Prisma 6.19.3, React 19.3), Prisma migration baseline, numeric coverage gate (100% on the pure seam), registry prune (39 unused shadcn components + dead toast hook), e2e triage-spec self-sufficiency fix; unit suites 42 → 53 |
 | 1.1 | 2026-09-20 | Engineering | [CA] | Parity remediation: cinematic hero (constellation + typewriter), radial menu, ghost marquee footer, full-bleed case studies, token corrections (radius 0, cobalt/sage, 60s marquee, label-mono 0.1em), Playwright E2E suite (30 tests) + new pure-logic Vitest suites (42 total) |
 | 1.0 | 2026-09-19 | Engineering | [SYN] | Initial architecture locked after full-stack build + verification |
 
@@ -42,17 +43,17 @@ This PAD is the canonical architecture record for the Designer Portfolio applica
 
 | Layer | Technology | Version | Key Rationale |
 |---|---|---|---|
-| Framework | Next.js (App Router) | 16.1.3 | RSC-first rendering; Server Actions remove the need for a hand-rolled API layer; first-class TypeScript |
-| UI runtime | React | 19.2.3 | Server Components by default keep the client bundle minimal |
-| Language | TypeScript (strict) | 5.9.3 | Compile-time contract enforcement across the data boundary |
-| Styling | Tailwind CSS | 4.1.18 | CSS-first `@theme` tokens; no runtime styling; design-token governance |
-| Components | Radix UI (shadcn-style) | current | Accessible primitives (dialog, select, accordion, switch) — WCAG posture without bespoke A11y code |
-| Motion | Framer Motion | 12.26.2 | Declarative animation for menu/preview/gallery with reduced-motion support |
-| ORM | Prisma | 6.19.2 | Typed schema; push-based workflow fits the solo-owner deployment model |
+| Framework | Next.js (App Router) | 16.3.5 | RSC-first rendering; Server Actions remove the need for a hand-rolled API layer; first-class TypeScript |
+| UI runtime | React | 19.3.0 | Server Components by default keep the client bundle minimal |
+| Language | TypeScript (strict) | 5.9.3 | Compile-time contract enforcement across the data boundary (`noImplicitAny` relaxed per scaffold convention) |
+| Styling | Tailwind CSS | 4.3.3 | CSS-first `@theme` tokens; no runtime styling; design-token governance |
+| Components | Radix UI (shadcn-style) | current | Accessible primitives (dialog, select, accordion, switch) — WCAG posture without bespoke A11y code; registry pruned to the 9 used components (regenerable via shadcn CLI) |
+| Motion | Framer Motion | 12.43.0 | Declarative animation for menu/preview/gallery with reduced-motion support |
+| ORM | Prisma | 6.19.3 | Typed schema; migration baseline committed (`20260920045009_init`) — `db push` and `migrate deploy` both supported |
 | Database | SQLite (default), PostgreSQL-ready | — | Zero-config local/self-hosted operation; provider-portable schema |
-| Validation | Zod | 4.3.5 | Single schema definition shared by client forms and server actions |
+| Validation | Zod | 4.6.5 | Single schema definition shared by client forms and server actions |
 | Auth | Custom scrypt + DB sessions | — | No third-party auth dependency; portable, auditable, ~120 lines of owned code |
-| Testing | Vitest · Playwright | 3.2.7 · 1.63 | Fast ESM-native unit suites + real-browser E2E against the running app |
+| Testing | Vitest · Playwright | 3.2.7 · 1.63 | Fast ESM-native unit suites (100% coverage gate on the pure seam) + real-browser E2E against the running app |
 | Fonts | next/font (Inter, JetBrains Mono) | — | Self-hosted; no render-blocking external font requests |
 
 ### 1.3 Architecture Decision Records
@@ -173,7 +174,9 @@ src/
 │   │                              project-hero, project-detail-body, inquiry-form, fade-in
 │   ├── dashboard/               ← shell/sidebar, projects manager, inquiries manager, status meta
 │   ├── auth/                    ← login form
-│   └── ui/                      ← shadcn/Radix primitives
+│   └── ui/                      ← shadcn/Radix primitives (pruned to the 9 the app imports:
+│                                  accordion, button, dialog, input, label, select, sonner,
+│                                  switch, textarea — extras regenerable via shadcn CLI)
 └── lib/                         ← data.ts, validation.ts, typewriter.ts, constellation.ts,
                                    site-config.ts, db.ts, auth/
 e2e/                            ← Playwright specs (6 files, 30 tests)
@@ -307,7 +310,7 @@ erDiagram
 
 - **Write path:** server actions only, always Zod-validated, always session-authorized, with `revalidatePath` calls for affected public surfaces.
 - **Seeding:** `prisma/seed.ts` is idempotent (upsert by slug for projects; owner created only when absent). Owner password comes from env — no credentials in the repo.
-- **Migrations:** `prisma db push` (schema-declarative) — appropriate for the single-owner deployment; switching to `prisma migrate dev` is a drop-in for team workflows.
+- **Migrations:** baseline committed (`prisma/migrations/20260920045009_init`) — `bun run db:migrate` (dev) or `bunx prisma migrate deploy` (CI/prod) reproduce the schema on a fresh clone; `db:push` remains valid for scratch iteration. SQLite `file:` URLs in `.env` resolve from the repo root (the command CWD).
 - **Backups:** SQLite = copy the file; PostgreSQL = standard pg_dump.
 
 ---
@@ -389,10 +392,10 @@ Single role model today: `OWNER` (full mutation rights). `VIEWER` exists in the 
 
 | Category | Files | Tests | Location | Framework |
 |---|---|---|---|---|
-| Validation schemas | 1 | 17 | `tests/validation.test.ts` | Vitest |
+| Validation schemas | 1 | 25 | `tests/validation.test.ts` | Vitest |
 | Password hashing | 1 | 4 | `tests/password.test.ts` | Vitest |
-| Typewriter state machine | 1 | 8 | `tests/typewriter.test.ts` | Vitest |
-| Constellation layout | 1 | 7 | `tests/constellation.test.ts` | Vitest |
+| Typewriter state machine | 1 | 9 | `tests/typewriter.test.ts` | Vitest |
+| Constellation layout | 1 | 9 | `tests/constellation.test.ts` | Vitest |
 | Radial-menu geometry | 1 | 6 | `tests/menu-wheel.test.ts` | Vitest |
 | Public pages content | 1 | 6 | `e2e/public-pages.spec.ts` | Playwright |
 | Project detail flows | 1 | 5 | `e2e/project-detail.spec.ts` | Playwright |
@@ -400,7 +403,7 @@ Single role model today: `OWNER` (full mutation rights). `VIEWER` exists in the 
 | Inquiry → dashboard | 1 | 2 | `e2e/inquiry.spec.ts` | Playwright |
 | Dashboard CRUD/triage | 1 | 5 | `e2e/dashboard.spec.ts` | Playwright |
 | A11y / rendering smoke | 1 | 6 | `e2e/a11y-smoke.spec.ts` | Playwright |
-| **Total** | **11** | **72** | | |
+| **Total** | **11** | **83** | | |
 
 ### 7.2 Test Patterns
 
@@ -408,7 +411,7 @@ Real behavior, no mocks: schemas parse actual payloads (valid, boundary, invalid
 
 ### 7.3 Coverage Thresholds
 
-Pure domain modules (`src/lib/validation.ts`, `src/lib/auth/password.ts`, `src/lib/typewriter.ts`, `src/lib/constellation.ts`, menu-wheel geometry) are exercised at 100% of their public surface by the current suites. There is no numeric coverage gate yet (see §10).
+Pure domain modules (`src/lib/validation.ts`, `src/lib/auth/password.ts`, `src/lib/typewriter.ts`, `src/lib/constellation.ts`, `src/lib/menu-wheel.ts`) are held at **100% statements/branches/functions/lines** by a machine-enforced gate: `bunx vitest run --coverage` fails the run below threshold (`coverage.include` in `vitest.config.ts` lists exactly these files — keep it in sync when modules move). The gate ran green at 100% across all five modules with the 53-test suite.
 
 ### 7.4 Pre-PR / Pre-Deploy Checklist
 
@@ -494,7 +497,6 @@ TypeScript strict, no `any` (`unknown` + narrowing); `interface` for shapes, `ty
 | Priority | Issue | Impact | Status |
 |---|---|---|---|
 | Low | In-memory rate limiting (login + inquiries) | Resets on restart; per-instance when scaled out | Accepted (single-instance deployment; swap for a shared store when horizontal) |
-| Low | No numeric coverage gate | Coverage regression not machine-blocked | Deferred (public surface is 100% exercised; add `vitest --coverage` thresholds when the suite grows) |
 | Low | Google OAuth affordance is inert | Owner must use email/password | By design (honest-unconfigured pattern; wire `GOOGLE_*` env + provider to activate) |
 | Info | One gallery item is a 720p MP4 | ~0.8 MB, lazy `preload="metadata"` | Accepted |
 | Info | Landing numbering shows `01/06` with 5 published projects | Intentional parity: the reference app hardcodes 6 (`WORKS_TOTAL_DISPLAY` in `src/lib/site-config.ts`) | Documented (matches reference exactly) |
@@ -502,6 +504,7 @@ TypeScript strict, no `any` (`unknown` + narrowing); `interface` for shapes, `ty
 | Info | Reference is a client-rendered SPA; this app is RSC-first with DB persistence and a dashboard the reference lacks | Architectural divergence is intentional | Documented (see ADR-001, ADR-006) |
 | Info | `/login` follows this site's design system instead of the reference's Base44 platform login widget (rounded card, system fonts, avatar) | Login screen is visually custom but functionally equivalent (Email/Password, Google affordance, forgot/sign-up links all present) | Deliberate: the reference's login is platform boilerplate that contradicts the app's own radius-0 / Inter / JetBrains-Mono tokens; the clone keeps the design language coherent |
 | Info | Project-detail `<title>` is the generic `Project Detail \| Designer Portfolio` | Browser-tab title matches the reference exactly (per-project titles remain in OG/meta tags, which the reference lacks) | Parity fix (session 3) |
+| Info | Computed `font-family` reports `Inter, "Inter Fallback"` / `"JetBrains Mono", "<name> Fallback"` (Next 16.3+ metric-fallback stacks) vs the reference's plain `Inter, sans-serif` | Extraction-level string only; rendered glyphs identical (live pixel diff: mean 0.36/255, 98.9% identical) | Documented artifact (session 8) — ignore in computed-style diffs |
 
 ## 11. Key Files Reference
 

@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
+  failure,
   inquirySchema,
   loginSchema,
   mediaItemSchema,
   parseGallery,
   parseStringList,
   projectInputSchema,
+  serializeGallery,
+  serializeStringList,
+  success,
   zodFieldErrors,
 } from "@/lib/validation";
 
@@ -135,5 +139,57 @@ describe("projectInputSchema", () => {
 
   it("allows an empty process image", () => {
     expect(projectInputSchema.safeParse({ ...base, processImage: "" }).success).toBe(true);
+  });
+});
+
+describe("JSON column serialization", () => {
+  it("serializes a gallery to the JSON column format", () => {
+    const items = [{ kind: "image" as const, src: "/projects/a/hero.jpg", alt: "A hero" }];
+    expect(serializeGallery(items)).toBe(JSON.stringify(items));
+    expect(parseGallery(serializeGallery(items))).toEqual(items);
+  });
+
+  it("refuses to serialize an invalid gallery item", () => {
+    expect(() => serializeGallery([{ kind: "poster" as never, src: "/a.jpg", alt: "A" }])).toThrow();
+  });
+
+  it("serializes a string list", () => {
+    expect(serializeStringList(["Logo", "Packaging"])).toBe('["Logo","Packaging"]');
+  });
+
+  it("refuses to serialize a list containing an empty string", () => {
+    expect(() => serializeStringList(["Logo", ""])).toThrow();
+  });
+});
+
+describe("ActionResult envelope", () => {
+  it("success wraps data", () => {
+    expect(success({ id: 1 })).toEqual({ ok: true, data: { id: 1 } });
+  });
+
+  it("failure carries an error and field errors", () => {
+    expect(failure("Invalid input", { slug: "taken" })).toEqual({
+      ok: false,
+      error: "Invalid input",
+      fieldErrors: { slug: "taken" },
+    });
+  });
+
+  it("failure omits field errors when there are none", () => {
+    const result = failure("boom");
+    expect(result).toEqual({ ok: false, error: "boom" });
+    if (!result.ok) {
+      expect(result.fieldErrors).toBeUndefined();
+    }
+  });
+
+  it("maps root-level schema issues to the form key", () => {
+    // A type mismatch at the schema root has an empty path — it must land
+    // under "form" rather than disappearing into the "" key.
+    const result = mediaItemSchema.safeParse(42);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(Object.keys(zodFieldErrors(result.error))).toEqual(["form"]);
+    }
   });
 });
