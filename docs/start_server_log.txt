@@ -3,10 +3,10 @@ $ rm -rf .next/
 $ rm -rf db/custom.db
 
 $ bun install
-[0.04ms] ".env"
+[0.06ms] ".env"
 bun install v1.3.14 (0d9b296a)
 
-Checked 623 installs across 720 packages (no changes) [27.00ms]
+Checked 623 installs across 720 packages (no changes) [20.00ms]
 
 $ bunx prisma migrate deploy
 warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
@@ -48,21 +48,21 @@ Running seed command `bun prisma/seed.ts` ...
 🌱  The seed command has been executed.
 
 $ ls -l db/custom.db
--rw-r--r-- 1 pete pete 94208 Sep 21 17:20 db/custom.db
+-rw-r--r-- 1 pete pete 94208 Sep 21 18:12 db/custom.db
 
 $ bun run build
 $ next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/
 ▲ Next.js 16.3.5 (Turbopack)
 - Environments: .env
-✓ Running next.config.ts took 37ms
+✓ Running next.config.ts took 36ms
 
   Creating an optimized production build ...
-✓ Compiled successfully in 11.9s
+✓ Compiled successfully in 12.9s
   Skipping validation of types
-✓ Finished TypeScript config validation in 27ms    
-✓ Collecting page data using 3 workers in 1660ms    
-✓ Generating static pages using 3 workers (17/17) in 1175ms
-✓ Finalizing page optimization in 4.0s    
+✓ Finished TypeScript config validation in 15ms    
+✓ Collecting page data using 3 workers in 1402ms    
+✓ Generating static pages using 3 workers (17/17) in 1165ms
+✓ Finalizing page optimization in 4.2s    
 
 Route (app)
 ┌ ○ /
@@ -98,5 +98,5 @@ $ NODE_ENV=production node .next/standalone/server.js
 - Local:         http://localhost:3009
 - Network:       http://0.0.0.0:3009
 ✓ Ready in 0ms
-✓ Running next.config took 6ms
+✓ Running next.config took 7ms
 
