@@ -1,9 +1,9 @@
 ---
 name: designer-portfolio
-description: "Complete engineering skill for the Designer Portfolio codebase — a precision-minimalist designer portfolio (Next.js 16 + React 19 + Prisma/SQLite + Tailwind v4) cloned from a base44 reference app. Covers the design-token system, the radial-menu geometry, the ActionResult action contract, auth/session design, test architecture (Vitest + Playwright), graceful-degradation, and every hard-won lesson from sessions 1–30."
-version: 1.4.0
-last_updated: 2026-09-21 (session 30 — DOM-texture + motion-cadence parity: marquee items stored title-case in the DOM like the source [the s14 "uppercase as-is" pin was a mis-read], footer copyright as ONE DOM text node, hero label's single "/06 — " fragment, LOGO_BREATH cadence 3.4 s expanded / 3.3 s tight, radial-menu links max-md:leading-tight 40 px, "Toggle projects" label, remote-origin e2e navigation headroom)
-project_state: "79 unit tests @ 100% pure-seam coverage · 55 e2e (+5 outage) · build 17/17 SSG · live parity audit: 8/10 routes exact line parity · title sweep 7/7 MATCH · error-surface + machine-surface + deep-behavior + head-surface + DOM-texture/cadence parity complete"
+description: "Complete engineering skill for the Designer Portfolio codebase — a precision-minimalist designer portfolio (Next.js 16 + React 19 + Prisma/SQLite + Tailwind v4) cloned from a base44 reference app. Covers the design-token system, the radial-menu geometry, the ActionResult action contract, auth/session design, test architecture (Vitest + Playwright), graceful-degradation, and every hard-won lesson from sessions 1–32."
+version: 1.5.0
+last_updated: 2026-09-21 (session 32 — reduced-motion + motion-profile parity: the hero's a11y-positive static constellation fallback under prefers-reduced-motion [slotVisible, frozen dots — replacing a ZERO-image content loss], the /projects cursor preview keyed per row for the source's ~250 ms row-switch crossfade, the source's reduce behavior characterized as a CSS-only half-measure [JS machines ignore it])
+project_state: "85 unit tests @ 100% pure-seam coverage · 57 e2e (+5 outage) · build 17/17 SSG · live parity audit: 8/10 routes exact line parity · title sweep 7/7 MATCH · error-surface + machine-surface + deep-behavior + head-surface + DOM-texture/cadence + reduced-motion/motion-profile parity complete"
 ---
 
 # Designer Portfolio — Engineering SKILL
@@ -867,6 +867,28 @@ Additional process lessons:
   Time-sample the computed style (≥ 20 s @100 ms) and pin the longest
   expanded run; the constants live in `LOGO_BREATH` (site-config) with a
   unit gate so the cadence cannot silently regress.
+- **Reduced-motion must pause motion, never remove content (s32).** The
+  clone gated its cycling effect on `useReducedMotion` and the hero went
+  EMPTY — zero constellation images for reduced-motion users, while the
+  source (whose JS machines ignore the preference entirely) kept its
+  living hero. The a11y-correct static fallback is `slotVisible`
+  (`src/lib/constellation.ts`): hover always wins, cycling only with
+  motion, and slot 0 renders statically under reduce; the cobalt dots
+  freeze via a zero-duration framer transition. Pin the contract with an
+  emulated-reduce e2e context (`browser.newContext({ reducedMotion:
+  "reduce" })`) — assertions: exactly one stable image, byte-identical dot
+  transforms across samples, all typewriter lines present.
+- **Transition-profile parity is about KEYS, not values (s32).** The
+  /projects cursor preview declared the source's exact enter/exit values
+  (opacity 0→1, scale 0.9→1 in / 0.95 out, 250 ms) yet swapped its image
+  INSTANTLY on a row switch — because a constant `key="preview"` made
+  framer treat every row as the same element. AnimatePresence runs
+  exit+enter only when the key CHANGES (`key={hovered}`); the exiting
+  element then freezes at its last-rendered position automatically
+  (it stops re-rendering), exactly like the source's outgoing card. The
+  probe that finds this class of gap: track ALL matching elements at rAF
+  speed during the interaction, not just the first match — sampling
+  `els[0]` masks the entering twin behind the exiting one.
 
 ---
 

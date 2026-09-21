@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildConstellation, MOBILE_SCALE, dotFloatPattern } from "@/lib/constellation";
+import { buildConstellation, MOBILE_SCALE, dotFloatPattern, slotVisible } from "@/lib/constellation";
 
 const projects = [
   { cover: "/c0.jpg", first: "/g0.jpg" },
@@ -94,5 +94,35 @@ describe("hero constellation layout", () => {
     expect(items[0].src).toBe("");
     expect(items[4].src).toBe(extras.slot4);
     expect(items[6].src).toBe(extras.slot6);
+  });
+});
+
+describe("slotVisible — reduced-motion static fallback (session 32)", () => {
+  it("shows slot 0 statically under reduced motion with nothing hovered", () => {
+    expect(slotVisible({ id: 0, hovered: null, cycled: null, reduced: true })).toBe(true);
+  });
+
+  it("hides every other slot under reduced motion with nothing hovered", () => {
+    expect(slotVisible({ id: 1, hovered: null, cycled: null, reduced: true })).toBe(false);
+    expect(slotVisible({ id: 9, hovered: null, cycled: 9, reduced: true })).toBe(false);
+  });
+
+  it("shows the hovered slot regardless of reduced motion", () => {
+    expect(slotVisible({ id: 3, hovered: 3, cycled: null, reduced: true })).toBe(true);
+    expect(slotVisible({ id: 3, hovered: 3, cycled: null, reduced: false })).toBe(true);
+  });
+
+  it("hides the static slot when another is hovered under reduced motion", () => {
+    expect(slotVisible({ id: 0, hovered: 3, cycled: null, reduced: true })).toBe(false);
+  });
+
+  it("cycles only the cycled slot when motion is allowed", () => {
+    expect(slotVisible({ id: 2, hovered: null, cycled: 2, reduced: false })).toBe(true);
+    expect(slotVisible({ id: 3, hovered: null, cycled: 2, reduced: false })).toBe(false);
+    expect(slotVisible({ id: 0, hovered: null, cycled: 2, reduced: false })).toBe(false);
+  });
+
+  it("never shows a cycled slot under reduced motion", () => {
+    expect(slotVisible({ id: 2, hovered: null, cycled: 2, reduced: true })).toBe(false);
   });
 });

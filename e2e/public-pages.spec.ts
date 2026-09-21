@@ -460,3 +460,76 @@ test("project hero label carries the numbering as one static fragment (session 3
   expect(label!.text).toMatch(/^\d\d\/06 — /);
   expect(label!.nodes).toContain("/06 — ");
 });
+
+test("cursor preview crossfades on row switch (session 32 parity)", async ({ page }) => {
+  // Source ground truth (rAF-sampled row-switch probe): TWO preview
+  // elements coexist for ~250ms — the exiting one freezes at its last
+  // position (opacity 1→0, scale 1→0.95, center origin) while the
+  // entering one mounts at the cursor (opacity 0→1, scale 0.9→1); their
+  // opacities sum to ~1 at every frame. Pre-fix clone: ONE element with a
+  // constant key swaps its image instantly (no crossfade at all).
+  await page.goto("/projects", { waitUntil: "domcontentloaded" });
+  await page.waitForTimeout(1200);
+  const rows = page.locator("a[href*='/project/']");
+  await rows.nth(0).hover();
+  await page.waitForTimeout(700);
+
+  const row1 = await rows.nth(1).boundingBox();
+  expect(row1).not.toBeNull();
+  await page.mouse.move(row1!.x + row1!.width / 2, row1!.y + 20);
+
+  // ~120ms after the switch: BOTH previews exist with strictly-ordered
+  // partial opacities (the old fading out, the new fading in).
+  await page.waitForTimeout(120);
+  const midSwitch = await page.evaluate(() => {
+    return [...document.querySelectorAll("div")]
+      .filter((d) => {
+        const cs = getComputedStyle(d);
+        const r = d.getBoundingClientRect();
+        const z = parseInt(cs.zIndex || "0", 10);
+        return (
+          cs.position === "fixed" &&
+          z >= 50 &&
+          r.width >= 150 &&
+          r.width <= 500 &&
+          r.height >= 100 &&
+          r.height <= 400
+        );
+      })
+      .map((el) => {
+        const r = el.getBoundingClientRect();
+        return { y: Math.round(r.y), op: Number(getComputedStyle(el).opacity) };
+      });
+  });
+  expect(
+    midSwitch.length,
+    `expected 2 coexisting previews mid-crossfade, got ${midSwitch.length}`,
+  ).toBe(2);
+  const ops = midSwitch.map((e) => e.op).sort((a, b) => a - b);
+  expect(ops[0], "the exiting preview must be partially faded at ~120ms").toBeGreaterThan(0);
+  expect(ops[0]).toBeLessThan(1);
+  expect(ops[1], "the entering preview must be brighter than the exiting one").toBeGreaterThan(ops[0]);
+
+  // ~700ms after the switch: exactly one preview, fully opaque, settled
+  // at the new cursor row.
+  await page.waitForTimeout(580);
+  const settled = await page.evaluate(() => {
+    return [...document.querySelectorAll("div")]
+      .filter((d) => {
+        const cs = getComputedStyle(d);
+        const r = d.getBoundingClientRect();
+        const z = parseInt(cs.zIndex || "0", 10);
+        return (
+          cs.position === "fixed" &&
+          z >= 50 &&
+          r.width >= 150 &&
+          r.width <= 500 &&
+          r.height >= 100 &&
+          r.height <= 400
+        );
+      })
+      .map((el) => ({ y: Math.round(el.getBoundingClientRect().y), op: Number(getComputedStyle(el).opacity) }));
+  });
+  expect(settled.length, `expected exactly 1 settled preview, got ${settled.length}`).toBe(1);
+  expect(settled[0].op).toBeGreaterThanOrEqual(0.99);
+});

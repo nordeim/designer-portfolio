@@ -95,11 +95,15 @@ export function ProjectIndex({ projects }: { projects: IndexProject[] }) {
         ))}
       </div>
 
-      {/* Cursor-following preview card (desktop only) */}
+      {/* Cursor-following preview card (desktop only). Keyed per row so a
+          hover switch plays the source's crossfade: the outgoing card
+          freezes at its last cursor position and fades out (scale 0.95)
+          while the incoming one mounts at the cursor and fades in
+          (session 32 — a constant key made the image swap instantly). */}
       <AnimatePresence>
         {hovered !== null && typeof window !== "undefined" && window.innerWidth >= 768 && (
           <motion.div
-            key="preview"
+            key={hovered}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}

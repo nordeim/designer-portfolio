@@ -123,3 +123,29 @@ export function dotFloatPattern(id: number): "deep" | "mid" | "shallow" {
       return "shallow";
   }
 }
+
+/**
+ * Whether a constellation slot shows its image. Hover always wins (it is
+ * user-initiated, so it stays active under reduced motion). Otherwise:
+ * with motion allowed the random `cycled` slot surfaces; with reduced
+ * motion the hero keeps its imagery via a STATIC slot-0 fallback instead
+ * of the source's (still-cycling) behavior — the source's JS machines
+ * ignore prefers-reduced-motion, which we deliberately do not replicate
+ * (a11y-positive divergence, session 32). Without the fallback the hero
+ * would lose all imagery for reduced-motion users.
+ */
+export function slotVisible({
+  id,
+  hovered,
+  cycled,
+  reduced,
+}: {
+  id: number;
+  hovered: number | null;
+  cycled: number | null;
+  reduced: boolean;
+}): boolean {
+  if (hovered !== null) return hovered === id;
+  if (reduced) return id === 0;
+  return cycled === id;
+}

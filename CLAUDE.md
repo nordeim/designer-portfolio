@@ -80,9 +80,9 @@ bun run dev                       # http://localhost:3000
 
 ### Test Pyramid
 
-- **Unit (Vitest, `tests/`)**: Zod schemas (inquiry, login, project input — including empty-select prompts), scrypt password hashing, JSON-column parsing degradation, typewriter state machine, constellation layout derivation, radial-menu angle math (incl. the mobile in-viewport reachability regression), database-path resolution, site-config DOM-parity contracts (incl. the session-30 title-case marquee + LOGO_BREATH cadence pins). No mocks — real schema parsing and real crypto.
+- **Unit (Vitest, `tests/`)**: Zod schemas (inquiry, login, project input — including empty-select prompts), scrypt password hashing, JSON-column parsing degradation, typewriter state machine, constellation layout derivation + the reduced-motion `slotVisible` fallback, radial-menu angle math (incl. the mobile in-viewport reachability regression), database-path resolution, site-config DOM-parity contracts (incl. the session-30 title-case marquee + LOGO_BREATH cadence pins). No mocks — real schema parsing and real crypto.
 - **Integration**: the dev server + browser is the integration surface (see Verification below).
-- **E2E (Playwright, `e2e/`)**: 45 specs across seven files (plus 5 opt-in outage specs) — public pages content (incl. the contact form's source-parity initial state: placeholder selects + four social links; the machine-surface contracts: dynamic robots.txt + source-aligned 6-route sitemap.xml), project detail (hero/gallery/zoom/prev-next/video/404), auth (login, gating, radial menu), inquiry submission → dashboard inbox, dashboard CRUD + inquiry triage + sign-out (with the reference's avatar row), and a11y smoke (focus visibility, console errors, mobile overflow, marquee animation, constellation, **mobile radial-menu paint + in-viewport reachability**, works-row hover smoothness with in-flight scale sampling, plus the session-18 source-parity specs: login auth-card metrics, standalone 404 stack, project-not-found state, legal section anatomy, and the session-30 DOM-texture + cadence specs: marquee title-case DOM, copyright single text node, numbering node texture, breathing-logo expanded hold, radial-menu 40px link line-height).
+- **E2E (Playwright, `e2e/`)**: 47 specs across seven files (plus 5 opt-in outage specs) — public pages content (incl. the contact form's source-parity initial state: placeholder selects + four social links; the machine-surface contracts: dynamic robots.txt + source-aligned 6-route sitemap.xml), project detail (hero/gallery/zoom/prev-next/video/404), auth (login, gating, radial menu), inquiry submission → dashboard inbox, dashboard CRUD + inquiry triage + sign-out (with the reference's avatar row), and a11y smoke (focus visibility, console errors, mobile overflow, marquee animation, constellation, **mobile radial-menu paint + in-viewport reachability**, works-row hover smoothness with in-flight scale sampling, plus the session-18 source-parity specs: login auth-card metrics, standalone 404 stack, project-not-found state, legal section anatomy, the session-30 DOM-texture + cadence specs: marquee title-case DOM, copyright single text node, numbering node texture, breathing-logo expanded hold, radial-menu 40px link line-height, and the session-32 motion specs: reduced-motion static constellation fallback + preview row-switch crossfade).
 
 ### Test Commands
 
@@ -90,7 +90,7 @@ bun run dev                       # http://localhost:3000
 bun run test                      # all unit suites
 bunx vitest run tests/validation.test.ts
 bunx vitest run -t "slug"
-E2E_ADMIN_PASSWORD=… bunx playwright test    # full e2e (60 tests: 55 normal + 5 outage-skipped; server must be running on :3000)
+E2E_ADMIN_PASSWORD=… bunx playwright test    # full e2e (62 tests: 57 normal + 5 outage-skipped; server must be running on :3000)
 bunx playwright test e2e/auth.spec.ts        # one file
 E2E_START=1 E2E_COMMAND="bun run start" bunx playwright test   # vs production build
 ```
@@ -141,6 +141,7 @@ Never bundle unrelated changes. Never commit `.env`, `db/*.db`, or `dev.log` (al
 - Route-level OG metadata must be composed via `pageMetadata()` (`src/lib/og.ts`): Next.js replaces nested metadata objects wholesale — a page setting `openGraph` silently loses the root's siteName/type/images, and the root's `twitter` block survives unless the page re-states it. `twitter:url` is not expressible in Next's typed API (accepted divergence).
 - DOM text-node texture is a parity surface (session 30): match the source's exact text-node splits (copyright = 1 node; hero label = 3 nodes with the single "/06 — " fragment; landing works label = the 5-node JSX split). JSX interleaving splits static text; a template-literal expression renders one node.
 - The breathing logo's cadence is source-pinned (`LOGO_BREATH` in `site-config.ts`): expanded hold 3.4 s / tight 3.3 s (~50 % duty, 7.45 s cycle). Never hold the expanded phase briefly — the source rests mostly-expanded.
+- Reduced-motion is a designed divergence (session 32): the source's JS machines (typewriter, constellation, LOGO_BREATH) all IGNORE `prefers-reduced-motion` (only its CSS animations get the `1e-05s` minimize). We honor it — machines pause — but NEVER at the cost of content: the hero renders a static slot-0 constellation image (`slotVisible` in `src/lib/constellation.ts`) with frozen dots and static typewriter lines. The /projects cursor preview is keyed per row (`key={hovered}`) so row-switches play the source's ~250 ms crossfade (exit scale 0.95 + enter overlap) — a constant key swaps the image silently.
 
 ## Communication & Documentation
 

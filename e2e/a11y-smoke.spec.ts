@@ -229,3 +229,88 @@ test("breathing logo holds the expanded state for the source's cadence (session 
   const bestMs = best * 250;
   expect(bestMs, `longest expanded run was ${bestMs}ms over 9s of sampling`).toBeGreaterThanOrEqual(2000);
 });
+
+test("reduced-motion hero renders a static constellation image and frozen dots (session 32 parity)", async ({ browser }) => {
+  // Source ground truth (emulated-reduce probe): the source's JS machines
+  // all IGNORE prefers-reduced-motion (typewriter types, constellation
+  // cycles, logo breathes) — only its CSS animations get the 1e-05s
+  // minimize. We deliberately do NOT replicate that (a11y-positive
+  // divergence): our hero pauses the machines but must not LOSE content —
+  // exactly ONE constellation image stays visible statically (slot 0) and
+  // the cobalt dots freeze at rest. Pre-fix behavior: ZERO images visible
+  // (content loss) + dots still bobbing (inconsistent with the freeze).
+  const ctx = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 1440, height: 900 } });
+  const page = await ctx.newPage();
+  await page.goto("/", { waitUntil: "networkidle" });
+  await page.waitForTimeout(1500);
+
+  const snapImages = () =>
+    page.evaluate(() => {
+      // Hero-area images only (the works-section imagery sits below the
+      // fold but still computes as "visible").
+      return Array.from(document.querySelectorAll("img"))
+        .map((im) => {
+          const r = im.getBoundingClientRect();
+          const cs = getComputedStyle(im);
+          return {
+            key: `${Math.round(r.x)},${Math.round(r.y)},${Math.round(r.width)}`,
+            vis:
+              cs.display !== "none" &&
+              cs.visibility !== "hidden" &&
+              r.width > 0 &&
+              cs.opacity !== "0" &&
+              r.y > -80 &&
+              r.y < 700 &&
+              r.width > 40 &&
+              r.width < 500,
+          };
+        })
+        .filter((im) => im.vis)
+        .map((im) => im.key);
+    });
+  const snapDots = () =>
+    page.evaluate(() => {
+      // The cobalt dot anchors: bg-cobalt rounded divs in the hero
+      // (computed borderRadius is 3.35544e+07px in this engine — select by
+      // class + color, not by the radius string).
+      return Array.from(document.querySelectorAll(".bg-cobalt"))
+        .filter((d) => {
+          const cs = getComputedStyle(d);
+          const r = d.getBoundingClientRect();
+          return cs.backgroundColor === "rgb(46, 91, 255)" && Math.abs(r.width - 7.7) < 1;
+        })
+        .map((d) => getComputedStyle(d).transform);
+    });
+
+  // Exactly one visible constellation image, stable over 2.5s (no cycling).
+  const first = await snapImages();
+  expect(first.length, `expected exactly 1 visible hero image, got ${first.length}`).toBe(1);
+  await page.waitForTimeout(2500);
+  const later = await snapImages();
+  expect(later).toEqual(first);
+
+  // The typewriter renders all three meta lines statically (no cursor).
+  const meta = await page.evaluate(() => {
+    const section = document.querySelector('section[aria-label="Introduction"]');
+    const text = section?.textContent ?? "";
+    return {
+      hasDesigner: /GRAPHIC DESIGNER/i.test(text),
+      hasBased: /BASED: BERLIN/i.test(text),
+      hasEmail: /HELLO@ALEXMOREAU\.DESIGN/i.test(text),
+      hasCursor: text.includes("|"),
+    };
+  });
+  expect(meta).toEqual({ hasDesigner: true, hasBased: true, hasEmail: true, hasCursor: false });
+
+  // The dots freeze: byte-identical transforms across 1.5s of sampling.
+  const d1 = await snapDots();
+  expect(d1.length).toBeGreaterThanOrEqual(8);
+  await page.waitForTimeout(750);
+  const d2 = await snapDots();
+  await page.waitForTimeout(750);
+  const d3 = await snapDots();
+  expect(d2, "dot transforms changed over 750ms — dots must be frozen under reduced motion").toEqual(d1);
+  expect(d3, "dot transforms changed over the second 750ms — dots must be frozen under reduced motion").toEqual(d1);
+
+  await ctx.close();
+});

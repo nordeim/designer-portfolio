@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useInView, useReducedMotion } from "framer-mot
 import {
   buildConstellation,
   dotFloatPattern,
+  slotVisible,
   type ConstellationItem,
   type ConstellationSource,
 } from "@/lib/constellation";
@@ -74,6 +75,7 @@ function ConstellationSlot({
   visible: boolean;
   onHover: (id: number | null) => void;
 }) {
+  const reduced = useReducedMotion();
   const anim = dotAnimation(item.id);
   return (
     <div
@@ -91,14 +93,18 @@ function ConstellationSlot({
       <motion.div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none z-0 bg-cobalt"
         style={{ width: "7.7px", height: "7.7px", marginLeft: "-3px" }}
-        animate={{ y: anim.y }}
-        transition={{
-          duration: anim.duration,
-          times: anim.times,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: anim.delay,
-        }}
+        animate={reduced ? { y: 0 } : { y: anim.y }}
+        transition={
+          reduced
+            ? { duration: 0, repeat: 0 }
+            : {
+                duration: anim.duration,
+                times: anim.times,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: anim.delay,
+              }
+        }
         aria-hidden
       />
       <AnimatePresence>
@@ -192,7 +198,7 @@ export function HeroConstellation({
         <ConstellationSlot
           key={item.id}
           item={item}
-          visible={hovered === item.id || (hovered === null && cycled === item.id)}
+          visible={slotVisible({ id: item.id, hovered, cycled, reduced: reduced ?? false })}
           onHover={setHovered}
         />
       ))}
