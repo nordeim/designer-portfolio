@@ -13,7 +13,7 @@ Every line here exists because an agent would plausibly miss it without help.
 | `bun run typecheck` | `tsc --noEmit` (strict; **must** pass before commit) |
 | `bun run test` | Vitest unit suites (`tests/*.test.ts`, 74 tests) |
 | `bunx vitest run --coverage` | Unit suites + the 100% coverage gate on the pure seam (PAD §7.3) |
-| `bunx playwright test` | E2E suite (`e2e/*.spec.ts`, 37 tests: 32 normal + 5 outage specs that skip unless `E2E_OUTAGE=1`) against an already-running server on :3000 |
+| `bunx playwright test` | E2E suite (`e2e/*.spec.ts`, 39 tests: 34 normal + 5 outage specs that skip unless `E2E_OUTAGE=1`) against an already-running server on :3000 |
 | `E2E_START=1 bunx playwright test` | E2E suite with Playwright managing the server itself (`E2E_COMMAND` overrides the command) |
 | `E2E_OUTAGE=1 E2E_START=1 E2E_PORT=3100 E2E_COMMAND="PORT=3100 DATABASE_URL=file:./db-outage-missing/custom.db bun run start" bunx playwright test e2e/outage.spec.ts` | Graceful-degradation contract against a deliberately broken-DB server (health 503 honesty, static shell survival, non-throwing actions, styled error panel) |
 | `bun run db:push` | Push `prisma/schema.prisma` to the database (schema-declarative; ignores migration files) |
@@ -29,7 +29,7 @@ Every line here exists because an agent would plausibly miss it without help.
 1. After editing `prisma/schema.prisma`: `bun run db:generate` **then** `bun run db:push` — the running dev server caches the Prisma client, so **restart `bun run dev`** after schema changes or you get `Cannot read properties of undefined (reading 'findMany')`.
 2. Clean check before pushing: `bun run lint && bun run typecheck && bun run test` (build optional but recommended).
 3. Fresh database: delete `db/custom.db`, then `bunx prisma migrate deploy && bun run db:seed` (or `bun run db:push && bun run db:seed` for scratch iteration).
-4. The full gate is verified green on a **fresh clone** (`bun install` → `migrate deploy` → `seed`): lint, typecheck, 74 unit tests, coverage 100%, build, 32 E2E tests (+ the 5-spec outage suite under `E2E_OUTAGE=1`). Keep it that way — `tsc --noEmit` must pass with only the dependencies declared in `package.json` (no stale `node_modules` phantom packages).
+4. The full gate is verified green on a **fresh clone** (`bun install` → `migrate deploy` → `seed`): lint, typecheck, 74 unit tests, coverage 100%, build, 34 E2E tests (+ the 5-spec outage suite under `E2E_OUTAGE=1`). Keep it that way — `tsc --noEmit` must pass with only the dependencies declared in `package.json` (no stale `node_modules` phantom packages).
 
 ### Running a single test file
 
@@ -53,7 +53,7 @@ bunx playwright test -g "radial menu"            # E2E tests matching a title
 
 ```
 src/app/(site)/        Public RSC pages — landing, /projects, /project/[slug], /about, /contact, /privacy, /accessibility
-src/app/(auth)/login   Login page (redirects signed-in users to /dashboard)
+src/app/(auth)/login   Login page — the reference's auth-screen design (slate system card; redirects signed-in users to /dashboard)
 src/app/dashboard/     Auth-gated admin (layout = the gate; overview, projects CRUD, inquiries inbox)
 src/actions/           ALL mutations ("use server" + Zod + ActionResult envelope — never throw across the boundary)
 src/lib/data.ts        Read-side queries (single auditable query surface)
@@ -61,6 +61,7 @@ src/lib/validation.ts  Zod schemas — the source of truth shared by client form
 src/lib/auth/          scrypt password hashing + DB-backed sessions (token hashed with SHA-256; cookie is signed)
 src/lib/typewriter.ts  Pure typewriter state machine (hero meta line) — unit-tested
 src/lib/constellation.ts Pure constellation layout derivation (hero image grid) — unit-tested
+not-found boundaries: root src/app/not-found.tsx = the reference's standalone 404 (quoted pathname, slate system design; client component reading usePathname); segment src/app/(site)/project/[slug]/not-found.tsx = the source-parity "Project not found." centered mono line inside the site chrome. Keep notFound() calls (honest 404 status) — never replace the boundary with a plain render.
 src/components/site/   Public chrome + sections: site-header (breathing A/M logo + fixed CTA),
                       radial-menu (rotating wheel overlay), hero-constellation (floating image
                       constellation + typewriter), works-section (alternating sticky parallax
@@ -81,6 +82,7 @@ e2e/                   Playwright specs (public pages, project detail, auth, inq
 - **JSON-in-string columns**: `outcomes`, `deliverables`, `gallery` are JSON strings on SQLite (no native arrays). Parse ONLY with `parseStringList`/`parseGallery` from `src/lib/validation.ts` — they degrade corrupt data to `[]` instead of crashing pages.
 - **Design tokens live in `src/app/globals.css`** (Tailwind v4 `@theme inline` + CSS custom properties). Do not hardcode hex values in components; use `bg-background`, `text-foreground`, `text-cobalt`, `border-border`, `label-mono`.
 - **Every brand color must be mapped in `@theme inline`, not just declared in `:root`** — Tailwind v4 generates utilities only from `@theme` entries. A `--charcoal` custom property without a `--color-charcoal: var(--charcoal)` mapping silently produces dead `bg-charcoal`/`text-charcoal` classes (the session-16 invisible-radial-menu defect: the overlay mounted transparent on every viewport).
+- **Two design systems by surface**: the portfolio surface uses the grayscale token system; the **auth screen (login) and standalone 404** deliberately replicate the reference's base44 "system screen" language with literal Tailwind **slate** utilities and literal radii (`rounded-2xl` card, `rounded-[12px]` inputs/buttons). Do not "fix" them back to tokens, and do not spread slate into the portfolio surface. Note `rounded-xl` is 4px in this codebase (the `@theme` radius override), NOT 12px — the auth screen uses `rounded-[12px]` literals for that reason.
 - **The radial wheel anchors off-screen left**: `wheelCenter` (src/lib/menu-wheel.ts) returns `x = viewportW/2 − radius` (reference bundle formula) so the item cluster sits around the screen center and stays reachable at 390px. Centering the circle on the screen instead pushes every item off the right edge — pinned by the "keeps every menu item inside a mobile viewport" regression test.
 - **Hero h1 scaling**: the `9.8vw` size at ≥1440px is applied via the unlayered `.hero-h1-scale` class (bottom of `globals.css`) — NOT via a Tailwind `min-[1440px]:`/`3xl:` utility. Tailwind v4 does not guarantee ascending media-block emission order for non-default breakpoints, so a layered utility can silently lose the cascade to `md:`. Keep this pattern for any rule that must beat a `md:`/`lg:` utility at a higher breakpoint.
 - **Auth**: custom DB sessions (not NextAuth). Password hashing is scrypt via `node:crypto` — no native bindings. Session cookie: HttpOnly, SameSite=Lax, Secure in production.
@@ -92,6 +94,7 @@ e2e/                   Playwright specs (public pages, project detail, auth, inq
 - `testTimeout: 30_000` is deliberate (cold workspace imports under parallel runs); do not lower it.
 - The password tests do real scrypt derivation (~200ms each) — keep the count low; do not loop thousands of iterations.
 - No DB integration tests by design: the suites cover pure domain logic (validation schemas, password hashing, JSON column parsing, typewriter state machine, constellation geometry, radial-menu angle math). If you add DB tests, guard them to skip when `DATABASE_URL` is unset.
+- E2E parity specs pin source-verified metrics (login-card geometry, 404 stack, project-not-found text, legal section anatomy) — changes that regress reference parity fail the suite.
 - Playwright: only Chromium is configured (the only runtime installed here). The mutating specs (inquiry submit, project CRUD) run against the real SQLite DB — they use unique payloads and clean up after themselves, so they are safe to re-run against a seeded database.
 - **Outage specs are opt-in**: `e2e/outage.spec.ts` skips itself unless `E2E_OUTAGE=1` — it must target a server whose `DATABASE_URL` points at an unwritable path (see its file header). It validates the graceful-degradation contract from session 10: never a false "ok" from `/api/health`, static shell survives, actions return failure envelopes (never throw), unknown dynamic slugs render the styled panel.
 - **Playwright + live deployments**: read-only specs run verbatim against any origin via `E2E_BASE_URL=https://… bunx playwright test` (password-gated specs skip) — the post-deploy smoke test documented in `docs/DEPLOYMENT.md`. Always clear stale ports before `E2E_START` runs (a leftover server from a previous round makes the whole suite fail spuriously with ECONNREFUSED).

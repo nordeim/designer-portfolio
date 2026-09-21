@@ -58,7 +58,22 @@ test("video gallery item autoplays muted", async ({ page }) => {
   await expect(video).toHaveAttribute("loop", "");
 });
 
-test("unknown slug shows the 404 page", async ({ page }) => {
-  await page.goto("/project/does-not-exist");
-  await expect(page.getByText(/404|not found|Project not found/i).first()).toBeVisible();
+test("unknown slug shows the source-parity project-not-found state", async ({ page }) => {
+  const response = await page.goto("/project/does-not-exist");
+  // HTTP semantics stay honest (the reference SPA returns 200; we keep the
+  // correct 404 — documented divergence, visuals unaffected).
+  expect(response?.status()).toBe(404);
+  // The reference renders the site chrome with a centered mono message —
+  // NOT the generic 404 boundary.
+  await expect(page.getByText("Project not found.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Page Not Found" })).toHaveCount(0);
+  // Site chrome still present: the footer marquee and the header logo.
+  await expect(page.getByText("BRAND IDENTITY").first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "Alex Moreau — home" })).toBeVisible();
+  // Source geometry: the message sits inside the viewport (centered band).
+  const msg = page.getByText("Project not found.", { exact: true });
+  const box = await msg.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box!.y).toBeGreaterThan(150);
+  expect(box!.y + box!.height).toBeLessThan(720);
 });

@@ -84,11 +84,41 @@ test("contact form starts with placeholder selects and four social links (source
   await expect(social.filter({ hasText: "Dribbble ↗" })).toBeVisible();
 });
 
-test("legal pages render", async ({ page }) => {
+test("legal pages render with the reference section anatomy", async ({ page }) => {
   await page.goto("/privacy");
-  await expect(page.getByRole("heading", { name: /privacy/i }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Privacy Policy", exact: true })).toBeVisible();
+  // Source section headings (structure mirrored; content is real, not the
+  // reference's unfilled template placeholders).
+  await expect(page.getByRole("heading", { name: "A legal disclaimer" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Privacy Policy - the basics" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "What to include in the Privacy Policy" })).toBeVisible();
+
   await page.goto("/accessibility");
-  await expect(page.getByRole("heading", { name: /accessibility/i }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Accessibility", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Accessibility Statement" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "What web accessibility is" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Accessibility adjustments on this site" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Declaration of partial compliance/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Accessibility arrangements/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Requests, issues and suggestions" })).toBeVisible();
+  // The reference's 8-item adjustments list (ours states real adjustments).
+  const adjustments = page.getByRole("list", { name: "Accessibility adjustments" });
+  await expect(adjustments.getByRole("listitem")).toHaveCount(8);
+});
+
+test("unmatched route renders the standalone 404 (source parity)", async ({ page }) => {
+  const response = await page.goto("/no-such-route-anywhere");
+  expect(response?.status()).toBe(404);
+  // Source stack: big light "404", medium "Page Not Found", the quoted
+  // pathname, and a bordered "Go Home" button — no site chrome.
+  const big404 = page.getByRole("heading", { name: "404", exact: true });
+  await expect(big404).toBeVisible();
+  const fs = await big404.evaluate((el) => getComputedStyle(el).fontSize);
+  expect(parseFloat(fs)).toBeGreaterThanOrEqual(64);
+  await expect(page.getByRole("heading", { name: "Page Not Found" })).toBeVisible();
+  await expect(page.getByText('The page "/no-such-route-anywhere" could not be found', { exact: false })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Go Home" })).toBeVisible();
+  await expect(page.getByText("A/M")).toHaveCount(0);
 });
 
 test("health endpoint reports ok", async ({ request }) => {

@@ -8,15 +8,16 @@ The public site opens on a cinematic hero: the designer's name in oversized disp
 
 ## Screenshots
 
-Captured from the running app (see `docs/screenshots/` — 16 shots covering every page, both themes, desktop + mobile, and the radial menu):
+Captured from the running app (see `docs/screenshots/` — 21 shots covering every page, both themes, desktop + mobile, the radial menu, and the auth/404 system screens):
 
 | | | |
 |---|---|---|
 | `01-landing-light.png` — constellation hero | `02-landing-dark.png` — dark hero | `13-landing-works.png` — sticky parallax rows |
 | `14-landing-footer-marquee.png` — ghost marquee | `16-radial-menu.png` — radial wheel overlay (open, projects submenu + preview) | `03-projects.png` — archive |
 | `07-project-detail.png` — full-bleed case study | `15-project-detail-gallery.png` — gallery + zoom | `04-about.png` — portrait + timeline |
-| `05-contact.png` — underline form + charcoal submit pill | `06-login.png` — sign-in | `08–10` — dashboard views |
+| `05-contact.png` — underline form + charcoal submit pill | `06-login.png` — auth card (reference system-screen design) | `08–10` — dashboard views |
 | `11-mobile-landing.png` — 390px hero | `12-mobile-menu.png` — mobile radial menu (open) | `23-mobile-menu-projects-submenu.png` — mobile submenu + preview |
+| `24-standalone-404.png` — unmatched-route 404 (quoted path, Go Home) | `25-project-not-found.png` — unknown-slug state in site chrome | `26`/`27` — legal pages (reference section anatomy) |
 
 ## Key Features
 
@@ -32,7 +33,7 @@ Captured from the running app (see `docs/screenshots/` — 16 shots covering eve
 | 📊 | Owner dashboard: stats overview, projects CRUD, inquiry triage workflow | `src/app/dashboard/` |
 | 🌗 | Light/dark themes; reduced-motion aware | `next-themes` + `globals.css` |
 | ♿ | Semantic landmarks, focus states, AA contrast, keyboard operability | throughout |
-| 🧪 | Vitest unit suites (validation, hashing, JSON parsing, typewriter, constellation, menu geometry, db-path resolution, site-config DOM parity) + Playwright E2E (7 spec files, 37 tests) | `tests/`, `e2e/` |
+| 🧪 | Vitest unit suites (validation, hashing, JSON parsing, typewriter, constellation, menu geometry, db-path resolution, site-config DOM parity) + Playwright E2E (7 spec files, 39 tests incl. the 5 opt-in outage specs) | `tests/`, `e2e/` |
 
 ## Quick Start
 
@@ -191,6 +192,15 @@ Typography: **Inter** (300–700, body/display; hero h1 scales 106 → 141px →
 | 1 — Owner dashboard | ✅ Complete | Auth, overview, projects CRUD, inquiry triage |
 | 2 — Polish | ✅ Complete | Dark mode, a11y pass, image optimization, rate limiting, honeypot |
 | 3 — Optional integrations | ⬜ Deferred | Google OAuth (UI present, honest unconfigured state), SMTP notifications |
+
+## Agent Engineering Reference
+
+**`designer-portfolio_SKILL.md`** (repo root) is the distilled engineering
+skill for this codebase — design-token rules (the `@theme inline` mapping
+contract, the radius-scale override), the radial-menu geometry, the
+ActionResult contract, the auth/session design, the full test architecture,
+and every lesson from the build sessions. Read it before extending or
+debugging unfamiliar areas; update it when architecture changes.
 
 ## Deployment
 

@@ -23,6 +23,55 @@ test("login page offers Google, forgot-password and sign-up affordances", async 
   await expect(page.getByText(/single owner account/i)).toBeVisible();
 });
 
+test("login card matches the reference auth-screen design", async ({ page }) => {
+  await page.goto("/login");
+
+  // Reference stack: gradient page, rounded-2xl card with shadow + accent
+  // line, 80/96px avatar circle with a bold initial, centered bold heading.
+  const card = page.getByRole("region", { name: "Sign in" });
+  await expect(card).toBeVisible();
+  const heading = page.getByRole("heading", { name: /Welcome to Designer Portfolio/ });
+  const headingWeight = await heading.evaluate((el) => getComputedStyle(el).fontWeight);
+  expect(parseInt(headingWeight, 10)).toBeGreaterThanOrEqual(600);
+
+  const avatarText = page.getByText("D", { exact: true });
+  await expect(avatarText).toBeVisible();
+  // The circle filling the initial (80px base, 96px at sm): the glyph's
+  // parent span is the full-size inner circle of the avatar.
+  const avatar = avatarText.locator("xpath=..");
+  const avatarBox = await avatar.boundingBox();
+  expect(avatarBox).not.toBeNull();
+  expect(avatarBox!.width).toBeGreaterThanOrEqual(76); // 80 desktop (sm: 96)
+  expect(avatarBox!.height).toBeGreaterThanOrEqual(76);
+
+  // Fields carry the reference's inline Mail / Lock adornment icons.
+  const emailIcon = page.locator("div:has(> svg.lucide-mail)").first();
+  await expect(emailIcon).toBeAttached();
+  const lockIcon = page.locator('div:has(> svg.lucide-lock)').first();
+  await expect(lockIcon).toBeAttached();
+
+  // Sentence-case, full-width primary button (the reference's dark pill is
+  // rounded-[12px], 48px tall — not the portfolio's label-mono ALL-CAPS).
+  const submit = page.getByRole("button", { name: "Sign in", exact: true });
+  await expect(submit).toBeVisible();
+  const submitBox = await submit.boundingBox();
+  expect(submitBox!.height).toBeGreaterThanOrEqual(44);
+  // The reference's primary button is dark (slate-900) with white text.
+  const submitColor = await submit.evaluate((el) => getComputedStyle(el).color);
+  const m = submitColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+  expect(m).not.toBeNull();
+  expect(Number(m![1])).toBeGreaterThan(200); // white-ish text on dark bg
+  expect(Number(m![2])).toBeGreaterThan(200);
+  expect(Number(m![3])).toBeGreaterThan(200);
+
+  // Forgot / sign-up sit on one bottom row (justify-between), like the source.
+  const forgot = page.getByRole("button", { name: "Forgot password?" });
+  const signup = page.getByRole("button", { name: "Need an account? Sign up" });
+  const forgotBox = await forgot.boundingBox();
+  const signupBox = await signup.boundingBox();
+  expect(Math.abs((forgotBox!.y + forgotBox!.height / 2) - (signupBox!.y + signupBox!.height / 2))).toBeLessThan(6);
+});
+
 test("invalid credentials are rejected without leaking internals", async ({ page }) => {
   await page.goto("/login");
   await page.getByRole("textbox", { name: "Email", exact: true }).fill("nobody@example.com");

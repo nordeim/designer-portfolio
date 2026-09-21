@@ -82,7 +82,7 @@ bun run dev                       # http://localhost:3000
 
 - **Unit (Vitest, `tests/`)**: Zod schemas (inquiry, login, project input — including empty-select prompts), scrypt password hashing, JSON-column parsing degradation, typewriter state machine, constellation layout derivation, radial-menu angle math (incl. the mobile in-viewport reachability regression), database-path resolution, site-config DOM-parity contracts. No mocks — real schema parsing and real crypto.
 - **Integration**: the dev server + browser is the integration surface (see Verification below).
-- **E2E (Playwright, `e2e/`)**: 32 specs across six files (plus 5 opt-in outage specs) — public pages content (incl. the contact form's source-parity initial state: placeholder selects + four social links), project detail (hero/gallery/zoom/prev-next/video/404), auth (login, gating, radial menu), inquiry submission → dashboard inbox, dashboard CRUD + inquiry triage + sign-out, and a11y smoke (focus visibility, console errors, mobile overflow, marquee animation, constellation, **mobile radial-menu paint + in-viewport reachability**).
+- **E2E (Playwright, `e2e/`)**: 34 specs across six files (plus 5 opt-in outage specs) — public pages content (incl. the contact form's source-parity initial state: placeholder selects + four social links), project detail (hero/gallery/zoom/prev-next/video/404), auth (login, gating, radial menu), inquiry submission → dashboard inbox, dashboard CRUD + inquiry triage + sign-out, and a11y smoke (focus visibility, console errors, mobile overflow, marquee animation, constellation, **mobile radial-menu paint + in-viewport reachability**, plus the session-18 source-parity specs: login auth-card metrics, standalone 404 stack, project-not-found state, legal section anatomy).
 
 ### Test Commands
 
@@ -133,6 +133,8 @@ Never bundle unrelated changes. Never commit `.env`, `db/*.db`, or `dev.log` (al
 - Prisma client errors like `undefined (reading 'findMany')` → schema changed without a dev-server restart.
 - Tailwind v4 media-order gotcha: a non-default breakpoint utility (e.g. `min-[1440px]:`/`3xl:`) is NOT guaranteed to be emitted after the default `md:`/`lg:` blocks, so it can silently lose the cascade. Rules that must win at higher widths use unlayered CSS (see `.hero-h1-scale` at the bottom of `globals.css`).
 - Tailwind v4 theme-mapping gotcha: a color declared only in `:root` (e.g. `--charcoal`) generates NO utilities — it must also be mapped in `@theme inline` (`--color-charcoal: var(--charcoal)`). A missing mapping renders as dead classes (the invisible radial-menu overlay — session 16).
+- Tailwind v4 radius-scale override: `rounded-xl` is 4px here (not 12px) because `@theme inline` remaps `--radius-xl` from `--radius: 0px`. Use `rounded-[12px]` literals where the reference demands 12px (auth-screen inputs/buttons). `rounded-2xl` (16px) is not remapped.
+- Two-design-system rule: auth screen + standalone 404 use literal slate utilities (the reference's system-screen language); everything else uses the grayscale token system. Do not mix them.
 - Playwright `toBeVisible()` does NOT require an element to be inside the viewport — off-screen elements pass. Specs guarding on-screen reachability (e.g. the mobile radial menu) must also assert `boundingBox()` geometry.
 
 ## Communication & Documentation
@@ -140,6 +142,7 @@ Never bundle unrelated changes. Never commit `.env`, `db/*.db`, or `dev.log` (al
 - Explain *why* in comments and commit messages, not *what*.
 - Label claims: **Verified** (executed and observed), **Reasoned** (inferred from code), **Assumed** (stated assumption).
 - Update `README.md` + this file when commands, env vars, or architecture change.
+- `designer-portfolio_SKILL.md` (repo root) is the distilled engineering reference — update it alongside the PAD when architecture changes.
 
 ## Project-Specific Standards
 
