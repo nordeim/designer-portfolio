@@ -1,9 +1,9 @@
 ---
 name: designer-portfolio
-description: "Complete engineering skill for the Designer Portfolio codebase — a precision-minimalist designer portfolio (Next.js 16 + React 19 + Prisma/SQLite + Tailwind v4) cloned from a base44 reference app. Covers the design-token system, the radial-menu geometry, the ActionResult action contract, auth/session design, test architecture (Vitest + Playwright), graceful-degradation, and every hard-won lesson from sessions 1–32."
-version: 1.5.0
-last_updated: 2026-09-21 (session 32 — reduced-motion + motion-profile parity: the hero's a11y-positive static constellation fallback under prefers-reduced-motion [slotVisible, frozen dots — replacing a ZERO-image content loss], the /projects cursor preview keyed per row for the source's ~250 ms row-switch crossfade, the source's reduce behavior characterized as a CSS-only half-measure [JS machines ignore it])
-project_state: "85 unit tests @ 100% pure-seam coverage · 57 e2e (+5 outage) · build 17/17 SSG · live parity audit: 8/10 routes exact line parity · title sweep 7/7 MATCH · error-surface + machine-surface + deep-behavior + head-surface + DOM-texture/cadence + reduced-motion/motion-profile parity complete"
+description: "Complete engineering skill for the Designer Portfolio codebase — a precision-minimalist designer portfolio (Next.js 16 + React 19 + Prisma/SQLite + Tailwind v4) cloned from a base44 reference app. Covers the design-token system, the radial-menu geometry, the ActionResult action contract, auth/session design, test architecture (Vitest + Playwright), graceful-degradation, and every hard-won lesson from sessions 1–34."
+version: 1.6.0
+last_updated: 2026-09-21 (session 34 — interaction-machine + document-surface parity: removed the invented cobalt ::selection, added the source's 4px sage webkit scrollbar, restored the Tailwind v3-era button pointer-cursor rule v4 dropped, the legal eyebrow's title-case SPAN texture, the footer's hidden CTA anchor for link-graph parity, and the inert font-feature-settings removal — proven by DOM-screenshot glyph identity)
+project_state: "85 unit tests @ 100% pure-seam coverage · 61 e2e (+5 outage) · build 17/17 SSG · live parity audit: 8/10 routes exact line parity · title sweep 7/7 MATCH · error-surface + machine-surface + deep-behavior + head-surface + DOM-texture/cadence + reduced-motion/motion-profile + interaction-machine/document-surface parity complete"
 ---
 
 # Designer Portfolio — Engineering SKILL
@@ -119,6 +119,12 @@ test or recorded in `docs/remediation-plan-session-18.md`):
 | radial-menu semantics | plain `div` overlay — no dialog role, no `aria-modal`, no focus trap; Escape does NOT close it | `role="dialog"` + `aria-modal` + labelled + Escape-close + focus management | A11y-positive divergence (WCAG); invisible visually — same family as the login-input attributes (s30-documented) |
 | logo link + landmarks | A/M link has no accessible name; no `<header>` element | `aria-label="Alex Moreau — home"` + semantic `<header>` | A11y-positive; invisible (s30-documented) |
 | marquee item animations | items carry small CSS `animation`s (0.2 s/0.3 s — mount/hover effects) | visually-equivalent `transition`s (200/300 ms) | Same observable behavior; the 60 s track loop + hover states are pinned at parity (s30-documented) |
+| `::selection` | NO rule anywhere — the browser default highlight | Identical since session 34 (the invented cobalt/white rule was removed) | Document-surface parity (s34); pinned by the session-34 e2e spec |
+| scrollbar | global webkit rules: 4px wide, transparent track, `var(--color-sage)` thumb, 2px radius | Identical since session 34 (rules added to `globals.css`; LightningCSS serializes `transparent` as `0px 0px` — rendered value identical) | Document-surface parity (s34) |
+| button cursor | every button computes `cursor: pointer` (its Tailwind v3-era preflight) | Identical since session 34 (`button, [role="button"] { cursor: pointer }` restored — Tailwind v4 dropped the rule) | Interaction parity (s34); pinned across chrome + form buttons |
+| legal eyebrow texture | SPAN storing title-case "Legal" (`font-mono text-xs tracking-widest uppercase text-muted-foreground block mb-6`) | Identical since session 34 (was a P storing "LEGAL") | DOM-text parity, the marquee-class texture (s34) |
+| footer hidden CTA | a `display:none` "Start a Project →" `/contact` anchor as the bottom row's first child | Identical since session 34 (replicated with the source's exact class list) | Link-graph parity — 4 `/contact` anchors per route (s34) |
+| Inter feature settings | stock (`font-feature-settings: normal`) | Identical since session 34 (the dead `"ss01","cv11"` line removed — the gstatic subset lacks those glyphs; DOM glyph screenshots byte-identical) | Computed-surface parity (s34) |
 
 ---
 
@@ -688,11 +694,11 @@ Run EVERY gate on a clean tree; all must be green before commit/push.
 ```bash
 bun run lint                                   # eslint .
 bun run typecheck                              # tsc --noEmit (strict)
-bun run test                                   # 76 unit tests
+bun run test                                   # 85 unit tests
 bunx vitest run --coverage                     # 100% on the pure seam
 bun run build                                  # 17/17 SSG pages
 DATABASE_URL="file:../db/custom.db" E2E_ADMIN_PASSWORD=… bunx playwright test
-#   → 46 passed + 5 skipped
+#   → 61 passed + 5 skipped
 E2E_OUTAGE=1 E2E_START=1 E2E_PORT=3100 \
   E2E_COMMAND="PORT=3100 DATABASE_URL=file:./db-outage-missing/custom.db bun run start" \
   bunx playwright test e2e/outage.spec.ts     # 5/5 graceful degradation
@@ -889,6 +895,40 @@ Additional process lessons:
   probe that finds this class of gap: track ALL matching elements at rAF
   speed during the interaction, not just the first match — sampling
   `els[0]` masks the entering twin behind the exiting one.
+- **Audit the framework-version deltas, not just the app code (s34).**
+  Three of this session's five parity gaps were FRAMEWORK defaults, not
+  app decisions: Tailwind v4 dropped the v3 preflight's `button { cursor:
+  pointer }` (every source button computed pointer, every clone button
+  default — restored in the base layer); Tailwind v4.3's preflight html
+  stack differs from the source's older-v4 build (`--default-font-family`
+  pinned to match); and the body's inherited `font-feature-settings:
+  "ss01","cv11"` was invented polish the source never shipped. When
+  cloning a site built on a different minor version of your framework,
+  diff the PREFLIGHT/computed base surface FIRST — one base-layer rule
+  can close a whole class of button/cursor/stack divergences at once.
+- **Prove a font-feature setting inert before removing or trusting it
+  (s34).** CSS `font-feature-settings` does NOT affect canvas text
+  (ctx.font only) — a canvas glyph-diff CANNOT see it. The correct
+  instrument: inject an identically-styled DOM element on both origins
+  and compare element-screenshot hashes (DOM text inherits the setting).
+  Both proofs byte-identical → the committed gstatic subset physically
+  lacks the alternate glyphs → the setting is dead code; remove it so
+  future audits don't re-derive the inertness.
+- **Hidden DOM nodes are parity surfaces too (s34).** The source's footer
+  ships a `display: none` "Start a Project →" duplicate of the fixed CTA
+  as its bottom row's first child — invisible, untabbable, yet the cause
+  of a consistent exactly-one-anchor delta in the link graph (and a
+  count-only `getByRole` blind spot, since hidden elements never reach
+  the a11y tree). Replicate inert-but-present markup with the source's
+  exact class list (`… hidden`), and pin it with a raw
+  `querySelectorAll` count — a11y-tree queries cannot see it.
+- **Chromium cssText lies about keywords (s34).** `background: transparent`
+  serializes as `background: 0px 0px` in rule cssText (and the longhand
+  read off a shorthand-only declaration returns `initial`), while
+  LightningCSS may further rewrite the keyword at build. Assert the rule
+  STRUCTURE (selector + the serialization this browser actually emits)
+  or compare parsed rendered values — never a keyword substring across
+  differently-built origins.
 
 ---
 

@@ -533,3 +533,154 @@ test("cursor preview crossfades on row switch (session 32 parity)", async ({ pag
   expect(settled.length, `expected exactly 1 settled preview, got ${settled.length}`).toBe(1);
   expect(settled[0].op).toBeGreaterThanOrEqual(0.99);
 });
+
+// ---------------------------------------------------------------------------
+// Session 34 parity — interaction-machine + document-surface layer.
+// Audited surfaces: ::selection, the webkit scrollbar, button cursors, the
+// legal eyebrow DOM texture, and the footer's hidden CTA anchor.
+// ---------------------------------------------------------------------------
+
+test("selection, scrollbar, and font-feature surface match the source (session 34 parity)", async ({ page }) => {
+  await page.goto("/");
+  const surface = await page.evaluate(() => {
+    // ::selection must be the browser default — the source ships NO rule
+    // (computed: transparent background), never a brand-tinted highlight.
+    const h1 = document.querySelector("h1");
+    const sel = getComputedStyle(h1!, "::selection");
+    // Body must render stock Inter features (the source: normal).
+    const ffs = getComputedStyle(document.body).fontFeatureSettings;
+    // The source's global webkit scrollbar rules (collect the parsed
+    // cssText per rule — Chromium serializes `background: transparent`
+    // as `background: 0px 0px` in shorthand cssText; the SOURCE's own
+    // identical rule serializes the same way in this browser, so matching
+    // the serialization IS the parity check).
+    const scrollbarRules: string[] = [];
+    for (const sheet of document.styleSheets) {
+      let rules: CSSRuleList;
+      try {
+        rules = sheet.cssRules;
+      } catch {
+        continue;
+      }
+      const walk = (rs: CSSRuleList) => {
+        for (const rule of rs) {
+          const styleRule = rule as CSSStyleRule;
+          if ((styleRule.selectorText || "").includes("::-webkit-scrollbar")) {
+            scrollbarRules.push(rule.cssText);
+          }
+          const nested = (rule as { cssRules?: CSSRuleList }).cssRules;
+          if (nested) walk(nested);
+        }
+      };
+      walk(rules);
+    }
+    return { selBg: sel.backgroundColor, ffs, scrollbarRules };
+  });
+  // ::selection: transparent (browser default) — the source has no rule.
+  expect(surface.selBg).toBe("rgba(0, 0, 0, 0)");
+  // Inter feature settings: stock (the source renders default glyphs).
+  expect(surface.ffs).toBe("normal");
+  // Scrollbar: the source's 4px sage hairline with a 2px-rounded thumb.
+  // The global track rule exists and Chromium's serialization of its
+  // `background: transparent` is `0px 0px` (identical on the source).
+  expect(
+    surface.scrollbarRules.some((r) => r.startsWith("::-webkit-scrollbar-track") && r.includes("background: 0px 0px")),
+    `global transparent track rule missing: ${surface.scrollbarRules.join(" | ")}`,
+  ).toBe(true);
+  expect(
+    surface.scrollbarRules.some((r) => r.startsWith("::-webkit-scrollbar ") && r.includes("width: 4px")),
+    `4px scrollbar rule missing: ${surface.scrollbarRules.join(" | ")}`,
+  ).toBe(true);
+  expect(
+    surface.scrollbarRules.some(
+      (r) => r.startsWith("::-webkit-scrollbar-thumb") && r.includes("background: var(--color-sage)") && r.includes("border-radius: 2px"),
+    ),
+    `sage 2px thumb rule missing: ${surface.scrollbarRules.join(" | ")}`,
+  ).toBe(true);
+});
+
+test("chrome buttons render the pointer cursor (session 34 parity)", async ({ page }) => {
+  await page.goto("/");
+  const landing = await page.evaluate(() => {
+    const btn = (label: string) =>
+      [...document.querySelectorAll("button")].find((b) => b.getAttribute("aria-label") === label)!;
+    return {
+      toggle: getComputedStyle(btn("Toggle dark mode")).cursor,
+      menu: getComputedStyle(btn("Open menu")).cursor,
+    };
+  });
+  // The source's buttons all compute cursor: pointer (its Tailwind
+  // v3-era preflight rule) — Tailwind v4 dropped it; we restore it.
+  expect(landing.toggle).toBe("pointer");
+  expect(landing.menu).toBe("pointer");
+
+  await page.goto("/contact");
+  const contact = await page.evaluate(() => {
+    const submit = [...document.querySelectorAll("button")].find((b) =>
+      (b.textContent || "").trim().startsWith("Send Inquiry"),
+    )!;
+    const trigger = [...document.querySelectorAll("button")].find((b) =>
+      (b.textContent || "").includes("Select a type"),
+    )!;
+    return { submit: getComputedStyle(submit).cursor, trigger: getComputedStyle(trigger).cursor };
+  });
+  expect(contact.submit).toBe("pointer");
+  expect(contact.trigger).toBe("pointer");
+});
+
+test("legal eyebrow label stores title-case text in a span (session 34 parity)", async ({ page }) => {
+  for (const path of ["/privacy", "/accessibility"]) {
+    await page.goto(path);
+    const label = await page.evaluate(() => {
+      const h1 = document.querySelector("h1");
+      const el = h1?.previousElementSibling;
+      if (!el) return null;
+      const cs = getComputedStyle(el);
+      return {
+        tag: el.tagName,
+        text: (el.textContent || "").replace(/\s+/g, " ").trim(),
+        transform: cs.textTransform,
+        display: cs.display,
+        marginBottom: cs.marginBottom,
+        cls: el.getAttribute("class") || "",
+      };
+    });
+    expect(label, `${path}: the eyebrow must exist before the h1`).not.toBeNull();
+    // The source: a SPAN storing title-case "Legal", visually uppercased
+    // by CSS (the session-30 marquee-class DOM texture).
+    expect(label!.tag).toBe("SPAN");
+    expect(label!.text).toBe("Legal");
+    expect(label!.transform).toBe("uppercase");
+    expect(label!.display).toBe("block");
+    expect(label!.marginBottom).toBe("24px");
+    expect(label!.cls).toContain("tracking-widest");
+  }
+});
+
+test("footer ships the source's hidden CTA anchor (session 34 parity)", async ({ page }) => {
+  await page.goto("/");
+  const cta = await page.evaluate(() => {
+    const links = [...document.querySelectorAll('a[href="/contact"]')];
+    const hidden = links.filter((a) => getComputedStyle(a).display === "none");
+    const row = [...document.querySelectorAll("footer div")]
+      .filter((d) => (d.getAttribute("class") || "").startsWith("flex flex-col md:flex-row"))
+      .pop();
+    return {
+      total: links.length,
+      hiddenCount: hidden.length,
+      hiddenText: (hidden[0]?.textContent || "").replace(/\s+/g, " ").trim(),
+      hiddenHref: hidden[0]?.getAttribute("href"),
+      inFooterRow: hidden[0]?.parentElement === row,
+      isFirstRowChild: row?.firstElementChild === hidden[0],
+    };
+  });
+  // The source renders 4 /contact anchors on the landing: the fixed CTA,
+  // the footer nav "Contact", "Start a Conversation", and a hidden
+  // duplicate of the CTA as the footer row's first child.
+  expect(cta.total).toBe(4);
+  expect(cta.hiddenCount).toBe(1);
+  expect(cta.hiddenText).toBe("Start a Project →");
+  expect(cta.hiddenHref).toBe("/contact");
+  expect(cta.inFooterRow).toBe(true);
+  expect(cta.isFirstRowChild).toBe(true);
+});

@@ -84,6 +84,17 @@ export function SiteFooter() {
         </div>
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 md:gap-4 pt-8 md:pt-0 border-t border-border md:border-t-0">
+          {/* The source's hidden CTA duplicate (session 34): a "Start a
+              Project →" anchor to /contact as the bottom row's FIRST child,
+              `display: none` at every viewport — inert (not tabbable, not in
+              the a11y tree) but present in the source's DOM. Replicated for
+              link-graph parity (4 /contact anchors on every route). */}
+          <Link
+            href="/contact"
+            className="font-mono text-xs tracking-widest uppercase text-foreground hover:text-cobalt transition-colors focus:outline-none focus:ring-2 focus:ring-cobalt focus:ring-offset-4 hidden"
+          >
+            Start a Project →
+          </Link>
           <span className="font-mono text-xs text-muted-foreground">
             {/* Single text node (session 30): the source ships ONE node —
                 "© 2026 Alex Moreau. Built on Base44." JSX static/expression

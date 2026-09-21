@@ -16,7 +16,10 @@ export const metadata: Metadata = pageMetadata({
 export default function PrivacyPage() {
   return (
     <section className="mx-auto max-w-[1400px] px-6 md:px-10 pt-28 md:pt-40 pb-16 md:pb-24" aria-label="Privacy policy">
-      <p className="label-mono text-muted-foreground mb-6">LEGAL</p>
+      {/* The source's exact eyebrow texture (session 34): a SPAN storing
+          title-case "Legal" — CSS uppercases it visually. The session-30
+          marquee-class DOM texture; keep the tag/class/case exact. */}
+      <span className="font-mono text-xs tracking-widest uppercase text-muted-foreground block mb-6">Legal</span>
       <h1 className="font-body text-5xl md:text-6xl font-light tracking-tight text-foreground mb-16">
         Privacy Policy
       </h1>

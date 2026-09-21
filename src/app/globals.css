@@ -104,6 +104,12 @@
   --gallery: #f5f5f7;
   --sage: #a3b18a;
   --charcoal: #121212;
+  /* html-level font stack — the source's older-Tailwind-v4 preflight
+     default (our Tailwind v4.3 ships the v3-flavored stack instead).
+     Inert for rendering (body's font-sans → Inter wins for all content;
+     DOM glyph screenshots are byte-identical either way) but pinned for
+     computed-style parity (session 34). */
+  --default-font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
 .dark {
@@ -144,11 +150,26 @@
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-feature-settings: "ss01", "cv11";
   }
-  ::selection {
-    background: var(--cobalt);
-    color: white;
+  /* The source's button cursor rule (carried by its Tailwind v3-era
+     preflight): Tailwind v4 dropped `button { cursor: pointer }` — every
+     source button (toggle, menu trigger, select triggers, submit) computes
+     pointer. Restore it so the chrome matches (session 34). */
+  button,
+  [role="button"] {
+    cursor: pointer;
+  }
+  /* The source's global scrollbar: a 4px sage hairline with a 2px-rounded
+     thumb (session 34) — sage resolves to #a3b18a on both origins. */
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-sage);
+    border-radius: 2px;
   }
 }
 
