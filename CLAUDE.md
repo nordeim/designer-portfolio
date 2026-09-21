@@ -90,7 +90,7 @@ bun run dev                       # http://localhost:3000
 bun run test                      # all unit suites
 bunx vitest run tests/validation.test.ts
 bunx vitest run -t "slug"
-E2E_ADMIN_PASSWORD=… bunx playwright test    # full e2e (45 tests: 40 normal + 5 outage-skipped; server must be running on :3000)
+E2E_ADMIN_PASSWORD=… bunx playwright test    # full e2e (55 tests: 50 normal + 5 outage-skipped; server must be running on :3000)
 bunx playwright test e2e/auth.spec.ts        # one file
 E2E_START=1 E2E_COMMAND="bun run start" bunx playwright test   # vs production build
 ```
@@ -137,6 +137,8 @@ Never bundle unrelated changes. Never commit `.env`, `db/*.db`, or `dev.log` (al
 - Two-design-system rule: auth screen + standalone 404 use literal slate utilities (the reference's system-screen language); everything else uses the grayscale token system. Do not mix them.
 - Playwright `toBeVisible()` does NOT require an element to be inside the viewport — off-screen elements pass. Specs guarding on-screen reachability (e.g. the mobile radial menu) must also assert `boundingBox()` geometry.
 - Inter self-hosting (session 26): `next/font/google`'s Inter differs from the reference's gstatic v20 woff2 by ~3% at weights 300/500 — the exact file lives in `src/app/fonts/` (with SIL OFL license). The reference's JS bundle also registers its GSAP pin in a `setTimeout` (~50% racy engagement) — replicate the measured intent deterministically, never the race.
+- Line-height parity is breakpoint-dependent (session 28): the reference's `leading-tight` on display h1s wins ONLY below md (v3's responsive text-* variants override it at md+) — replicate with `max-md:leading-tight`, never by dropping or unprefixed re-adding the class. The detail h2 uses plain `leading-snug` (41.25px at all widths); legal h2s stay `text-xl`.
+- Route-level OG metadata must be composed via `pageMetadata()` (`src/lib/og.ts`): Next.js replaces nested metadata objects wholesale — a page setting `openGraph` silently loses the root's siteName/type/images, and the root's `twitter` block survives unless the page re-states it. `twitter:url` is not expressible in Next's typed API (accepted divergence).
 
 ## Communication & Documentation
 

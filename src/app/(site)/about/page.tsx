@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/og";
 import { FadeIn } from "@/components/site/fade-in";
 import { EXPERIENCE, SKILL_GROUPS, SITE } from "@/lib/site-config";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "About",
   description:
     "Alex Moreau — a Berlin-based graphic designer specializing in brand identity, building visual systems from first sketch to final print file.",
-};
+  path: "/about",
+});
 
 const PORTRAIT = "/about-portrait.jpg";
 
@@ -34,7 +36,7 @@ export default function AboutPage() {
           </FadeIn>
           <FadeIn className="md:col-start-7 md:col-span-6 flex flex-col justify-end" delay={0.2}>
             <span className="font-mono text-xs tracking-widest uppercase text-muted-foreground block mb-4">About</span>
-            <h1 className="font-body text-4xl md:text-5xl lg:text-6xl font-light tracking-tight text-foreground mb-8">
+            <h1 className="font-body text-4xl md:text-5xl lg:text-6xl font-light tracking-tight text-foreground mb-8 max-md:leading-tight">
               Brands that mean
               <br />
               <span className="text-muted-foreground">something.</span>

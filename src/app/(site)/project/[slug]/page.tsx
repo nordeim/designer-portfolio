@@ -38,10 +38,25 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: "Project Detail",
     description: project.objective,
+    // Per-route canonical + og:url (session 28 parity — the reference serves
+    // both on every route). The OG block stays deliberately richer than the
+    // reference's generic "Project Detail | …" card: per-project
+    // title/description/hero image (invisible in the browser UI).
+    alternates: { canonical: `/project/${project.slug}` },
     openGraph: {
       title: `${project.title} — ${project.subtitle}`,
       description: project.objective,
+      url: `/project/${project.slug}`,
+      siteName: "Designer Portfolio",
+      locale: "en_US",
+      type: "website",
       images: [{ url: project.heroImage }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${project.title} — ${project.subtitle}`,
+      description: project.objective,
+      images: [project.heroImage],
     },
   };
 }

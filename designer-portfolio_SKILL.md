@@ -1,9 +1,9 @@
 ---
 name: designer-portfolio
 description: "Complete engineering skill for the Designer Portfolio codebase — a precision-minimalist designer portfolio (Next.js 16 + React 19 + Prisma/SQLite + Tailwind v4) cloned from a base44 reference app. Covers the design-token system, the radial-menu geometry, the ActionResult action contract, auth/session design, test architecture (Vitest + Playwright), graceful-degradation, and every hard-won lesson from sessions 1–26."
-version: 1.2.0
-last_updated: 2026-09-21 (session 26 — deep-behavior parity: source-exact Inter via next/font/local, pinned detail intro at y=138, reference FAQ typography, exact focus-ring map, form field insets, display h1 line-heights, mixed-case hero DOM)
-project_state: "76 unit tests @ 100% pure-seam coverage · 46 e2e (+5 outage) · build 17/17 SSG · live parity audit: 8/10 routes exact line parity · title sweep 7/7 MATCH · error-surface + machine-surface + deep-behavior parity complete"
+version: 1.3.0
+last_updated: 2026-09-21 (session 28 — head-surface + mobile-typography parity: og/twitter image surface, per-route og:url/canonical/title via pageMetadata(), PWA manifest + apple metas, mobile display-h1 leading-tight 45px, detail h2 leading-snug restored 41.25px, legal h2s flat text-xl, constellation slot table enumerated at 10/10 parity)
+project_state: "76 unit tests @ 100% pure-seam coverage · 50 e2e (+5 outage) · build 17/17 SSG · live parity audit: 8/10 routes exact line parity · title sweep 7/7 MATCH · error-surface + machine-surface + deep-behavior + head-surface parity complete"
 ---
 
 # Designer Portfolio — Engineering SKILL
@@ -104,6 +104,13 @@ test or recorded in `docs/remediation-plan-session-18.md`):
 | CTA arrow glyph width | gstatic latin-subset JBM lacks U+2192 → system-fallback arrow (~6px narrower text) | JBM's own arrow glyph (CTA text 166px vs 160px) | Right edges align; engineering a one-glyph fallback isn't worth it (s26) |
 | project-detail pin END | GSAP pin (racy: ~50% engagement, releases ~294px before grid bottom) | CSS sticky, deterministic, holds to the grid's flow end; POSITION (y=138) + start exact | Determinism beats replicating a race — the bundle's pinned intent is what users are meant to see (s26) |
 | focus-ring coverage | Plain `focus:` cobalt ring ONLY on CTA/footer/philosophy/submit/info links; nothing on chrome/rows/links/FAQ/zoom | Identical map since session 26 (plain `focus:`, no rings on the no-ring set) | Exact parity — the old `focus-visible:` everywhere was MORE accessible but not what the reference ships |
+| og:image asset | its media.base44.com logo SVG (1200×630 fill) | this site's own `/icon.svg` (1200×630 intent) on every route | Same surface (a logo social-preview everywhere), never a hotlink to the reference CDN (s28) |
+| per-project OG card | generic `Project Detail \| Designer Portfolio` + logo | `Kinto — Matcha Brand Identity` + hero image + objective (+ og:url/canonical + mirrored twitter since s28) | SEO-positive divergence; the browser-tab title still matches exactly |
+| twitter:url | shipped on every route (base44 template) | not shipped | Not expressible in Next's typed `TwitterMetadata`; dead tag (X's parser ignores it); og:url + canonical carry the route (s28) |
+| PWA surface | `/manifest.json` + mobile-web-app-capable + apple status-bar/title metas | Identical field structure since session 28 (`public/manifest.json` + layout `manifest`/`appleWebApp` keys; own icon + origin) | Parity — installable + standalone chrome like the reference |
+| constellation img alt | `alt="Project preview"` on floating decorative previews | `alt=""` + aria-hidden | WCAG-correct treatment of decorative imagery (s28) |
+| gallery image alts | terse (`Kinto 1`) | descriptive (`Kinto — packaging suite…`) | SEO/a11y-positive (s28) |
+| viewport serialization | `initial-scale=1.0` | `initial-scale=1` (Next default) | Functionally identical |
 
 ---
 
@@ -793,6 +800,46 @@ Additional process lessons:
   selects to 36px. In Tailwind v4 the escape hatch is the important
   suffix: `h-12!`. Same war exists for `data-[state=…]` variants — check
   the base's conditional classes before overriding at the call site.
+
+- **L35 (s28): Tailwind v3's responsive text-size variants override base
+  leading-* utilities — line-height parity is BREAKPOINT-DEPENDENT.** The
+  reference keeps `leading-tight` on its display h1s, but in v3 the
+  `md:text-6xl`/`lg:text-7xl` media-query blocks (emitted after all base
+  utilities) re-set line-height, so `leading-tight` only WINS below 768px
+  (36px × 1.25 = 45px mobile, 72/60px desktop). Session 26 "fixed" the
+  desktop half by dropping the class and silently broke the mobile half
+  (v4 default 40px). The correct replication is `max-md:leading-tight` —
+  never drop the class, never re-add it unprefixed. Audit headings at
+  BOTH 390px and 1440px, always.
+
+- **L36 (s28): a single-sample probe of a randomized surface is noise.**
+  The landing constellation cycles 0–1 images on random timers; one
+  probe round "found" three divergent slots — a 40-sample enumeration
+  proved the 10-slot table is at EXACT parity (same positions, sizes,
+  visible-count pattern, entry scale animation). Any time-dependent or
+  randomized surface needs patient multi-sample enumeration with
+  center-normalized geometry, not a snapshot.
+
+- **L37 (s28): Next.js replaces nested metadata objects WHOLESALE — and
+  the root's `twitter` block survives page-level `openGraph`.** A page
+  that sets `openGraph: {…}` silently loses the root's
+  siteName/locale/type/images; a page that sets only openGraph keeps the
+  root's twitter.title (the card stops mirroring the route). Compose
+  route-level metadata through one helper (`src/lib/og.ts`
+  `pageMetadata()`) that re-states the full OG set AND the twitter block
+  AND `alternates.canonical`. Also: `twitter:url` does not exist in
+  Next's typed `TwitterMetadata` — a hard API boundary, document it as
+  divergence instead of fighting the types.
+
+- **L38 (s28): the source is a moving target — re-verify pinned probes
+  before re-fixing.** Session 26 measured the detail h2 at 36px and
+  removed the clone's `leading-snug`; the current source demonstrably
+  ships `leading-snug` (41.25px, double-verified at both viewports).
+  Either the source drifted or that probe mis-targeted — either way the
+  parity target is the CURRENT source. Re-run the probe twice, at two
+  viewports, before reversing a prior session's fix; then flip the e2e
+  assertion WITH the evidence in the comment so the next agent can trace
+  the reversal.
 
 ---
 

@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/og";
 import { SITE } from "@/lib/site-config";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Privacy",
   description: "How this portfolio collects, uses, and protects the personal information you share.",
-};
+  path: "/privacy",
+});
 
 /**
  * Privacy policy — mirrors the reference app's section anatomy (disclaimer /
@@ -20,7 +22,7 @@ export default function PrivacyPage() {
       </h1>
       <div className="max-w-3xl flex flex-col gap-8 font-body text-sm md:text-base leading-relaxed text-foreground">
         <section aria-label="A legal disclaimer">
-          <h2 className="font-body text-xl md:text-2xl font-medium text-foreground mb-4">A legal disclaimer</h2>
+          <h2 className="font-body text-xl font-medium text-foreground mb-4">A legal disclaimer</h2>
           <p>
             The explanations and information provided on this page describe the actual data practices of this
             portfolio in plain language. They are general information about how this specific site works, not legal
@@ -30,7 +32,7 @@ export default function PrivacyPage() {
         </section>
 
         <section aria-label="Privacy policy - the basics">
-          <h2 className="font-body text-xl md:text-2xl font-medium text-foreground mb-4">Privacy Policy - the basics</h2>
+          <h2 className="font-body text-xl font-medium text-foreground mb-4">Privacy Policy - the basics</h2>
           <p>
             This portfolio is a showcase for {SITE.name}&apos;s design work. The only personal information collected
             here is what you voluntarily submit through the project inquiry form: your name, email address, company,
@@ -52,7 +54,7 @@ export default function PrivacyPage() {
         </section>
 
         <section aria-label="What is covered by this privacy policy">
-          <h2 className="font-body text-xl md:text-2xl font-medium text-foreground mb-4">
+          <h2 className="font-body text-xl font-medium text-foreground mb-4">
             What to include in the Privacy Policy
           </h2>
           <p>

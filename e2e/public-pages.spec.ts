@@ -69,10 +69,10 @@ test("contact page renders headline, underline form, FAQ, and info columns", asy
 });
 
 test("display headings use the source's default line-heights (session 26 parity)", async ({ page }) => {
-  // Source-measured: the reference's display h1s carry NO leading-*
-  // utility — text-7xl/text-6xl defaults apply (lh 1.0: 72px / 60px). Our
-  // added leading-tight (1.25) inflated every contact/about h1 by 25%,
-  // pushing the whole page flow down ~36px.
+  // Source-measured: at desktop the reference's display h1s settle at the
+  // text-7xl/text-6xl bundled line-heights (lh 1.0: 72px / 60px). Our old
+  // leading-tight (1.25) inflated every contact/about h1 by 25%, pushing
+  // the whole page flow down ~36px.
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/contact");
   const contactLh = await page.locator("h1").evaluate((el) => getComputedStyle(el).lineHeight);
@@ -81,6 +81,54 @@ test("display headings use the source's default line-heights (session 26 parity)
   await page.goto("/about");
   const aboutLh = await page.locator("h1").evaluate((el) => getComputedStyle(el).lineHeight);
   expect(aboutLh).toBe("60px");
+});
+
+test("display h1s keep the source's leading-tight at mobile (session 28 parity)", async ({ page }) => {
+  // Source-measured (390px): the reference KEEPS leading-tight on the
+  // contact/about h1s. In Tailwind v3 the responsive md:/lg: text-size
+  // variants are emitted after base utilities, so their bundled line-heights
+  // WIN at >=768px — leading-tight (1.25) only wins BELOW md: 36px x 1.25
+  // = 45px. The session-26 fix dropped the class entirely (mobile fell to
+  // v4's text-4xl default 40px). The parity target is 45px at <768px AND
+  // 72/60px at desktop — replicated with max-md:leading-tight.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/contact");
+  const contactM = await page.locator("h1").evaluate((el) => {
+    const cs = getComputedStyle(el);
+    return `${cs.fontSize}/${cs.lineHeight}`;
+  });
+  expect(contactM).toBe("36px/45px");
+
+  await page.goto("/about");
+  const aboutM = await page.locator("h1").evaluate((el) => {
+    const cs = getComputedStyle(el);
+    return `${cs.fontSize}/${cs.lineHeight}`;
+  });
+  expect(aboutM).toBe("36px/45px");
+
+  // Desktop must NOT regress (the max-md variant stops at 768px).
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/contact");
+  const contactD = await page.locator("h1").evaluate((el) => getComputedStyle(el).lineHeight);
+  expect(contactD).toBe("72px");
+});
+
+test("legal-page h2s stay at text-xl on every breakpoint (session 28 parity)", async ({ page }) => {
+  // Source-measured: the reference's legal h2s are `text-xl font-medium`
+  // (20px/28px) at ALL widths — no md:text-2xl step. The clone scaled to
+  // 24px/32px at >=768px.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/privacy");
+  const h2 = page.locator("h2").first();
+  const fs = await h2.evaluate((el) => getComputedStyle(el).fontSize);
+  const lh = await h2.evaluate((el) => getComputedStyle(el).lineHeight);
+  expect(`${fs}/${lh}`).toBe("20px/28px");
+
+  await page.goto("/accessibility");
+  const h2b = page.locator("h2").first();
+  const fsb = await h2b.evaluate((el) => getComputedStyle(el).fontSize);
+  const lhb = await h2b.evaluate((el) => getComputedStyle(el).lineHeight);
+  expect(`${fsb}/${lhb}`).toBe("20px/28px");
 });
 
 test("legal-page h1s use the source's mobile size and margin (session 26 parity)", async ({ page }) => {
@@ -250,4 +298,89 @@ test("sitemap.xml matches the reference route set (6 routes, weekly, 1.0/0.8)", 
   expect(prios).toHaveLength(6);
   expect(prios[0]).toBe("1.0");
   for (const p of prios.slice(1)) expect(p).toBe("0.8");
+});
+
+test("head metadata carries the source's social surface (session 28 parity)", async ({ page }) => {
+  // Source ground truth: every route serves og:image + twitter:image (the
+  // site logo), og:url + canonical per route, and og:title mirrors the page
+  // title (e.g. "Contact | Designer Portfolio" on /contact). The clone
+  // previously served NO social preview image anywhere and let secondary
+  // pages fall back to the root OG block.
+  await page.goto("/contact");
+  const meta = await page.evaluate(() => {
+    const get = (sel) => document.head.querySelector(sel)?.getAttribute("content") ?? null;
+    return {
+      ogTitle: get('meta[property="og:title"]'),
+      ogDesc: get('meta[property="og:description"]'),
+      ogImage: get('meta[property="og:image"]'),
+      ogUrl: get('meta[property="og:url"]'),
+      twImage: get('meta[name="twitter:image"]'),
+      twCard: get('meta[name="twitter:card"]'),
+      twTitle: get('meta[name="twitter:title"]'),
+      canonical: document.head.querySelector('link[rel="canonical"]')?.getAttribute("href") ?? null,
+      manifest: document.head.querySelector('link[rel="manifest"]')?.getAttribute("href") ?? null,
+      webAppCapable: get('meta[name="mobile-web-app-capable"]'),
+      appleStatus: get('meta[name="apple-mobile-web-app-status-bar-style"]'),
+      appleTitle: get('meta[name="apple-mobile-web-app-title"]'),
+    };
+  });
+  expect(meta.ogTitle).toBe("Contact | Designer Portfolio");
+  expect(meta.ogDesc).toBeTruthy();
+  expect(meta.ogImage).toBeTruthy(); // the site icon — the source serves its logo too
+  expect(meta.twImage).toBeTruthy();
+  expect(meta.twCard).toBe("summary_large_image");
+  // The twitter card mirrors the route title (the root's twitter block must
+  // not survive page-level replacement).
+  expect(meta.twTitle).toBe("Contact | Designer Portfolio");
+  expect(meta.ogUrl).toContain("/contact");
+  expect(meta.canonical).toContain("/contact");
+  expect(meta.manifest).toBe("/manifest.json");
+  expect(meta.webAppCapable).toBe("yes");
+  expect(meta.appleStatus).toBe("black");
+  expect(meta.appleTitle).toBe("Designer Portfolio");
+
+  // Landing carries the same image surface + the root canonical.
+  await page.goto("/");
+  const landingMeta = await page.evaluate(() => ({
+    img: document.head.querySelector('meta[property="og:image"]')?.getAttribute("content") ?? null,
+    canonical: document.head.querySelector('link[rel="canonical"]')?.getAttribute("href") ?? null,
+  }));
+  expect(landingMeta.img).toBeTruthy();
+  expect(landingMeta.canonical).toBeTruthy();
+
+  // Project detail: per-route og:url + canonical join the (deliberately
+  // richer) per-project OG + twitter blocks.
+  await page.goto("/project/kinto-cafe-branding");
+  const detail = await page.evaluate(() => ({
+    ogUrl: document.head.querySelector('meta[property="og:url"]')?.getAttribute("content") ?? null,
+    canonical: document.head.querySelector('link[rel="canonical"]')?.getAttribute("href") ?? null,
+    twTitle: document.head.querySelector('meta[name="twitter:title"]')?.getAttribute("content") ?? null,
+  }));
+  expect(detail.ogUrl).toContain("/project/kinto-cafe-branding");
+  expect(detail.canonical).toContain("/project/kinto-cafe-branding");
+  expect(detail.twTitle).toBe("Kinto — Matcha Brand Identity");
+});
+
+test("manifest.json serves the PWA field set (session 28 parity)", async ({ request }) => {
+  // Source ground truth: /manifest.json with name, short_name, description,
+  // SVG icons at 192 + 512, standalone display, theme_color #000000,
+  // background_color #ffffff, scoped to the origin. The clone previously
+  // shipped no manifest at all (not installable, no standalone chrome).
+  const res = await request.get("/manifest.json");
+  expect(res.status()).toBe(200);
+  const body = await res.json();
+  expect(body.name).toBe("Designer Portfolio");
+  expect(body.short_name).toBe("Designer Portfolio");
+  expect(body.description).toBeTruthy();
+  expect(body.display).toBe("standalone");
+  expect(body.theme_color).toBe("#000000");
+  expect(body.background_color).toBe("#ffffff");
+  expect(body.start_url).toBeTruthy();
+  expect(body.scope).toBeTruthy();
+  const icons = body.icons ?? [];
+  expect(icons.map((i: { sizes: string }) => i.sizes).sort()).toEqual(["192x192", "512x512"]);
+  for (const icon of icons) {
+    expect(icon.src).toBeTruthy();
+    expect(icon.type).toBe("image/svg+xml");
+  }
 });

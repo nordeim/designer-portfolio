@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/og";
 import { SITE } from "@/lib/site-config";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Accessibility",
   description: "This portfolio's commitment to WCAG 2.2 Level AA accessibility and how to report barriers.",
-};
+  path: "/accessibility",
+});
 
 /**
  * Accessibility statement — mirrors the reference app's section anatomy
@@ -42,7 +44,7 @@ export default function AccessibilityPage() {
         </p>
 
         <section aria-label="Accessibility Statement">
-          <h2 className="font-body text-xl md:text-2xl font-medium text-foreground mb-4">Accessibility Statement</h2>
+          <h2 className="font-body text-xl font-medium text-foreground mb-4">Accessibility Statement</h2>
           <p>This statement was last updated on September 21, 2026.</p>
           <p>
             We at {SITE.name} are working to make this site (designer-portfolio) accessible to people with
@@ -52,7 +54,7 @@ export default function AccessibilityPage() {
         </section>
 
         <section aria-label="What web accessibility is">
-          <h2 className="font-body text-xl md:text-2xl font-medium text-foreground mb-4">What web accessibility is</h2>
+          <h2 className="font-body text-xl font-medium text-foreground mb-4">What web accessibility is</h2>
           <p>
             An accessible site allows visitors with disabilities to browse the site with the same or a similar level
             of ease and enjoyment as other visitors. This can be achieved through the capabilities of the system on
@@ -62,7 +64,7 @@ export default function AccessibilityPage() {
         </section>
 
         <section aria-label="Accessibility adjustments on this site">
-          <h2 className="font-body text-xl md:text-2xl font-medium text-foreground mb-4">
+          <h2 className="font-body text-xl font-medium text-foreground mb-4">
             Accessibility adjustments on this site
           </h2>
           <p>
@@ -81,7 +83,7 @@ export default function AccessibilityPage() {
         </section>
 
         <section aria-label="Declaration of partial compliance with the standard due to third-party content">
-          <h2 className="font-body text-xl md:text-2xl font-medium text-foreground mb-4">
+          <h2 className="font-body text-xl font-medium text-foreground mb-4">
             Declaration of partial compliance with the standard due to third-party content
           </h2>
           <p>
@@ -93,7 +95,7 @@ export default function AccessibilityPage() {
         </section>
 
         <section aria-label="Accessibility arrangements in the organization">
-          <h2 className="font-body text-xl md:text-2xl font-medium text-foreground mb-4">
+          <h2 className="font-body text-xl font-medium text-foreground mb-4">
             Accessibility arrangements in the organization
           </h2>
           <p>
@@ -104,7 +106,7 @@ export default function AccessibilityPage() {
         </section>
 
         <section aria-label="Requests, issues and suggestions">
-          <h2 className="font-body text-xl md:text-2xl font-medium text-foreground mb-4">
+          <h2 className="font-body text-xl font-medium text-foreground mb-4">
             Requests, issues and suggestions
           </h2>
           <p>

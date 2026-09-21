@@ -29,7 +29,10 @@ test("detail intro column pins at the source's measured position (source parity)
   // y=138 — pinned through the gallery (the source's own pin is racy: it
   // only engages when ScrollTrigger initializes after image layout; our
   // CSS-sticky replication is the deterministic form of its intent).
-  // The intro h2 uses the source's default text-3xl line-height (36px).
+  // The intro h2 carries the source's leading-snug: 30px × 1.375 = 41.25px.
+  // (Session 26 removed it against a then-measured 36px; the current source
+  // demonstrably ships leading-snug — double-verified at 390px AND 1440px —
+  // so parity demands 41.25px.)
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(`/project/${SLUG}`);
   const detail = page.getByLabel("Project detail");
@@ -37,7 +40,7 @@ test("detail intro column pins at the source's measured position (source parity)
   await expect(introH2).toBeVisible();
 
   const h2lh = await introH2.evaluate((el) => getComputedStyle(el).lineHeight);
-  expect(h2lh).toBe("36px");
+  expect(h2lh).toBe("41.25px");
 
   // Mid-gallery: the intro column must be PINNED at viewport y=138 (±8).
   await page.evaluate(() => window.scrollTo(0, 2600));

@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/og";
 import { getPublishedProjects } from "@/lib/data";
 import { ProjectIndex } from "@/components/site/project-index";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Projects",
   description:
     "Selected works — brand identity, print & merchandise, packaging, and web projects by Alex Moreau.",
-};
+  path: "/projects",
+});
 
 /**
  * The project archive: label + display heading over the interactive index

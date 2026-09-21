@@ -163,7 +163,7 @@ export function ProjectDetailBody({
           <span className="font-mono text-xs tracking-widest uppercase text-muted-foreground block mb-4">
             {project.category}
           </span>
-          <h2 className="font-body text-3xl font-light tracking-tight text-foreground mb-8">
+          <h2 className="font-body text-3xl font-light tracking-tight text-foreground mb-8 leading-snug">
             {project.tagline}
           </h2>
           <p className="font-body text-base leading-relaxed text-muted-foreground">{project.description}</p>
@@ -189,7 +189,7 @@ export function ProjectDetailBody({
             <span className="font-mono text-xs tracking-widest uppercase text-muted-foreground block mb-4">
               {project.category}
             </span>
-            <h2 className="font-body text-2xl md:text-3xl font-light tracking-tight text-foreground mb-8">
+            <h2 className="font-body text-2xl md:text-3xl font-light tracking-tight text-foreground mb-8 leading-snug">
               {project.tagline}
             </h2>
             <p className="font-body text-base leading-relaxed text-muted-foreground">{project.description}</p>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/og";
 import { FadeIn } from "@/components/site/fade-in";
 import { InquiryForm } from "@/components/site/inquiry-form";
 import { FAQ_ITEMS, SOCIAL_LINKS, SITE } from "@/lib/site-config";
@@ -9,11 +10,12 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Contact",
   description:
     "Start a project with Alex Moreau — submit a project inquiry and get a detailed response within 48 hours.",
-};
+  path: "/contact",
+});
 
 /**
  * Contact page: display headline, the inquiry form, the collaboration FAQ,
@@ -30,7 +32,7 @@ export default function ContactPage() {
             <span className="font-mono text-xs tracking-widest uppercase text-muted-foreground block mb-4">
               Contact
             </span>
-            <h1 className="font-body text-4xl md:text-6xl lg:text-7xl font-light tracking-tight text-foreground mb-6">
+            <h1 className="font-body text-4xl md:text-6xl lg:text-7xl font-light tracking-tight text-foreground mb-6 max-md:leading-tight">
               Let&apos;s build something
               <br />
               <span className="text-muted-foreground">remarkable together.</span>
