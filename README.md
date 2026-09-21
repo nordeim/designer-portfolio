@@ -8,7 +8,7 @@ The public site opens on a cinematic hero: the designer's name in oversized disp
 
 ## Screenshots
 
-Captured from the running app (see `docs/screenshots/` — 25 shots covering every page, both themes, desktop + mobile, the radial menu, the auth/404 system screens, and the dev-server verification set):
+Captured from the running app (see `docs/screenshots/` — 35 shots covering every page, both themes, desktop + mobile, the radial menu, the auth/404 system screens, the session-22 error-surface parity set, and the dev-server verification sets):
 
 | | | |
 |---|---|---|
@@ -19,6 +19,7 @@ Captured from the running app (see `docs/screenshots/` — 25 shots covering eve
 | `11-mobile-landing.png` — 390px hero | `12-mobile-menu.png` — mobile radial menu (open) | `23-mobile-menu-projects-submenu.png` — mobile submenu + preview |
 | `24-standalone-404.png` — unmatched-route 404 (quoted path, Go Home) | `25-project-not-found.png` — unknown-slug state in site chrome | `26`/`27` — legal pages (reference section anatomy) |
 | `28-dev-landing.png` — dev-server verification (Turbopack) | `29-dev-project-not-found.png` — dev-server unknown-slug (title-parity fix, session 20) | `30`/`31` — dev-server login + projects |
+| `32-dev-login-error-alert.png` — reference alert card on failed sign-in (session 22) | `33-dev-contact-error-toast.png` — persistent destructive system toast (session 22) | `34-dev-contact-success-toast.png` — success panel + light toast (session 22) · `35` — login card divider |
 
 ## Key Features
 
@@ -34,7 +35,7 @@ Captured from the running app (see `docs/screenshots/` — 25 shots covering eve
 | 📊 | Owner dashboard: stats overview, projects CRUD, inquiry triage workflow | `src/app/dashboard/` |
 | 🌗 | Light/dark themes; reduced-motion aware | `next-themes` + `globals.css` |
 | ♿ | Semantic landmarks, focus states, AA contrast, keyboard operability | throughout |
-| 🧪 | Vitest unit suites (validation, hashing, JSON parsing, typewriter, constellation, menu geometry, db-path resolution, site-config DOM parity) + Playwright E2E (7 spec files, 39 tests incl. the 5 opt-in outage specs) | `tests/`, `e2e/` |
+| 🧪 | Vitest unit suites (validation, hashing, JSON parsing, typewriter, constellation, menu geometry, db-path resolution, site-config DOM parity) + Playwright E2E (7 spec files, 42 tests incl. the 5 opt-in outage specs) | `tests/`, `e2e/` |
 
 ## Quick Start
 
@@ -152,12 +153,12 @@ Reads flow through RSC pages → `src/lib/data.ts` → Prisma. Mutations flow th
 ## Testing
 
 ```bash
-bun run test                                   # all unit suites (73 tests)
+bun run test                                   # all unit suites (74 tests)
 bunx vitest run --coverage                     # + 100% coverage gate on the pure seam
 bunx vitest run tests/validation.test.ts       # single file
 bunx vitest run -t "rejects a slug"            # single test
 
-E2E_ADMIN_PASSWORD=… bunx playwright test       # all e2e (36 tests: 31 normal + 5 outage-skipped; server on :3000)
+E2E_ADMIN_PASSWORD=… bunx playwright test       # all e2e (42 tests: 37 normal + 5 outage-skipped; server on :3000)
 bunx playwright test e2e/auth.spec.ts          # single spec file
 
 # graceful-degradation contract (run against a deliberately broken-DB server):
@@ -166,9 +167,9 @@ E2E_OUTAGE=1 E2E_START=1 E2E_PORT=3100 \
   bunx playwright test e2e/outage.spec.ts
 ```
 
-**Unit (Vitest, 73 tests)**: inquiry/login/project Zod schemas (valid input, boundary values, invalid input, unknown enum values, empty-select prompts), JSON-column serialization round-trips + parse degradation, the ActionResult envelope, scrypt hashing round-trips + malformed stored hashes, typewriter state machine (typing/pausing/cycling/out-of-bounds guard), constellation layout derivation (positions/sizes/contain flags/source fallbacks), radial-menu angle math (rotation clamping, counter-rotation), database-path resolution (CLI-parity anchoring, build-output skipping), and site-config DOM-parity contracts (title-case skill titles, four social networks, uppercase marquee). Password tests do real key derivation (~200 ms each). The pure-seam modules are held at 100% coverage by a machine-enforced gate (`bunx vitest run --coverage`).
+**Unit (Vitest, 74 tests)**: inquiry/login/project Zod schemas (valid input, boundary values, invalid input, unknown enum values, empty-select prompts), JSON-column serialization round-trips + parse degradation, the ActionResult envelope, scrypt hashing round-trips + malformed stored hashes, typewriter state machine (typing/pausing/cycling/out-of-bounds guard), constellation layout derivation (positions/sizes/contain flags/source fallbacks), radial-menu angle math (rotation clamping, counter-rotation), database-path resolution (CLI-parity anchoring, build-output skipping), and site-config DOM-parity contracts (title-case skill titles, four social networks, uppercase marquee). Password tests do real key derivation (~200 ms each). The pure-seam modules are held at 100% coverage by a machine-enforced gate (`bunx vitest run --coverage`).
 
-**E2E (Playwright, 36 tests across 7 files)**: public page content + console cleanliness (including a source-parity spec: the contact form's selects start empty showing "Select a type"-style placeholders and the Social column lists four networks with `↗` arrows), project detail (hero labels, sticky intro, gallery zoom toggle, prev/next wrap-around, autoplaying video, 404), auth (login affordances, invalid credentials, dashboard gating, radial menu open/Escape), inquiry submission → dashboard inbox (values picked through the Radix select UI), dashboard flows (CRUD round-trip verified on the public site, inquiry triage, sign-out), a11y smoke (focus visibility, theme toggle, mobile overflow, marquee animation, constellation rendering), and a graceful-degradation suite (`e2e/outage.spec.ts`, 5 specs — health honesty, static shell survival, non-throwing login/inquiry actions, styled error panel instead of a bare 500) that activates only under `E2E_OUTAGE=1` against a server with an unreachable database. Mutating specs use unique payloads and clean up after themselves. On RAM-constrained hosts (< ~6 GB), run the suite against the production build (`E2E_START=1 E2E_COMMAND="bun run start"`) — the Turbopack dev server + Chromium together can exceed the memory budget. The read-only specs also double as a **live-deployment smoke test**: `E2E_BASE_URL=https://your-domain bunx playwright test` (see `docs/DEPLOYMENT.md`).
+**E2E (Playwright, 42 tests across 7 files)**: public page content + console cleanliness (including source-parity specs: the contact form's selects start empty showing "Select a type"-style placeholders and the Social column lists four networks with `↗` arrows; the session-22 error-surface specs pin the login alert card, native validation, the slate-400 focus ring, and the persistent destructive/success system toasts), project detail (hero labels, sticky intro, gallery zoom toggle, prev/next wrap-around, autoplaying video, 404), auth (login affordances, invalid credentials, dashboard gating, radial menu open/Escape), inquiry submission → dashboard inbox (values picked through the Radix select UI), dashboard flows (CRUD round-trip verified on the public site, inquiry triage, sign-out), a11y smoke (focus visibility, theme toggle, mobile overflow, marquee animation, constellation rendering), and a graceful-degradation suite (`e2e/outage.spec.ts`, 5 specs — health honesty, static shell survival, non-throwing login/inquiry actions, styled error panel instead of a bare 500) that activates only under `E2E_OUTAGE=1` against a server with an unreachable database. Mutating specs use unique payloads and clean up after themselves. On RAM-constrained hosts (< ~6 GB), run the suite against the production build (`E2E_START=1 E2E_COMMAND="bun run start"`) — the Turbopack dev server + Chromium together can exceed the memory budget. The read-only specs also double as a **live-deployment smoke test**: `E2E_BASE_URL=https://your-domain bunx playwright test` (see `docs/DEPLOYMENT.md`).
 
 ## Design System
 

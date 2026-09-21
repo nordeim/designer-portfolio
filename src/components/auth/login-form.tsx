@@ -3,11 +3,9 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Mail, Lock } from "lucide-react";
-import { toast } from "sonner";
 import { loginAction } from "@/actions/auth";
-import { loginSchema, type LoginInput } from "@/lib/validation";
+import type { LoginInput } from "@/lib/validation";
 import { SITE } from "@/lib/site-config";
 
 /**
@@ -17,10 +15,23 @@ import { SITE } from "@/lib/site-config";
  * inline Mail/Lock icons, a full-width dark submit, and the
  * forgot-password / sign-up pair on a bottom justify-between row.
  *
- * Divergences (documented in docs/remediation-plan-session-17.md): Google
- * OAuth and password reset render honest "not configured" notices instead
- * of linking to flows that don't exist on this deployment, and sign-up
- * explains the single-owner design.
+ * Error-surface parity (session 22, verified against the reference):
+ *  - Sign-in failures render the reference's system alert card
+ *    (bg-red-50/70, border-red-200, 12px radius, text-red-700) with the
+ *    exact copy "Invalid email or password" — no toast, no inline field
+ *    errors.
+ *  - Empty submits are blocked by NATIVE validation (required + type=email
+ *    — the reference does not use client-side schema errors here); a
+ *    short-but-nonempty password flows to the server action, which answers
+ *    with the same undifferentiated alert copy.
+ *  - Inputs focus with the reference's slate-400 ring (not cobalt) and are
+ *    h-11 → sm:h-12 like the reference.
+ *
+ * Divergences (documented in the PAD divergence table): Google OAuth and
+ * password reset render honest "not configured" notices instead of linking
+ * to flows that don't exist on this deployment, and sign-up explains the
+ * single-owner design. Inputs keep name/autocomplete attributes for
+ * password-manager + WCAG 1.3.5 support.
  */
 export function LoginForm() {
   const router = useRouter();
@@ -29,12 +40,7 @@ export function LoginForm() {
   const [googleHint, setGoogleHint] = useState(false);
   const [authHint, setAuthHint] = useState<"forgot" | "signup" | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginInput>({
-    resolver: zodResolver(loginSchema),
+  const { register, handleSubmit } = useForm<LoginInput>({
     defaultValues: { email: "", password: "" },
   });
 
@@ -43,11 +49,10 @@ export function LoginForm() {
     startTransition(async () => {
       const result = await loginAction(values);
       if (result.ok) {
-        toast.success("Signed in — welcome back.");
+        // The reference redirects without a toast — straight to the app.
         router.replace("/dashboard");
       } else {
         setServerError(result.error);
-        toast.error(result.error);
       }
     });
   }
@@ -88,7 +93,7 @@ export function LoginForm() {
               <button
                 type="button"
                 onClick={() => setGoogleHint(true)}
-                className="w-full flex items-center justify-center gap-3 bg-white text-slate-700 px-5 py-3.5 rounded-[12px] border border-slate-200 hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                className="w-full flex items-center justify-center gap-3 bg-white text-slate-700 px-5 py-3.5 rounded-[12px] border border-slate-200 font-medium text-[16px] hover:bg-slate-50 hover:border-slate-300 hover:shadow-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
               >
                 <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden>
                   <path
@@ -113,13 +118,23 @@ export function LoginForm() {
                 </p>
               )}
 
-              <div className="flex items-center gap-4" aria-hidden>
-                <span className="flex-1 h-px bg-slate-200" />
-                <span className="font-body text-xs text-slate-400">OR</span>
-                <span className="flex-1 h-px bg-slate-200" />
+              {/* The reference's OR divider — shadcn's Separator pattern: a
+                  full-width hairline passing under a white-backed, uppercase
+                  "or" label (session-22 parity). */}
+              <div className="relative" aria-hidden>
+                <div className="absolute inset-0 flex items-center">
+                  <div
+                    data-orientation="horizontal"
+                    role="none"
+                    className="shrink-0 h-[1px] w-full bg-slate-200"
+                  />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-3 text-slate-500 font-medium tracking-wider">or</span>
+                </div>
               </div>
 
-              <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4 sm:gap-5" aria-label="Email and password sign-in">
+              <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 sm:gap-5" aria-label="Email and password sign-in">
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="email" className="font-body text-sm font-medium leading-4 text-slate-700">
                     Email
@@ -129,13 +144,13 @@ export function LoginForm() {
                     <input
                       id="email"
                       type="email"
+                      required
                       placeholder="you@example.com"
                       autoComplete="email"
-                      className="flex w-full h-12 rounded-[12px] border border-slate-200 bg-slate-50/50 pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-card disabled:cursor-not-allowed disabled:opacity-50 transition-shadow"
+                      className="flex w-full h-11 sm:h-12 rounded-[12px] border border-slate-200 bg-slate-50/50 pl-10 pr-3 text-base md:text-sm text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 transition-shadow"
                       {...register("email")}
                     />
                   </div>
-                  {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
                 </div>
 
                 <div className="flex flex-col gap-1.5">
@@ -147,25 +162,28 @@ export function LoginForm() {
                     <input
                       id="password"
                       type="password"
+                      required
                       placeholder="••••••••"
                       autoComplete="current-password"
-                      className="flex w-full h-12 rounded-[12px] border border-slate-200 bg-slate-50/50 pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-card disabled:cursor-not-allowed disabled:opacity-50 transition-shadow"
+                      className="flex w-full h-11 sm:h-12 rounded-[12px] border border-slate-200 bg-slate-50/50 pl-10 pr-3 text-base md:text-sm text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 transition-shadow"
                       {...register("password")}
                     />
                   </div>
-                  {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
                 </div>
 
                 {serverError && (
-                  <p className="text-sm text-destructive" role="alert">
-                    {serverError}
-                  </p>
+                  <div
+                    role="alert"
+                    className="relative w-full border p-4 text-foreground bg-red-50/70 border-red-200 rounded-[12px]"
+                  >
+                    <div className="text-red-700 text-sm [&_p]:leading-relaxed">{serverError}</div>
+                  </div>
                 )}
 
                 <button
                   type="submit"
                   disabled={pending}
-                  className="w-full inline-flex items-center justify-center gap-1 h-12 rounded-[12px] bg-slate-900 text-sm font-medium text-white hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:opacity-50 disabled:pointer-events-none"
+                  className="w-full inline-flex items-center justify-center gap-1 h-11 sm:h-12 rounded-[12px] bg-slate-900 text-sm font-medium text-white shadow-sm hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:opacity-50 disabled:pointer-events-none"
                 >
                   {pending ? "Signing in…" : "Sign in"}
                 </button>
@@ -188,14 +206,14 @@ export function LoginForm() {
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
                   <button
                     type="button"
-                    className="font-body text-sm text-slate-500 font-medium hover:text-slate-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                    className="font-body text-sm text-slate-500 font-medium hover:text-slate-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 rounded-sm"
                     onClick={() => setAuthHint("forgot")}
                   >
                     Forgot password?
                   </button>
                   <button
                     type="button"
-                    className="font-body text-sm text-slate-500 font-medium hover:text-slate-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                    className="font-body text-sm text-slate-500 font-medium hover:text-slate-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 rounded-sm"
                     onClick={() => setAuthHint("signup")}
                   >
                     Need an account? Sign up

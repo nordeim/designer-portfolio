@@ -7,7 +7,6 @@ import {
   loginSchema,
   success,
   failure,
-  zodFieldErrors,
   type ActionResult,
   type LoginInput,
 } from "@/lib/validation";
@@ -37,7 +36,10 @@ function clearThrottle(email: string): void {
 export async function loginAction(input: LoginInput): Promise<ActionResult<{ email: string }> | ActionResult<never>> {
   const parsed = loginSchema.safeParse(input);
   if (!parsed.success) {
-    return failure("Please check the form for errors.", zodFieldErrors(parsed.error));
+    // Source parity (session 22): the reference never differentiates sign-in
+    // failures — a short password or malformed input renders the same alert
+    // copy as bad credentials. The schema still gates the boundary.
+    return failure("Invalid email or password");
   }
   const { email, password } = parsed.data;
   const normalizedEmail = email.toLowerCase();
@@ -55,12 +57,12 @@ export async function loginAction(input: LoginInput): Promise<ActionResult<{ ema
     return failure("Sign-in is temporarily unavailable. Please try again in a moment.");
   }
   if (!user) {
-    return failure("Invalid email or password.");
+    return failure("Invalid email or password");
   }
 
   const valid = await verifyPassword(password, user.passwordHash);
   if (!valid) {
-    return failure("Invalid email or password.");
+    return failure("Invalid email or password");
   }
 
   clearThrottle(normalizedEmail);

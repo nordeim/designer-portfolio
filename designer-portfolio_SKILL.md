@@ -1,9 +1,9 @@
 ---
 name: designer-portfolio
 description: "Complete engineering skill for the Designer Portfolio codebase — a precision-minimalist designer portfolio (Next.js 16 + React 19 + Prisma/SQLite + Tailwind v4) cloned from a base44 reference app. Covers the design-token system, the radial-menu geometry, the ActionResult action contract, auth/session design, test architecture (Vitest + Playwright), graceful-degradation, and every hard-won lesson from sessions 1–17."
-version: 1.0.1
-last_updated: 2026-09-21 (session 20 — unknown-slug title parity)
-project_state: "74 unit tests @ 100% pure-seam coverage · 34 e2e (+5 outage) · build 17/17 SSG · live parity audit: 8/10 routes exact line parity · title sweep 7/7 MATCH"
+version: 1.0.2
+last_updated: 2026-09-21 (session 22 — error-surface parity: login alert card, native validation, persistent Radix system toasts)
+project_state: "74 unit tests @ 100% pure-seam coverage · 37 e2e (+5 outage) · build 17/17 SSG · live parity audit: 8/10 routes exact line parity · title sweep 7/7 MATCH · error-surface parity: login alert/toast-free, contact Radix toasts"
 ---
 
 # Designer Portfolio — Engineering SKILL
@@ -92,6 +92,9 @@ test or recorded in `docs/remediation-plan-session-18.md`):
 | Login forgot/signup | Links out to base44 flows | Buttons revealing "not configured" notices | Flows don't exist here |
 | Login input attributes | No `name`/`autocomplete` on inputs | `name="email"`/`name="password"` + `autocomplete="email"`/`"current-password"` | Password managers + WCAG 1.3.5 (invisible) |
 | Unknown-slug `<title>` | `Project Detail \| Designer Portfolio` (route title persists) | Same — fixed session 20 (generateMetadata null branch + segment not-found metadata both return "Project Detail") | Parity (was "Project not found" pre-session 20) |
+| Toast root role | No role on toast roots | `role="alert"` on the destructive variant only | AT announcement + the outage e2e contract; the success variant stays roleless (Radix mirrors it into its own aria-live announcer) |
+| Contact form feedback | Toast-only (no per-field errors) | Same since session 22 (toast-only; Zod still validates server-side) | Parity — the inline field errors were a clone-side nicety the reference never had |
+| slate-400 rendering | Tailwind v3 rgb(148,163,184) | Tailwind v4 oklch → ≈rgb(144,161,185) | ±4/255 palette-conversion rounding; visually identical — assert with tolerance |
 
 ---
 
@@ -292,6 +295,37 @@ for future higher-breakpoint overrides.
   `.hero-h1-scale` (§4.5); project hero titles use the oversized display
   class in `project-hero.tsx`.
 
+### 4.7 The public system toasts (`src/components/ui/toast.tsx`, s22)
+
+The reference's form feedback is a Radix Toast system — replicated exactly:
+square (0px radius under the token override — the reference's app also runs
+radius 0), `p-6 pr-8`, `shadow-lg`, 388px wide, viewport
+`fixed top-0 … sm:bottom-0 sm:right-0 … md:max-w-[420px]` (mobile: full-width
+at the TOP; ≥sm: bottom-right), title `text-sm font-semibold`, close button
+(opacity-0 → group-hover), and **`duration: Infinity`** — the reference's
+toasts NEVER auto-dismiss. Two variants: default `bg-background text-foreground`
+(#F6F6F6, success) and destructive `border-destructive bg-destructive
+text-destructive-foreground` (#EF4444, errors — `--destructive-foreground:
+hsl(0 0% 98%)` was added to `:root` + `@theme inline` for it).
+
+Three hard rules learned the hard way (s22):
+1. The **viewport must portal to `document.body`** — framer-motion wrappers
+   (FadeIn) re-anchor position:fixed and pushed the toast below the fold.
+2. **`role="alert"` only on the destructive variant** — Radix mirrors every
+   toast into its own hidden `role="status" aria-live="assertive"` announcer;
+   a role on the success root double-matches role queries.
+3. The public surface uses ONLY these toasts (the reference shows no
+   per-field inline errors, no login toasts); **sonner remains mounted for
+   the dashboard surfaces** (the reference's admin is not publicly routed).
+
+The login error surface (same session): failures render the reference's
+shadcn-style alert card — `bg-red-50/70 border-red-200 rounded-[12px] p-4` +
+inner `text-red-700 text-sm`, copy `Invalid email or password` (NO trailing
+period), persistent, NO toast. Empty submits are blocked by **native**
+validation (`required` + `type=email`, no `noValidate`); a short password
+flows to the server action which returns the same undifferentiated copy
+(the Zod-failure path maps to it deliberately — the boundary still gates).
+
 ---
 
 ## 5. Component Architecture & Patterns
@@ -359,7 +393,7 @@ src/components/
 │   ├── project-index.tsx      # /projects rows w/ invert-fill + cursor preview
 │   ├── project-hero.tsx      # full-bleed case-study hero + meta grid
 │   ├── project-detail-body.tsx # sticky intro + zoomable gallery + prev/next
-│   ├── inquiry-form.tsx       # RHF + Zod + server action, honeypot — client
+│   ├── inquiry-form.tsx       # RHF + Zod + server action, honeypot, Radix toast — client
 │   ├── error-panel.tsx        # styled degraded panel (outage contract)
 │   └── fade-in.tsx
 ├── dashboard/  # dashboard-shell (sidebar/slide-over), projects-manager,
@@ -367,7 +401,8 @@ src/components/
 │               # status-meta
 ├── auth/login-form.tsx        # the auth-card screen (§4.4) — client
 └── ui/         # shadcn-style primitives: button, input, label, textarea,
-                # select, dialog, switch, accordion, sonner
+                # select, dialog, switch, accordion, toast (§4.7 — the
+                # reference's system toasts), sonner (dashboard-only)
 ```
 
 Client islands are exactly: site-header, radial-menu, hero-constellation,
@@ -573,6 +608,23 @@ tissue — read them twice.
     the DB is down; static shell must survive; actions return envelopes;
     unknown dynamic slugs render the styled panel. 5-spec opt-in suite
     pins all of it.
+19. **framer-motion re-anchors position:fixed** (s22): a motion wrapper
+    (transform/will-change) becomes the containing block for fixed
+    descendants — the public toast viewport rendered below the fold inside
+    the contact form's `FadeIn` until `ToastViewport` was portaled to
+    `document.body`. Any fixed overlay mounted inside animated content
+    MUST portal.
+20. **Tailwind v4 oklch computed colors** (s22): computed styles report
+    `oklab()`/`lab()` strings, and v4's palette rounds ±1–4 channels vs
+    v3's rgb values. String-equality assertions on computed colors are
+    format-brittle — normalize through a canvas (`getImageData`) and
+    assert channels with tolerance.
+21. **Radix's hidden announcer double-matches role queries** (s22): Radix
+    Toast mirrors every toast into a visually-hidden
+    `<span role="status" aria-live="assertive">` — adding `role="status"`
+    to the toast root made `getByRole("status")` resolve to 2 elements
+    (strict-mode violation). Give the toast root `role="alert"` (errors
+    only) and locate success toasts structurally (`ol > li`).
 
 ---
 
@@ -968,12 +1020,14 @@ Actions     src/actions/* — ActionResult envelope, never throw (§5.2)
 Reads       src/lib/data.ts only
 Auth        src/lib/auth/{password,session}.ts — scrypt + DB sessions + throttle
 Forms       react-hook-form + zodResolver + lib/validation schemas
-Tests       tests/*.test.ts (74, pure seam, 100%) · e2e/*.spec.ts (34+5 outage)
+Tests       tests/*.test.ts (74, pure seam, 100%) · e2e/*.spec.ts (37+5 outage)
 Gates       lint · typecheck · test · coverage · build · playwright · outage
+Toasts      ui/toast.tsx (public: Radix, persistent, portaled) · sonner (dashboard)
 Parity      scripts/session17-parity-audit.mjs (10-route line diff)
             scripts/session17-visual-diff.mjs (tolerance pixel diff)
-Screenshots docs/screenshots/01–27
-Docs        README · AGENTS · CLAUDE · PAD (v1.7) · docs/session_*.md
+            scripts/session22-functional-audit.mjs (error/behavior surfaces)
+Screenshots docs/screenshots/01–35
+Docs        README · AGENTS · CLAUDE · PAD (v1.9) · docs/session_*.md
             docs/remediation-plan-session-18.md · this file
 Deploy      docs/DEPLOYMENT.md (provision DB; absolute DATABASE_URL)
 Push        docs/ssh_git_wrapper_v3.py per docs/how-to-git-push-using-ssh-wrapper_SKILL.md

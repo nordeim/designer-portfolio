@@ -34,6 +34,7 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -83,6 +84,9 @@
   --accent: hsl(103 22% 55%);
   --accent-foreground: hsl(0 0% 97%);
   --destructive: hsl(0 84.2% 60.2%);
+  /* Text on the destructive surface (the persistent session-22 system toast):
+     rgb(250, 250, 250) — matches the reference's destructive toast exactly. */
+  --destructive-foreground: hsl(0 0% 98%);
   --border: hsl(0 0% 85%);
   --input: hsl(0 0% 85%);
   --ring: hsl(227 100% 59%);

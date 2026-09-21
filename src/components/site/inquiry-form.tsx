@@ -4,7 +4,6 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
-import { toast } from "sonner";
 import { submitInquiryAction, type SubmitInquiryPayload } from "@/actions/contact";
 import { inquirySchema, type InquiryInput } from "@/lib/validation";
 import { PROJECT_TYPES, BUDGET_RANGES, TIMELINES } from "@/lib/site-config";
@@ -17,6 +16,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Toast,
+  ToastClose,
+  ToastProvider,
+  ToastTitle,
+  ToastViewport,
+} from "@/components/ui/toast";
 
 const FIELD_LABEL = "font-mono text-xs tracking-widest uppercase text-muted-foreground block mb-2";
 const FIELD_INPUT =
@@ -27,13 +33,18 @@ const FIELD_INPUT =
  * design (hairline bottom borders, cobalt focus, charcoal submit pill).
  * Client-side validation mirrors the server's Zod schema; the honeypot
  * field stays hidden from real users. Submissions resolve to an
- * ActionResult envelope — errors render inline, success swaps the panel
- * for the reference's centered confirmation state.
+ * ActionResult envelope — errors and success feedback render as the
+ * reference's persistent system toasts (session-22 parity: the source shows
+ * ONLY toasts for form feedback — no per-field inline errors; error toasts
+ * are the solid-destructive variant, the success toast is the light
+ * default variant). The success state additionally swaps the form for the
+ * reference's centered confirmation panel.
  */
 export function InquiryForm() {
   const [sent, setSent] = useState(false);
   const [pending, startTransition] = useTransition();
-  const [serverError, setServerError] = useState<string | null>(null);
+  const [errorToast, setErrorToast] = useState<string | null>(null);
+  const [successToast, setSuccessToast] = useState<string | null>(null);
   // Remount key: after a successful submit (or reset), the Radix Selects are
   // uncontrolled — remounting the form subtree restores their placeholder
   // state alongside the react-hook-form reset.
@@ -44,7 +55,6 @@ export function InquiryForm() {
     handleSubmit,
     setValue,
     reset,
-    formState: { errors },
   } = useForm<InquiryInput>({
     resolver: zodResolver(inquirySchema),
     // The three selects deliberately start EMPTY (source-app parity: the
@@ -59,57 +69,55 @@ export function InquiryForm() {
   });
 
   function onSubmit(values: InquiryInput) {
-    setServerError(null);
+    setErrorToast(null);
     startTransition(async () => {
       const result = await submitInquiryAction(values satisfies SubmitInquiryPayload);
       if (result.ok) {
         setSent(true);
         reset();
         setFormKey((k) => k + 1);
-        toast.success("Inquiry sent successfully.");
+        setSuccessToast("Inquiry sent successfully.");
       } else {
-        setServerError(result.error);
-        toast.error(result.error);
+        setErrorToast(result.error);
       }
     });
   }
 
-  // Parity with the reference app's error path: a destructive toast for
-  // missing required fields (inline field errors render as well).
+  // Parity with the reference app's error path: the destructive system
+  // toast for missing required fields (the source renders no per-field
+  // inline errors — only this toast).
   function onInvalid() {
-    toast.error("Please fill in all required fields.");
+    setErrorToast("Please fill in all required fields.");
   }
 
-  if (sent) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="py-16 text-center"
-        role="status"
+  const successPanel = (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="py-16 text-center"
+      role="status"
+    >
+      <h3 className="font-body text-2xl md:text-3xl font-light text-foreground mb-4">
+        Thank you for reaching out.
+      </h3>
+      <p className="font-body text-base text-muted-foreground">
+        I&apos;ll review your inquiry and respond within 48 hours.
+      </p>
+      <button
+        type="button"
+        className="mt-8 font-mono text-xs tracking-widest uppercase text-foreground hover:text-cobalt transition-colors border-b border-foreground/20 hover:border-cobalt pb-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt"
+        onClick={() => {
+          setSent(false);
+          reset();
+          setFormKey((k) => k + 1);
+        }}
       >
-        <h3 className="font-body text-2xl md:text-3xl font-light text-foreground mb-4">
-          Thank you for reaching out.
-        </h3>
-        <p className="font-body text-base text-muted-foreground">
-          I&apos;ll review your inquiry and respond within 48 hours.
-        </p>
-        <button
-          type="button"
-          className="mt-8 font-mono text-xs tracking-widest uppercase text-foreground hover:text-cobalt transition-colors border-b border-foreground/20 hover:border-cobalt pb-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt"
-          onClick={() => {
-            setSent(false);
-            reset();
-            setFormKey((k) => k + 1);
-          }}
-        >
-          Send another inquiry →
-        </button>
-      </motion.div>
-    );
-  }
+        Send another inquiry →
+      </button>
+    </motion.div>
+  );
 
-  return (
+  const form = (
     <form key={formKey} onSubmit={handleSubmit(onSubmit, onInvalid)} noValidate className="space-y-8" aria-label="Project inquiry form">
       {/* Honeypot — hidden from users, irresistible to bots. */}
       <div className="hidden" aria-hidden="true">
@@ -125,7 +133,6 @@ export function InquiryForm() {
             Name *
           </label>
           <Input id="name" placeholder="Your full name" autoComplete="name" className={FIELD_INPUT} {...register("name")} />
-          {errors.name && <p className="text-xs text-destructive mt-1">{errors.name.message}</p>}
         </div>
 
         <div>
@@ -140,7 +147,6 @@ export function InquiryForm() {
             className={FIELD_INPUT}
             {...register("email")}
           />
-          {errors.email && <p className="text-xs text-destructive mt-1">{errors.email.message}</p>}
         </div>
 
         <div>
@@ -148,7 +154,6 @@ export function InquiryForm() {
             Company
           </label>
           <Input id="company" placeholder="Company name" autoComplete="organization" className={FIELD_INPUT} {...register("company")} />
-          {errors.company && <p className="text-xs text-destructive mt-1">{errors.company.message}</p>}
         </div>
 
         <div>
@@ -167,7 +172,6 @@ export function InquiryForm() {
               ))}
             </SelectContent>
           </Select>
-          {errors.projectType && <p className="text-xs text-destructive mt-1">{errors.projectType.message}</p>}
         </div>
 
         <div>
@@ -188,7 +192,6 @@ export function InquiryForm() {
               ))}
             </SelectContent>
           </Select>
-          {errors.budgetRange && <p className="text-xs text-destructive mt-1">{errors.budgetRange.message}</p>}
         </div>
 
         <div>
@@ -207,7 +210,6 @@ export function InquiryForm() {
               ))}
             </SelectContent>
           </Select>
-          {errors.timeline && <p className="text-xs text-destructive mt-1">{errors.timeline.message}</p>}
         </div>
       </div>
 
@@ -222,14 +224,7 @@ export function InquiryForm() {
           className="bg-transparent border-0 border-b border-border rounded-none font-body text-base min-h-[160px] px-0 focus-visible:ring-0 focus-visible:rounded-none focus-visible:border-b-2 focus-visible:border-cobalt resize-none"
           {...register("details")}
         />
-        {errors.details && <p className="text-xs text-destructive mt-1">{errors.details.message}</p>}
       </div>
-
-      {serverError && (
-        <p className="text-sm text-destructive" role="alert">
-          {serverError}
-        </p>
-      )}
 
       <button
         type="submit"
@@ -239,5 +234,30 @@ export function InquiryForm() {
         {pending ? "Sending…" : "Send Inquiry"}
       </button>
     </form>
+  );
+
+  return (
+    <ToastProvider>
+      {sent ? successPanel : form}
+
+      {/* The reference's system toasts — persistent, square, close on hover. */}
+      {errorToast && (
+        <Toast variant="destructive" open onOpenChange={(open) => !open && setErrorToast(null)}>
+          <div className="grid gap-1">
+            <ToastTitle>{errorToast}</ToastTitle>
+          </div>
+          <ToastClose />
+        </Toast>
+      )}
+      {successToast && (
+        <Toast open onOpenChange={(open) => !open && setSuccessToast(null)}>
+          <div className="grid gap-1">
+            <ToastTitle>{successToast}</ToastTitle>
+          </div>
+          <ToastClose />
+        </Toast>
+      )}
+      <ToastViewport />
+    </ToastProvider>
   );
 }
