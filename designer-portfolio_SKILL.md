@@ -1,9 +1,9 @@
 ---
 name: designer-portfolio
-description: "Complete engineering skill for the Designer Portfolio codebase — a precision-minimalist designer portfolio (Next.js 16 + React 19 + Prisma/SQLite + Tailwind v4) cloned from a base44 reference app. Covers the design-token system, the radial-menu geometry, the ActionResult action contract, auth/session design, test architecture (Vitest + Playwright), graceful-degradation, and every hard-won lesson from sessions 1–26."
-version: 1.3.0
-last_updated: 2026-09-21 (session 28 — head-surface + mobile-typography parity: og/twitter image surface, per-route og:url/canonical/title via pageMetadata(), PWA manifest + apple metas, mobile display-h1 leading-tight 45px, detail h2 leading-snug restored 41.25px, legal h2s flat text-xl, constellation slot table enumerated at 10/10 parity)
-project_state: "76 unit tests @ 100% pure-seam coverage · 50 e2e (+5 outage) · build 17/17 SSG · live parity audit: 8/10 routes exact line parity · title sweep 7/7 MATCH · error-surface + machine-surface + deep-behavior + head-surface parity complete"
+description: "Complete engineering skill for the Designer Portfolio codebase — a precision-minimalist designer portfolio (Next.js 16 + React 19 + Prisma/SQLite + Tailwind v4) cloned from a base44 reference app. Covers the design-token system, the radial-menu geometry, the ActionResult action contract, auth/session design, test architecture (Vitest + Playwright), graceful-degradation, and every hard-won lesson from sessions 1–30."
+version: 1.4.0
+last_updated: 2026-09-21 (session 30 — DOM-texture + motion-cadence parity: marquee items stored title-case in the DOM like the source [the s14 "uppercase as-is" pin was a mis-read], footer copyright as ONE DOM text node, hero label's single "/06 — " fragment, LOGO_BREATH cadence 3.4 s expanded / 3.3 s tight, radial-menu links max-md:leading-tight 40 px, "Toggle projects" label, remote-origin e2e navigation headroom)
+project_state: "79 unit tests @ 100% pure-seam coverage · 55 e2e (+5 outage) · build 17/17 SSG · live parity audit: 8/10 routes exact line parity · title sweep 7/7 MATCH · error-surface + machine-surface + deep-behavior + head-surface + DOM-texture/cadence parity complete"
 ---
 
 # Designer Portfolio — Engineering SKILL
@@ -111,6 +111,14 @@ test or recorded in `docs/remediation-plan-session-18.md`):
 | constellation img alt | `alt="Project preview"` on floating decorative previews | `alt=""` + aria-hidden | WCAG-correct treatment of decorative imagery (s28) |
 | gallery image alts | terse (`Kinto 1`) | descriptive (`Kinto — packaging suite…`) | SEO/a11y-positive (s28) |
 | viewport serialization | `initial-scale=1.0` | `initial-scale=1` (Next default) | Functionally identical |
+| marquee DOM text case | mixed-case storage + CSS `text-transform: uppercase` (probed s30: "Brand Identity") | Identical since session 30 (title-case `MARQUEE_ITEMS`; the ghost-marquee's `uppercase` class renders) — the s14 "uppercase as-is" pin was a mis-read of visually uppercased text | DOM-text parity (screen readers, text extraction, copy-paste) |
+| footer copyright nodes | ONE text node ("© 2026 Alex Moreau. Built on Base44.") | Identical since session 30 (template-literal expression) — JSX interleaving had split 3 | DOM-text parity (s30) |
+| numbering label texture | LANDING works label = 5-node JSX split ("01" "/" "06" " — " year); case-study hero label = 3 nodes ("01" "/06 — " category) | Identical since session 30 (hero uses a single template-literal fragment; works kept the JSX split) | DOM-text parity, per-surface exact (s30) |
+| breathing-logo cadence | tight 3.3 s → expand 0.4 s → expanded hold 3.4 s → collapse 0.35 s (~50 % duty, 7.45 s cycle) | Identical since session 30 (`LOGO_BREATH` in site-config; the old machine held expanded 0.5 s and doubled the tight phase) | Motion parity — the logo rests mostly-EXPANDED (s30) |
+| radial-menu link metrics | `leading-tight` wins below md only (37.5 px); `md:text-4xl`'s bundled 40 px at md+; toggle label exactly "Toggle projects" | Identical since session 30 (`max-md:leading-tight`, renamed label) | The v3-cascade lesson, third occurrence (s30) |
+| radial-menu semantics | plain `div` overlay — no dialog role, no `aria-modal`, no focus trap; Escape does NOT close it | `role="dialog"` + `aria-modal` + labelled + Escape-close + focus management | A11y-positive divergence (WCAG); invisible visually — same family as the login-input attributes (s30-documented) |
+| logo link + landmarks | A/M link has no accessible name; no `<header>` element | `aria-label="Alex Moreau — home"` + semantic `<header>` | A11y-positive; invisible (s30-documented) |
+| marquee item animations | items carry small CSS `animation`s (0.2 s/0.3 s — mount/hover effects) | visually-equivalent `transition`s (200/300 ms) | Same observable behavior; the 60 s track loop + hover states are pinned at parity (s30-documented) |
 
 ---
 
@@ -840,6 +848,25 @@ Additional process lessons:
   viewports, before reversing a prior session's fix; then flip the e2e
   assertion WITH the evidence in the comment so the next agent can trace
   the reversal.
+
+- **DOM text-node texture is its own parity layer (s30).** Which strings
+  live in which text nodes — and in which case — is observable to screen
+  readers, text extraction, and copy-paste, even when visually identical.
+  Two JSX shapes produce different node trees: `text{expr}text{expr}`
+  interleaves separate static nodes; one `{`template literal`}` expression
+  renders ONE node. The source is inconsistent per-surface (its landing
+  works label is the 5-node split; its hero label and footer copyright are
+  single-fragment) — probe each surface, never "tidy" them uniformly.
+  Same layer: storage case (the marquee's title-case DOM + CSS uppercase —
+  a visually-uppercase read once masqueraded as an uppercase DOM contract
+  for 16 sessions).
+- **Motion parity means phase durations, not just endpoints (s30).** The
+  breathing logo's endpoints (0.05em ↔ 0.7em, 0.4 s/0.35 s transitions)
+  were pinned since session 1, but the source rests EXPANDED 3.4 s vs the
+  clone's 0.5 s — a 7× duty-cycle error invisible to any endpoint probe.
+  Time-sample the computed style (≥ 20 s @100 ms) and pin the longest
+  expanded run; the constants live in `LOGO_BREATH` (site-config) with a
+  unit gate so the cadence cannot silently regress.
 
 ---
 

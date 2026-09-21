@@ -218,11 +218,25 @@ test("the radial menu opens, lists routes, and closes", async ({ page }) => {
   // The wheel shows the four route labels plus a projects expander.
   await expect(dialog.getByRole("link", { name: "Home" })).toBeVisible();
   await expect(dialog.getByRole("link", { name: "About" })).toBeVisible();
-  // Expand the projects submenu and follow one link.
-  await dialog.getByRole("button", { name: "Toggle projects list" }).click();
+  // Link metrics at source parity (session 30): the items are 36px text
+  // with the text-4xl-bundled 40px line-height at md+ — the source's
+  // `leading-tight` only wins below md (the v3-cascade lesson, third
+  // occurrence). The clone's unprefixed leading-tight rendered 45px.
+  const linkMetrics = await dialog.getByRole("link", { name: "Home" }).evaluate((el) => {
+    const cs = getComputedStyle(el);
+    return { lh: cs.lineHeight, h: Math.round(el.getBoundingClientRect().height) };
+  });
+  expect(linkMetrics.lh).toBe("40px");
+  expect(linkMetrics.h).toBe(40);
+  // Expand the projects submenu and follow one link (the source's toggle
+  // label is exactly "Toggle projects" — session 30 rename).
+  await dialog.getByRole("button", { name: "Toggle projects" }).click();
   await expect(dialog.getByText("Kinto")).toBeVisible();
   await dialog.getByRole("link", { name: /^Kinto/ }).click();
-  await expect(page).toHaveURL(new RegExp(`/project/${SLUG}`));
+  // Remote-origin runs can exceed the default assertion timeout while the
+  // project page streams in; 20s keeps live smoke runs stable without
+  // weakening local semantics.
+  await expect(page).toHaveURL(new RegExp(`/project/${SLUG}`), { timeout: 20_000 });
 });
 
 test("Escape closes the radial menu", async ({ page }) => {

@@ -194,3 +194,38 @@ test("mobile radial menu paints, shows every item, and closes (regression: invis
   await dialog.getByRole("button", { name: "Close menu" }).click();
   await expect(dialog).toBeHidden({ timeout: 5000 });
 });
+
+test("breathing logo holds the expanded state for the source's cadence (session 30 parity)", async ({ page }) => {
+  // Source ground truth (20 s @100 ms letter-spacing probe): the A/M logo
+  // rests EXPANDED (letter-spacing 0.7em ≈ 9.8px at 14px font) for ~3.4 s
+  // per cycle — tight 3.3 s → expand 0.4 s → expanded 3.4 s → collapse
+  // 0.35 s. The pre-fix machine held the expanded phase for only ~0.5 s
+  // (a blink). We sample the logo's inner span letter-spacing for ~9 s and
+  // require at least one contiguous expanded run of ≥ 2 s.
+  await page.goto("/");
+  await page.waitForTimeout(500);
+  const samples: number[] = [];
+  for (let i = 0; i < 36; i++) {
+    const ls = await page.evaluate(() => {
+      const a = [...document.querySelectorAll("a")].find((el) => /^A\/M$/.test(el.textContent?.trim() ?? ""));
+      const span = a?.querySelector("span");
+      return span ? parseFloat(getComputedStyle(span).letterSpacing) : -1;
+    });
+    samples.push(ls);
+    await page.waitForTimeout(250);
+  }
+  // Longest contiguous run of "expanded" (≥ 5px, comfortably above the
+  // 0.7px tight state and below the 9.8px fully-expanded state).
+  let best = 0;
+  let run = 0;
+  for (const s of samples) {
+    if (s >= 5) {
+      run++;
+      best = Math.max(best, run);
+    } else {
+      run = 0;
+    }
+  }
+  const bestMs = best * 250;
+  expect(bestMs, `longest expanded run was ${bestMs}ms over 9s of sampling`).toBeGreaterThanOrEqual(2000);
+});

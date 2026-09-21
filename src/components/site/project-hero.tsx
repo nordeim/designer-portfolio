@@ -76,7 +76,9 @@ export function ProjectHero({ project }: { project: HeroProject }) {
         >
           <div className="col-start-2 col-span-10 mb-4">
             <span className="font-mono text-xs tracking-widest uppercase text-gallery/60">
-              {id}/{WORKS_INDEX_TOTAL} — {project.category}
+              {/* Single static fragment "/06 — " (session 30) — matches the
+                  source's 3-node label texture ("01" + "/06 — " + category). */}
+              {id}{`/${WORKS_INDEX_TOTAL} — `}{project.category}
             </span>
           </div>
           <h1 className="col-start-2 col-span-10 font-body text-6xl md:text-8xl lg:text-9xl font-light tracking-tighter text-gallery leading-none mb-6">

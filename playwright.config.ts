@@ -30,6 +30,11 @@ const PORT = Number(process.env.E2E_PORT ?? 3000);
 const baseURL = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${PORT}`;
 const startServer = process.env.E2E_START === "1";
 const command = process.env.E2E_COMMAND ?? `bun run dev -- --port ${PORT}`;
+// Remote-origin runs (E2E_BASE_URL → live smoke) need navigation headroom:
+// a cross-Atlantic page.goto can exceed the 30s default under load, which
+// flaked the mobile-overflow sweep on jesspete.shop (session 30). Local
+// runs keep the framework default — this only relaxes remote-origin timing.
+const isRemoteOrigin = Boolean(process.env.E2E_BASE_URL);
 
 export default defineConfig({
   testDir: "./e2e",
@@ -42,6 +47,7 @@ export default defineConfig({
     baseURL,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
+    navigationTimeout: isRemoteOrigin ? 90_000 : undefined,
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: startServer

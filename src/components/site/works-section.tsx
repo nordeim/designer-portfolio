@@ -85,6 +85,10 @@ function WorkRow({ project, index }: { project: WorkRowProject; index: number })
           } flex flex-col justify-end py-4`}
         >
           <span className="font-mono text-xs tracking-widest text-muted-foreground uppercase mb-2">
+            {/* Node texture (session 30 re-probe): the source's LANDING works
+                label is the 5-node JSX split ("01" "/" "06" " — " year) —
+                keep it. Only the case-study hero label carries the single
+                "/06 — " fragment. */}
             {id}/{WORKS_INDEX_TOTAL} — {project.year}
           </span>
           <h3 className="font-body text-3xl md:text-4xl font-light tracking-tight text-foreground group-hover:text-cobalt transition-colors duration-300 mb-2">

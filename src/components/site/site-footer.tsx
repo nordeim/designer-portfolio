@@ -85,7 +85,11 @@ export function SiteFooter() {
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 md:gap-4 pt-8 md:pt-0 border-t border-border md:border-t-0">
           <span className="font-mono text-xs text-muted-foreground">
-            © {SITE.copyrightYear} Alex Moreau. Built on Base44.
+            {/* Single text node (session 30): the source ships ONE node —
+                "© 2026 Alex Moreau. Built on Base44." JSX static/expression
+                interleaving would split it into 3 nodes; a template literal
+                keeps the DOM texture identical. */}
+            {`© ${SITE.copyrightYear} Alex Moreau. Built on Base44.`}
           </span>
         </div>
       </div>

@@ -180,7 +180,7 @@ export function RadialMenu({ projects, onClose }: { projects: MenuProject[]; onC
                       <Link
                         href={item.path}
                         onClick={onClose}
-                        className="font-body text-3xl md:text-4xl font-light text-gallery hover:text-cobalt transition-colors duration-300 focus:outline-none leading-tight"
+                        className="font-body text-3xl md:text-4xl font-light text-gallery hover:text-cobalt transition-colors duration-300 focus:outline-none max-md:leading-tight"
                       >
                         {item.label}
                       </Link>
@@ -192,7 +192,7 @@ export function RadialMenu({ projects, onClose }: { projects: MenuProject[]; onC
                           setProjectsOpen((open) => !open);
                         }}
                         className="text-white/50 hover:text-cobalt transition-colors duration-200 focus:outline-none mt-1"
-                        aria-label="Toggle projects list"
+                        aria-label="Toggle projects"
                         aria-expanded={projectsOpen}
                       >
                         <ChevronDown
@@ -206,7 +206,7 @@ export function RadialMenu({ projects, onClose }: { projects: MenuProject[]; onC
                     <Link
                       href={item.path}
                       onClick={onClose}
-                      className="font-body text-3xl md:text-4xl font-light text-gallery hover:text-cobalt transition-colors duration-300 focus:outline-none leading-tight"
+                      className="font-body text-3xl md:text-4xl font-light text-gallery hover:text-cobalt transition-colors duration-300 focus:outline-none max-md:leading-tight"
                     >
                       {item.label}
                     </Link>

@@ -7,6 +7,7 @@ import { AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 import { RadialMenu, type MenuProject } from "@/components/site/radial-menu";
+import { LOGO_BREATH } from "@/lib/site-config";
 
 /**
  * Fixed header overlay, matching the reference app's chrome:
@@ -34,7 +35,11 @@ function BreathingLogo({ light }: { light: boolean }) {
     const schedule = (fn: () => void, ms: number) => {
       t = setTimeout(fn, ms);
     };
-    // idle 3s → spacing 0.5s → reset 3s → idle 0.4s → repeat (reference cadence)
+    // Source cadence (session 30 probe, 20 s @100 ms sampling — the machine
+    // constants live in site-config LOGO_BREATH): tight 3.3 s → expand 0.4 s
+    // → EXPANDED HOLD 3.4 s → collapse 0.35 s → repeat (≈7.4 s cycle). The
+    // source rests mostly-EXPANDED; the old machine's 0.5 s spacing phase
+    // collapsed before the logo ever rested at 0.7em.
     const start = () => {
       schedule(() => {
         setPhase("spacing");
@@ -42,10 +47,10 @@ function BreathingLogo({ light }: { light: boolean }) {
           setPhase("reset");
           schedule(() => {
             setPhase("idle");
-            schedule(start, 400);
-          }, 3000);
-        }, 500);
-      }, 3000);
+            schedule(start, LOGO_BREATH.restartMs);
+          }, LOGO_BREATH.resetMs);
+        }, LOGO_BREATH.spacingMs);
+      }, LOGO_BREATH.idleMs);
     };
     start();
     return () => clearTimeout(t);

@@ -384,3 +384,79 @@ test("manifest.json serves the PWA field set (session 28 parity)", async ({ requ
     expect(icon.type).toBe("image/svg+xml");
   }
 });
+
+test("marquee band stores title-case text in the DOM (session 30 parity)", async ({ page }) => {
+  // Source ground truth: the footer marquee's spans carry mixed-case
+  // textContent ("Brand Identity", "Digital Product", …) rendered visually
+  // uppercase via text-transform. The clone previously stored UPPERCASE
+  // literals — visually identical, but the DOM text (screen readers, text
+  // extraction, copy-paste) diverged. Same pattern as SKILL_GROUPS and the
+  // hero meta line (session 26).
+  await page.goto("/");
+  const track = page.getByRole("contentinfo").locator(".marquee-track");
+  await expect(track).toBeVisible();
+  const firstItem = await track.evaluate((el) => {
+    const spans = el.querySelectorAll("span span");
+    return spans[0]?.textContent ?? "";
+  });
+  expect(firstItem).toBe("Brand Identity");
+});
+
+test("footer copyright is a single DOM text node (session 30 parity)", async ({ page }) => {
+  // Source ground truth: ONE text node — "© 2026 Alex Moreau. Built on
+  // Base44." The clone's JSX interleaved static text with the year
+  // expression, splitting it into 3 text nodes. Node texture is invisible
+  // visually but observable to text extraction and copy-paste semantics.
+  await page.goto("/");
+  const copyright = await page.evaluate(() => {
+    const el = [...document.querySelectorAll("footer span, [role='contentinfo'] span")].find((s) =>
+      /^©/.test(s.textContent ?? ""),
+    );
+    if (!el) return null;
+    const textNodes = [...el.childNodes].filter((n) => n.nodeType === Node.TEXT_NODE);
+    return { text: el.textContent, nodeCount: textNodes.length };
+  });
+  expect(copyright).not.toBeNull();
+  expect(copyright!.text).toBe("© 2026 Alex Moreau. Built on Base44.");
+  expect(copyright!.nodeCount).toBe(1);
+});
+
+test("works rows match the source's numbering node texture (session 30 parity)", async ({ page }) => {
+  // Source ground truth (re-probe): the LANDING works label is the 5-node
+  // JSX split — "01", "/", "06", " — ", "2035" — the plain
+  // {id}/{WORKS_INDEX_TOTAL} — {year} interleaving. (Only the case-study
+  // hero label carries the single "/06 — " fragment — see the spec below.)
+  // Pinning the texture guards against "tidying" the JSX into a template
+  // literal, which would diverge from the source's DOM.
+  await page.goto("/");
+  const label = await page.evaluate(() => {
+    const el = [...document.querySelectorAll("a[href^='/project/'] span")].find((s) =>
+      /^\d\d\/06/.test((s.textContent ?? "").trim()),
+    );
+    if (!el) return null;
+    const textNodes = [...el.childNodes].filter((n) => n.nodeType === Node.TEXT_NODE);
+    return { text: el.textContent?.trim() ?? "", nodes: textNodes.map((n) => n.textContent) };
+  });
+  expect(label).not.toBeNull();
+  expect(label!.text).toMatch(/^\d\d\/06 — \d{4}$/);
+  expect(label!.nodes.slice(0, 4)).toEqual(["01", "/", "06", " — "]);
+  expect(label!.nodes[4]).toMatch(/^\d{4}$/);
+});
+
+test("project hero label carries the numbering as one static fragment (session 30 parity)", async ({ page }) => {
+  // Same rule on the case-study hero: the source renders "01" + "/06 — " +
+  // the category (3 nodes — the static fraction+dash fragment is ONE node,
+  // unlike the landing works label's 5-node split above).
+  await page.goto("/project/kinto-cafe-branding");
+  const label = await page.evaluate(() => {
+    const el = [...document.querySelectorAll("section span")].find((s) =>
+      /^\d\d\/06/.test((s.textContent ?? "").trim()),
+    );
+    if (!el) return null;
+    const textNodes = [...el.childNodes].filter((n) => n.nodeType === Node.TEXT_NODE);
+    return { text: el.textContent?.trim() ?? "", nodes: textNodes.map((n) => n.textContent) };
+  });
+  expect(label).not.toBeNull();
+  expect(label!.text).toMatch(/^\d\d\/06 — /);
+  expect(label!.nodes).toContain("/06 — ");
+});

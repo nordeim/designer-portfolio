@@ -38,14 +38,18 @@ export const NAV_LINKS = [
   { label: "Contact", href: "/contact" },
 ] as const;
 
-/** The giant ghost marquee band rendered at the top of the site footer. */
+/** The giant ghost marquee band rendered at the top of the site footer.
+ * Title-case in the DOM (session 30 re-probe: the source stores
+ * "Brand Identity"-style text and uppercases via CSS — the same pattern
+ * as SKILL_GROUPS and the hero meta line; session 14's "uppercase as-is"
+ * contract was a mis-read of visually uppercased text). */
 export const MARQUEE_ITEMS = [
-  "BRAND IDENTITY",
-  "DIGITAL PRODUCT",
-  "MOTION DESIGN",
-  "SPATIAL DESIGN",
-  "TYPOGRAPHY",
-  "ART DIRECTION",
+  "Brand Identity",
+  "Digital Product",
+  "Motion Design",
+  "Spatial Design",
+  "Typography",
+  "Art Direction",
 ] as const;
 
 /**
@@ -54,6 +58,25 @@ export const MARQUEE_ITEMS = [
  * 5 published projects — we reproduce the constant for visual parity.
  */
 export const WORKS_INDEX_TOTAL = "06";
+
+/**
+ * Breathing-logo cadence (session 30 source probe, 20 s @100 ms
+ * letter-spacing sampling). The source's cycle: tight 3.3 s → expand
+ * 0.4 s (cubic-bezier(0.65, 0, 0.35, 1)) → EXPANDED HOLD 3.4 s →
+ * collapse 0.35 s → repeat (cycle ≈ 7.45 s, ~50 % duty). The pre-fix
+ * machine held the expanded phase for only 0.5 s AND doubled the tight
+ * phase (idle 3 s + reset 3 s + restart 0.4 s = 6.4 s vs the source's 3.3).
+ */
+export const LOGO_BREATH = {
+  /** the tight hold before each expand — the source's FULL tight phase */
+  idleMs: 3300,
+  /** the 0.4 s expand transition + 3.4 s expanded hold */
+  spacingMs: 3800,
+  /** the 0.35 s collapse transition only — the cycle restarts into idle */
+  resetMs: 350,
+  /** immediate restart (0 — the idle phase carries the whole tight hold) */
+  restartMs: 0,
+} as const;
 
 export const PROJECT_TYPES = [
   "Brand Identity",
