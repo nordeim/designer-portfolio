@@ -1,12 +1,22 @@
+$ grep -v '^#' .env
+DATABASE_URL="file:../db/custom.db"
+AUTH_SECRET="nt1GXmZOy6tB+gUmdn77ppwHzC0zgsGuKfKb8mSxWQU="
+ADMIN_EMAIL=admin@alexmoreau.design
+SEED_ADMIN_PASSWORD=set-me-min-8-chars
+NEXT_PUBLIC_SITE_URL=https://designer-portfolio.jesspete.shop
+SITE_URL=https://designer-portfolio.jesspete.shop
+E2E_ADMIN_EMAIL=admin@alexmoreau.design
+E2E_ADMIN_PASSWORD=
+
 $ rm -rf .next/
 
-$ rm -rf db/custom.db
+$ rm -rf db/custom.db 
 
 $ bun install
 [0.04ms] ".env"
 bun install v1.3.14 (0d9b296a)
 
-Checked 623 installs across 720 packages (no changes) [3.04s]
+Checked 623 installs across 720 packages (no changes) [45.00ms]
 
 $ bunx prisma migrate deploy
 warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
@@ -30,7 +40,7 @@ migrations/
       
 All migrations have been successfully applied.
 
-$ SEED_ADMIN_PASSWORD=P@ssw0rd bun run db:seed
+$ SEED_ADMIN_PASSWORD=P@ssw0rd bun run db:seed 
 $ prisma db seed
 warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
 For more information, see: https://pris.ly/prisma-config
@@ -48,21 +58,21 @@ Running seed command `bun prisma/seed.ts` ...
 🌱  The seed command has been executed.
 
 $ ls -l db/custom.db
--rw-r--r-- 1 pete pete 94208 Sep 21 08:38 db/custom.db
+-rw-r--r-- 1 pete pete 94208 Sep 21 09:26 db/custom.db
 
 $ bun run build
 $ next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/
 ▲ Next.js 16.3.5 (Turbopack)
 - Environments: .env
-✓ Running next.config.ts took 295ms
+✓ Running next.config.ts took 182ms
 
   Creating an optimized production build ...
-✓ Compiled successfully in 58s
+✓ Compiled successfully in 56s
   Skipping validation of types
-✓ Finished TypeScript config validation in 45ms    
-✓ Collecting page data using 3 workers in 5.6s    
-✓ Generating static pages using 3 workers (17/17) in 5.7s
-✓ Finalizing page optimization in 3.7s    
+✓ Finished TypeScript config validation in 30ms    
+✓ Collecting page data using 3 workers in 6.5s    
+✓ Generating static pages using 3 workers (17/17) in 3.3s
+✓ Finalizing page optimization in 3.5s    
 
 Route (app)
 ┌ ○ /
@@ -98,5 +108,5 @@ $ NODE_ENV=production node .next/standalone/server.js
 - Local:         http://localhost:3009
 - Network:       http://0.0.0.0:3009
 ✓ Ready in 0ms
-✓ Running next.config took 24ms
+✓ Running next.config took 9ms
 
