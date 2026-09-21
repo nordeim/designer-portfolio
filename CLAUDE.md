@@ -82,7 +82,7 @@ bun run dev                       # http://localhost:3000
 
 - **Unit (Vitest, `tests/`)**: Zod schemas (inquiry, login, project input — including empty-select prompts), scrypt password hashing, JSON-column parsing degradation, typewriter state machine, constellation layout derivation, radial-menu angle math (incl. the mobile in-viewport reachability regression), database-path resolution, site-config DOM-parity contracts. No mocks — real schema parsing and real crypto.
 - **Integration**: the dev server + browser is the integration surface (see Verification below).
-- **E2E (Playwright, `e2e/`)**: 37 specs across seven files (plus 5 opt-in outage specs) — public pages content (incl. the contact form's source-parity initial state: placeholder selects + four social links), project detail (hero/gallery/zoom/prev-next/video/404), auth (login, gating, radial menu), inquiry submission → dashboard inbox, dashboard CRUD + inquiry triage + sign-out, and a11y smoke (focus visibility, console errors, mobile overflow, marquee animation, constellation, **mobile radial-menu paint + in-viewport reachability**, plus the session-18 source-parity specs: login auth-card metrics, standalone 404 stack, project-not-found state, legal section anatomy).
+- **E2E (Playwright, `e2e/`)**: 40 specs across seven files (plus 5 opt-in outage specs) — public pages content (incl. the contact form's source-parity initial state: placeholder selects + four social links; the machine-surface contracts: dynamic robots.txt + source-aligned 6-route sitemap.xml), project detail (hero/gallery/zoom/prev-next/video/404), auth (login, gating, radial menu), inquiry submission → dashboard inbox, dashboard CRUD + inquiry triage + sign-out (with the reference's avatar row), and a11y smoke (focus visibility, console errors, mobile overflow, marquee animation, constellation, **mobile radial-menu paint + in-viewport reachability**, works-row hover smoothness with in-flight scale sampling, plus the session-18 source-parity specs: login auth-card metrics, standalone 404 stack, project-not-found state, legal section anatomy).
 
 ### Test Commands
 
@@ -90,7 +90,7 @@ bun run dev                       # http://localhost:3000
 bun run test                      # all unit suites
 bunx vitest run tests/validation.test.ts
 bunx vitest run -t "slug"
-E2E_ADMIN_PASSWORD=… bunx playwright test    # full e2e (server must be running on :3000)
+E2E_ADMIN_PASSWORD=… bunx playwright test    # full e2e (45 tests: 40 normal + 5 outage-skipped; server must be running on :3000)
 bunx playwright test e2e/auth.spec.ts        # one file
 E2E_START=1 E2E_COMMAND="bun run start" bunx playwright test   # vs production build
 ```

@@ -128,3 +128,49 @@ test("health endpoint reports ok", async ({ request }) => {
   expect(body.status).toBe("ok");
   expect(body.db).toBe(true);
 });
+
+test("robots.txt serves the dynamic contract (no static shadow)", async ({ request }) => {
+  // The documented contract (AGENTS.md): wildcard rule, admin routes
+  // disallowed, sitemap linked — served by src/app/robots.ts. A stale
+  // public/robots.txt once shadowed this route (5 bot-specific rules, no
+  // Disallow, no Sitemap line) — "Googlebot" is its fingerprint and must
+  // never reappear.
+  const res = await request.get("/robots.txt");
+  expect(res.status()).toBe(200);
+  const body = await res.text();
+  // Next's generator emits "User-Agent" (capital A) — the robots protocol is
+  // case-insensitive, so match either casing.
+  expect(body).toMatch(/^user-agent:\s?\*$/im);
+  expect(body).toContain("Disallow: /dashboard");
+  expect(body).toContain("Disallow: /login");
+  expect(body).toMatch(/^Sitemap: .+\/sitemap\.xml$/m);
+  expect(body).not.toContain("Googlebot");
+});
+
+test("sitemap.xml matches the reference route set (6 routes, weekly, 1.0/0.8)", async ({ request }) => {
+  // Source ground truth: exactly 6 routes in this order — home (trailing
+  // slash), about, projects, contact, privacy, accessibility — all weekly,
+  // priorities 1.0 (home) / 0.8 (others). The reference omits project
+  // detail pages from its sitemap; the clone matches (they stay SSG'd and
+  // internally linked).
+  const res = await request.get("/sitemap.xml");
+  expect(res.status()).toBe(200);
+  expect(res.headers()["content-type"]).toContain("xml");
+  const xml = await res.text();
+  expect(xml).toContain('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">');
+
+  const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+  expect(locs).toHaveLength(6);
+  const paths = locs.map((l) => l.replace(/^https?:\/\/[^/]+/, ""));
+  expect(paths).toEqual(["/", "/about", "/projects", "/contact", "/privacy", "/accessibility"]);
+  expect(xml).not.toContain("/project/");
+
+  const freqs = [...xml.matchAll(/<changefreq>([^<]+)<\/changefreq>/g)].map((m) => m[1]);
+  expect(freqs).toHaveLength(6);
+  for (const f of freqs) expect(f).toBe("weekly");
+
+  const prios = [...xml.matchAll(/<priority>([^<]+)<\/priority>/g)].map((m) => m[1]);
+  expect(prios).toHaveLength(6);
+  expect(prios[0]).toBe("1.0");
+  for (const p of prios.slice(1)) expect(p).toBe("0.8");
+});

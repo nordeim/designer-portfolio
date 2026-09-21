@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, FolderKanban, Inbox, LogOut, Menu, X, ExternalLink } from "lucide-react";
+import { LayoutDashboard, FolderKanban, Inbox, Menu, X, ExternalLink } from "lucide-react";
 import { logoutAction } from "@/actions/auth";
 import { SITE } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
@@ -100,7 +100,16 @@ export function DashboardShell({ user, children }: { user: DashUser; children: R
         disabled={pending}
         className="justify-start font-body text-sm"
       >
-        <LogOut className="h-4 w-4" aria-hidden />
+        {/* The reference's sign-out row carries the owner's avatar — a solid
+            dark round circle with the white initial, pulled flush against
+            the button's left border (see
+            docs/designer-portfolio-dashboard.png). */}
+        <span
+          className="-ml-3.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground text-[13px] font-medium text-background"
+          aria-hidden
+        >
+          {initials.charAt(0)}
+        </span>
         {pending ? "Signing out…" : "Sign out"}
       </Button>
     </div>

@@ -117,6 +117,12 @@ test("inquiry triage: status transitions persist", async ({ page }) => {
 });
 
 test("sign out returns to the public site", async ({ page }) => {
-  await page.getByRole("button", { name: /sign out/i }).click();
+  // The reference dashboard's sign-out row carries the owner's avatar — a
+  // dark round circle with the white initial (docs/designer-portfolio-dashboard.png).
+  const signOut = page.getByRole("button", { name: /sign out/i });
+  const avatar = signOut.locator("span.rounded-full");
+  await expect(avatar).toHaveCount(1);
+  await expect(avatar).toHaveText(/^[A-Z]$/);
+  await signOut.click();
   await expect(page).toHaveURL(/\/login|\/$/, { timeout: 10_000 });
 });

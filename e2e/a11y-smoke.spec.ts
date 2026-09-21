@@ -66,6 +66,39 @@ test("footer marquee track animates", async ({ page }) => {
   expect(animation).not.toBe("none");
 });
 
+test("works-row image hover scales smoothly through a transition (source parity)", async ({ page }) => {
+  // The reference animates the row image to scale(1.05) over 0.7s with
+  // cubic-bezier(0.65, 0, 0.35, 1). Tailwind v4's scale utility animates the
+  // `scale` PROPERTY, so the transition-property list must include `scale`
+  // and the hover must produce in-flight values — an inline
+  // `style={{ transition: "transform …" }}` shorthand silently drops the
+  // `scale` property from the list and the hover SNAPS (the session-24 bug).
+  await page.goto("/");
+  const img = page.locator("a[href^='/project/'] img").first();
+  await img.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(700); // let the framer-motion row reveal settle
+
+  const prop = await img.evaluate((el) => getComputedStyle(el).transitionProperty);
+  expect(prop).toContain("scale");
+  const timing = await img.evaluate((el) => getComputedStyle(el).transitionTimingFunction);
+  expect(timing).toBe("cubic-bezier(0.65, 0, 0.35, 1)");
+
+  await img.hover();
+  // Sample during the ~700ms flight — a snap yields only the endpoints; a
+  // real transition passes through intermediate values.
+  let sawMidFlight = false;
+  for (let i = 0; i < 8; i++) {
+    const s = await img.evaluate((el) => getComputedStyle(el).scale);
+    const v = parseFloat(s);
+    if (v > 1.0005 && v < 1.049) sawMidFlight = true;
+    await page.waitForTimeout(60);
+  }
+  await page.waitForTimeout(900);
+  const settled = await img.evaluate((el) => getComputedStyle(el).scale);
+  expect(sawMidFlight, "hover scale must animate (transition, not snap)").toBe(true);
+  expect(settled).toBe("1.05");
+});
+
 test("hero constellation renders image slots and cobalt dots", async ({ page }) => {
   await page.goto("/");
   const hero = page.getByLabel("Introduction");

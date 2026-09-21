@@ -50,11 +50,14 @@ function WorkRow({ project, index }: { project: WorkRowProject; index: number })
         >
           <div className="image-hover-zone group/img relative overflow-hidden aspect-[4/5]">
             {/* Raw <img>: hover-preview imagery with a JS-driven transform. */}
+            {/* The reference eases the hover scale with cubic-bezier(0.65, 0, 0.35, 1). */}
+            {/* Tailwind v4's scale-105 animates the `scale` property, which */}
+            {/* `transition-transform` covers — an inline `transition` shorthand */}
+            {/* would drop `scale` from the property list and snap (session 24). */}
             <img
               src={project.heroImage}
               alt={`${project.title} — ${project.subtitle}`}
-              className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover/img:scale-105 motion-reduce:transition-none"
-              style={{ transition: "transform 0.7s cubic-bezier(0.65, 0, 0.35, 1)" }}
+              className="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.65,0,0.35,1)] group-hover/img:scale-105 motion-reduce:transition-none"
               loading="lazy"
             />
             <div

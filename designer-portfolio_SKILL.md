@@ -1,9 +1,9 @@
 ---
 name: designer-portfolio
-description: "Complete engineering skill for the Designer Portfolio codebase — a precision-minimalist designer portfolio (Next.js 16 + React 19 + Prisma/SQLite + Tailwind v4) cloned from a base44 reference app. Covers the design-token system, the radial-menu geometry, the ActionResult action contract, auth/session design, test architecture (Vitest + Playwright), graceful-degradation, and every hard-won lesson from sessions 1–17."
-version: 1.0.2
-last_updated: 2026-09-21 (session 22 — error-surface parity: login alert card, native validation, persistent Radix system toasts)
-project_state: "74 unit tests @ 100% pure-seam coverage · 37 e2e (+5 outage) · build 17/17 SSG · live parity audit: 8/10 routes exact line parity · title sweep 7/7 MATCH · error-surface parity: login alert/toast-free, contact Radix toasts"
+description: "Complete engineering skill for the Designer Portfolio codebase — a precision-minimalist designer portfolio (Next.js 16 + React 19 + Prisma/SQLite + Tailwind v4) cloned from a base44 reference app. Covers the design-token system, the radial-menu geometry, the ActionResult action contract, auth/session design, test architecture (Vitest + Playwright), graceful-degradation, and every hard-won lesson from sessions 1–24."
+version: 1.1.0
+last_updated: 2026-09-21 (session 24 — layered-behavior parity: smooth works-row hover, un-shadowed robots.txt, byte-exact sitemap route handler, dashboard sign-out avatar)
+project_state: "74 unit tests @ 100% pure-seam coverage · 40 e2e (+5 outage) · build 17/17 SSG · live parity audit: 8/10 routes exact line parity · title sweep 7/7 MATCH · error-surface + machine-surface parity complete"
 ---
 
 # Designer Portfolio — Engineering SKILL
@@ -95,6 +95,11 @@ test or recorded in `docs/remediation-plan-session-18.md`):
 | Toast root role | No role on toast roots | `role="alert"` on the destructive variant only | AT announcement + the outage e2e contract; the success variant stays roleless (Radix mirrors it into its own aria-live announcer) |
 | Contact form feedback | Toast-only (no per-field errors) | Same since session 22 (toast-only; Zod still validates server-side) | Parity — the inline field errors were a clone-side nicety the reference never had |
 | slate-400 rendering | Tailwind v3 rgb(148,163,184) | Tailwind v4 oklch → ≈rgb(144,161,185) | ±4/255 palette-conversion rounding; visually identical — assert with tolerance |
+| robots.txt served | `User-agent: *` + `Allow: /` + `Sitemap:` line (admin-free SPA) | Same + `Disallow: /dashboard`, `Disallow: /login` (dynamic `robots.ts`; the stale shadowing `public/robots.txt` was deleted in session 24) | Real admin routes exist here — keep crawlers out |
+| sitemap.xml route set | 6 routes (home `/` trailing slash, about, projects, contact, privacy, accessibility — NO project pages), all `weekly`, 1.0/0.8, indented | Identical since session 24 (`src/app/sitemap.xml/route.ts`, byte-exact incl. indentation + no trailing newline; outage-proof — no DB call) | Parity; project pages stay SSG'd + internally linked |
+| robots/sitemap content types | `text/html` (base44 host artifact) | `text/plain` / `application/xml` (correct) | Matching text/html would be actively wrong |
+| favicon | broken (CDN `storage: object doesn't exist`) | working A/M monogram (`src/app/icon.svg`) | Enterprise-grade > replicating brokenness |
+| works-row hover mechanism | `transform: scale(1.05)` (v3-style) | Tailwind v4 `scale` property (computed `scale: 1.05`) | Same 700ms + cubic-bezier(0.65,0,0.35,1) + same in-flight values — visually identical |
 
 ---
 
@@ -387,7 +392,7 @@ src/components/
 │   ├── site-header.tsx        # fixed overlay chrome: A/M logo, MENU, CTA, theme toggle
 │   ├── radial-menu.tsx        # the rotating wheel overlay (§6.3) — client
 │   ├── hero-constellation.tsx # floating image grid + typewriter meta — client
-│   ├── works-section.tsx      # alternating sticky parallax rows
+│   ├── works-section.tsx      # alternating sticky parallax rows (hover: image scale→1.05 over 0.7s, ref easing)
 │   ├── philosophy-section.tsx
 │   ├── ghost-marquee.tsx      # giant footer band (marquee-track)
 │   ├── project-index.tsx      # /projects rows w/ invert-fill + cursor preview
@@ -396,9 +401,9 @@ src/components/
 │   ├── inquiry-form.tsx       # RHF + Zod + server action, honeypot, Radix toast — client
 │   ├── error-panel.tsx        # styled degraded panel (outage contract)
 │   └── fade-in.tsx
-├── dashboard/  # dashboard-shell (sidebar/slide-over), projects-manager,
-│               # project-form-dialog, project-row-actions, inquiries-manager,
-│               # status-meta
+├── dashboard/  # dashboard-shell (sidebar/slide-over, sign-out avatar row),
+│               # projects-manager, project-form-dialog,
+│               # project-row-actions, inquiries-manager, status-meta
 ├── auth/login-form.tsx        # the auth-card screen (§4.4) — client
 └── ui/         # shadcn-style primitives: button, input, label, textarea,
                 # select, dialog, switch, accordion, toast (§4.7 — the
@@ -716,6 +721,40 @@ Additional process lessons:
 - **L25 (s10): graceful degradation is a feature you can test.** The
   outage suite (deliberately broken DB) keeps honesty guarantees from
   regressing — invest in one for any DB-backed static site.
+- **L26 (s24): an inline `transition` shorthand silently unmasks Tailwind
+  transitions.** `style={{ transition: "transform …" }}` overrides the
+  ENTIRE transition-* longhand set of `transition-transform` — and since
+  v4's `scale-*` utilities animate the `scale` PROPERTY (which
+  `transition-transform` covers but a `transform`-only shorthand does
+  not), the hover SNAPPED instead of easing for months while looking
+  correct in code review. Never inline a `transition` on an element that
+  also carries Tailwind transition utilities; use an `ease-[…]` utility
+  (it sets `--tw-ease`, which both declarations resolve, order-safe).
+- **L27 (s24): `public/` files SHADOW App Router routes.** A stale
+  `public/robots.txt` silently beat `src/app/robots.ts` on every deploy —
+  the documented crawler contract was never actually served. When a
+  metadata-route file exists, grep `public/` for a same-named static file;
+  assert the served body (the e2e specs now pin the `Disallow` lines and
+  the absence of the stale file's `Googlebot` fingerprint).
+- **L28 (s24): the metadata-convention serializer is not configurable.**
+  `app/sitemap.ts` emits flat, unindented XML with a trailing newline and
+  forces DB-driven route lists. When the reference's sitemap is
+  byte-inspectable, a plain route handler (`app/sitemap.xml/route.ts`)
+  gives exact bytes AND drops the DB dependency (the old sitemap 500'd
+  during an outage — the static shell contract now covers it).
+- **L29 (s24): VLM + threshold-ASCII glyph forensics lie on 13px letters.**
+  A rendered white-on-dark "A" was misread as "N" by the VLM three times
+  AND by a threshold-based ASCII extraction. The truth chain: DOM
+  `charCodeAt(0)` → `document.fonts.check` → same-page clone pixel diff.
+  Never trust a single-channel read of tiny glyphs; verify the character
+  code and re-render a control glyph in the same page.
+- **L30 (s24): kill the port properly, or you audit a zombie.** A failed
+  `pkill -9 -f "next-server\|next dev"` (backslash-pipe inside double
+  quotes — a literal, not a regex alternation) left the previous server
+  alive; the "dev server" never started (EADDRINUSE), and a login-throttle
+  (5/10min) made every subsequent probe fail confusingly. Always verify
+  with `ss -tlnp | grep :3000` after the kill, and treat EADDRINUSE in the
+  server log as "you are talking to a zombie".
 
 ---
 
