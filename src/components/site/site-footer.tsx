@@ -26,7 +26,7 @@ export function SiteFooter() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="font-body text-sm text-foreground hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:ring-offset-4"
+                  className="font-body text-sm text-foreground hover:text-cobalt transition-colors focus:outline-none focus:ring-2 focus:ring-cobalt focus:ring-offset-4"
                 >
                   {link.label}
                 </Link>
@@ -43,7 +43,7 @@ export function SiteFooter() {
                   href={link.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-body text-sm text-foreground hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:ring-offset-4"
+                  className="font-body text-sm text-foreground hover:text-cobalt transition-colors focus:outline-none focus:ring-2 focus:ring-cobalt focus:ring-offset-4"
                 >
                   {link.label}
                 </a>
@@ -56,7 +56,7 @@ export function SiteFooter() {
             <div className="flex flex-col gap-3">
               <a
                 href={`mailto:${SITE.email}`}
-                className="font-body text-sm text-foreground hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:ring-offset-4"
+                className="font-body text-sm text-foreground hover:text-cobalt transition-colors focus:outline-none focus:ring-2 focus:ring-cobalt focus:ring-offset-4"
               >
                 {SITE.email}
               </a>
@@ -69,13 +69,13 @@ export function SiteFooter() {
             <div className="flex flex-col gap-3">
               <Link
                 href="/privacy"
-                className="font-body text-sm text-foreground hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:ring-offset-4"
+                className="font-body text-sm text-foreground hover:text-cobalt transition-colors focus:outline-none focus:ring-2 focus:ring-cobalt focus:ring-offset-4"
               >
                 Privacy Policy
               </Link>
               <Link
                 href="/accessibility"
-                className="font-body text-sm text-foreground hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:ring-offset-4"
+                className="font-body text-sm text-foreground hover:text-cobalt transition-colors focus:outline-none focus:ring-2 focus:ring-cobalt focus:ring-offset-4"
               >
                 Accessibility Statement
               </Link>

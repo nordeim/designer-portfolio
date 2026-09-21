@@ -22,21 +22,67 @@ test("public pages log no console errors", async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test("keyboard focus is visible on primary controls", async ({ page }) => {
+test("focus rings match the source's exact coverage (session 26 parity)", async ({ page }) => {
+  // Source-measured ring map (base44 Tab-stops): the fixed CTA, footer
+  // links, philosophy links, and the inquiry submit show the cobalt ring
+  // (with the white 4px offset) — via PLAIN `focus:` (any focus, mouse or
+  // keyboard). The header chrome (logo / theme toggle / menu button),
+  // works rows, All Projects, radial-menu links, prev/next links, and the
+  // FAQ triggers render NO ring (focus:outline-none only). This spec pins
+  // that exact coverage — programmatic el.focus() triggers :focus (which
+  // is what the source's plain focus: responds to).
   await page.goto("/");
+  const cta = page.getByRole("link", { name: "Start a Project →" });
+  await cta.focus();
+  await expect(cta).toBeFocused();
+  const ctaRing = await cta.evaluate((el) => {
+    const cs = getComputedStyle(el);
+    return cs.boxShadow;
+  });
+  // White 4px offset + cobalt 6px ring, exactly like the source's CTA.
+  expect(ctaRing).toContain("rgb(46, 91, 255)");
+  expect(ctaRing).toContain("rgb(255, 255, 255)");
+
+  // The menu button must NOT paint a ring — the source shows none there.
   const menu = page.getByRole("button", { name: "Open menu" });
   await menu.focus();
-  await expect(menu).toBeFocused();
-  // The focus ring is an outline/box-shadow — non-zero width.
-  const outline = await menu.evaluate((el) => {
+  const menuRing = await menu.evaluate((el) => {
     const cs = getComputedStyle(el);
-    return { width: cs.outlineWidth, style: cs.outlineStyle, shadow: cs.boxShadow, ring: cs.getPropertyValue("--tw-ring-shadow") };
+    const shadow = cs.boxShadow;
+    // A ring is any shadow segment with a non-transparent color and a
+    // non-zero width (transparent segments from @property initial values
+    // don't count — the session-26 truncation lesson).
+    if (shadow === "none") return false;
+    let visible = false;
+    for (const seg of shadow.split(/,(?![^(]*\))/)) {
+      const m = seg.match(/rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)(?:[,\s/]+(\d*\.?\d+))?\s*\)/);
+      if (m) {
+        const alpha = m[4] === undefined || m[4] === "" ? 1 : parseFloat(m[4]);
+        const w = seg.match(/0px 0px 0px (\d+)px/);
+        if (alpha > 0.05 && w && parseInt(w[1], 10) > 0) visible = true;
+      }
+    }
+    return visible;
   });
-  const hasRing =
-    (outline.style !== "none" && parseFloat(outline.width) > 0) ||
-    outline.shadow !== "none" ||
-    outline.ring.length > 0;
-  expect(hasRing).toBe(true);
+  expect(menuRing, "menu button must show no ring (source parity)").toBe(false);
+});
+
+test("Inter font file matches the source's glyph metrics (session 26)", async ({ page }) => {
+  // The source loads Google Fonts CDN Inter v20 (variable woff2, latin).
+  // next/font/google shipped a build whose weights 300/500 run ~3% wider
+  // (canvas: "Matcha, elevated" 243px vs the source's 236px) — shifting
+  // page flow and text wrapping. This spec pins the exact glyph metrics:
+  // the self-hosted file must measure what the source measures.
+  await page.goto("/");
+  await page.evaluate(() => document.fonts.ready);
+  const width = await page.evaluate(() => {
+    const ctx = document.createElement("canvas").getContext("2d");
+    if (!ctx) return null;
+    ctx.font = '300 30px "Inter"';
+    return Math.round(ctx.measureText("Matcha, elevated").width);
+  });
+  expect(width).toBeGreaterThanOrEqual(235);
+  expect(width).toBeLessThanOrEqual(237);
 });
 
 test("theme toggle switches the color scheme", async ({ page }) => {

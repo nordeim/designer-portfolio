@@ -21,10 +21,48 @@ test("hero shows the index label, oversized title, subtitle and meta", async ({ 
   await expect(hero.getByText("Objective")).toBeVisible();
 });
 
-test("detail section has sticky intro, gallery, and a working zoom toggle", async ({ page }) => {
+test("detail intro column pins at the source's measured position (source parity)", async ({ page }) => {
+  // Source-measured (session 26): the reference pins the intro column via
+  // GSAP ScrollTrigger (trigger = the Project detail section, start
+  // "top 10px", pin = intro). The section top sits 128px above the grid
+  // (py-32), so the pin engages at scroll 890 holding the intro at viewport
+  // y=138 — pinned through the gallery (the source's own pin is racy: it
+  // only engages when ScrollTrigger initializes after image layout; our
+  // CSS-sticky replication is the deterministic form of its intent).
+  // The intro h2 uses the source's default text-3xl line-height (36px).
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(`/project/${SLUG}`);
   const detail = page.getByLabel("Project detail");
-  await expect(detail.getByRole("heading", { name: "Matcha, elevated" })).toBeVisible();
+  const introH2 = detail.getByRole("heading", { name: "Matcha, elevated" });
+  await expect(introH2).toBeVisible();
+
+  const h2lh = await introH2.evaluate((el) => getComputedStyle(el).lineHeight);
+  expect(h2lh).toBe("36px");
+
+  // Mid-gallery: the intro column must be PINNED at viewport y=138 (±8).
+  await page.evaluate(() => window.scrollTo(0, 2600));
+  await page.waitForTimeout(500);
+  const pinnedY = await introH2.evaluate((el) => {
+    const col = el.closest(".col-span-4");
+    return col ? Math.round(col.getBoundingClientRect().y) : null;
+  });
+  expect(pinnedY).not.toBeNull();
+  expect(Math.abs(pinnedY! - 138)).toBeLessThanOrEqual(8);
+
+  // Past the gallery: the pin has released and the intro is gone.
+  await page.evaluate(() => window.scrollTo(0, 5900));
+  await page.waitForTimeout(500);
+  const releasedY = await introH2.evaluate((el) => {
+    const col = el.closest(".col-span-4");
+    return col ? Math.round(col.getBoundingClientRect().y) : null;
+  });
+  expect(releasedY).not.toBeNull();
+  expect(releasedY!).toBeLessThan(0);
+});
+
+test("gallery renders with a working zoom toggle", async ({ page }) => {
+  await page.goto(`/project/${SLUG}`);
+  const detail = page.getByLabel("Project detail");
   // Gallery images render (natural-ratio frames).
   expect(await detail.locator("img").count()).toBeGreaterThan(2);
 

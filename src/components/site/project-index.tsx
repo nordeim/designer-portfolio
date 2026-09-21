@@ -37,7 +37,7 @@ export function ProjectIndex({ projects }: { projects: IndexProject[] }) {
           <Link
             key={project.id}
             href={`/project/${project.slug}`}
-            className="group block border-b border-border relative overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cobalt"
+            className="group block border-b border-border relative overflow-hidden focus:outline-none"
             onMouseEnter={() => setHovered(i)}
             onMouseLeave={() => setHovered(null)}
             onFocus={() => setHovered(i)}

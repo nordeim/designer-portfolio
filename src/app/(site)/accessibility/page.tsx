@@ -31,7 +31,7 @@ export default function AccessibilityPage() {
       aria-label="Accessibility statement"
     >
       <p className="label-mono text-muted-foreground mb-6">LEGAL</p>
-      <h1 className="font-body text-4xl md:text-6xl font-light tracking-tight text-foreground mb-10">
+      <h1 className="font-body text-5xl md:text-6xl font-light tracking-tight text-foreground mb-16">
         Accessibility
       </h1>
       <div className="max-w-3xl flex flex-col gap-8 font-body text-sm md:text-base leading-relaxed text-foreground">

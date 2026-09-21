@@ -1,9 +1,9 @@
 ---
 name: designer-portfolio
-description: "Complete engineering skill for the Designer Portfolio codebase — a precision-minimalist designer portfolio (Next.js 16 + React 19 + Prisma/SQLite + Tailwind v4) cloned from a base44 reference app. Covers the design-token system, the radial-menu geometry, the ActionResult action contract, auth/session design, test architecture (Vitest + Playwright), graceful-degradation, and every hard-won lesson from sessions 1–24."
-version: 1.1.0
-last_updated: 2026-09-21 (session 24 — layered-behavior parity: smooth works-row hover, un-shadowed robots.txt, byte-exact sitemap route handler, dashboard sign-out avatar)
-project_state: "74 unit tests @ 100% pure-seam coverage · 40 e2e (+5 outage) · build 17/17 SSG · live parity audit: 8/10 routes exact line parity · title sweep 7/7 MATCH · error-surface + machine-surface parity complete"
+description: "Complete engineering skill for the Designer Portfolio codebase — a precision-minimalist designer portfolio (Next.js 16 + React 19 + Prisma/SQLite + Tailwind v4) cloned from a base44 reference app. Covers the design-token system, the radial-menu geometry, the ActionResult action contract, auth/session design, test architecture (Vitest + Playwright), graceful-degradation, and every hard-won lesson from sessions 1–26."
+version: 1.2.0
+last_updated: 2026-09-21 (session 26 — deep-behavior parity: source-exact Inter via next/font/local, pinned detail intro at y=138, reference FAQ typography, exact focus-ring map, form field insets, display h1 line-heights, mixed-case hero DOM)
+project_state: "76 unit tests @ 100% pure-seam coverage · 46 e2e (+5 outage) · build 17/17 SSG · live parity audit: 8/10 routes exact line parity · title sweep 7/7 MATCH · error-surface + machine-surface + deep-behavior parity complete"
 ---
 
 # Designer Portfolio — Engineering SKILL
@@ -100,6 +100,10 @@ test or recorded in `docs/remediation-plan-session-18.md`):
 | robots/sitemap content types | `text/html` (base44 host artifact) | `text/plain` / `application/xml` (correct) | Matching text/html would be actively wrong |
 | favicon | broken (CDN `storage: object doesn't exist`) | working A/M monogram (`src/app/icon.svg`) | Enterprise-grade > replicating brokenness |
 | works-row hover mechanism | `transform: scale(1.05)` (v3-style) | Tailwind v4 `scale` property (computed `scale: 1.05`) | Same 700ms + cubic-bezier(0.65,0,0.35,1) + same in-flight values — visually identical |
+| Inter font source | Google Fonts CDN Inter v20 (variable woff2, latin) | The same file, self-hosted via `next/font/local` (`src/app/fonts/inter-var-latin.woff2` + OFL license) — next/font/google's build measures ~3% wider at 300/500 | Glyph-exact parity (canvas-verified 236px both sides) while keeping self-hosting |
+| CTA arrow glyph width | gstatic latin-subset JBM lacks U+2192 → system-fallback arrow (~6px narrower text) | JBM's own arrow glyph (CTA text 166px vs 160px) | Right edges align; engineering a one-glyph fallback isn't worth it (s26) |
+| project-detail pin END | GSAP pin (racy: ~50% engagement, releases ~294px before grid bottom) | CSS sticky, deterministic, holds to the grid's flow end; POSITION (y=138) + start exact | Determinism beats replicating a race — the bundle's pinned intent is what users are meant to see (s26) |
+| focus-ring coverage | Plain `focus:` cobalt ring ONLY on CTA/footer/philosophy/submit/info links; nothing on chrome/rows/links/FAQ/zoom | Identical map since session 26 (plain `focus:`, no rings on the no-ring set) | Exact parity — the old `focus-visible:` everywhere was MORE accessible but not what the reference ships |
 
 ---
 
@@ -140,7 +144,7 @@ bun run dev                       # :3000 (Turbopack; logs tee'd to dev.log)
 
 bun run lint                      # eslint . (flat config; src, prisma, tests, e2e)
 bun run typecheck                 # tsc --noEmit — MUST pass before commit
-bun run test                      # vitest run (74 unit tests)
+bun run test                      # vitest run (76 unit tests)
 bunx vitest run --coverage        # + the 100% pure-seam coverage gate
 bunx playwright test              # e2e against a running server on :3000
 E2E_ADMIN_PASSWORD=… bunx playwright test   # auth/dashboard/inquiry specs enabled
@@ -290,8 +294,11 @@ for future higher-breakpoint overrides.
 
 ### 4.6 Typography & label system
 
-- `next/font`: Inter (body, weights 300–700) + JetBrains Mono (labels) —
-  self-hosted, no render-blocking requests; exposed as
+- Fonts: **Inter via `next/font/local`** — `src/app/fonts/inter-var-latin.woff2`,
+  the reference's exact gstatic v20 variable file (weights 300–700, SIL OFL
+  license alongside; next/font/google's build is ~3% wider at 300/500, see
+  L31) — + **JetBrains Mono via `next/font/google`** (labels). Self-hosted
+  at build, no render-blocking requests; exposed as
   `--font-inter`/`--font-jetbrains` on `<body>`.
 - `label-mono` (globals.css) = the microlabel voice: mono, uppercase,
   letterspaced, small. Use for OVERVIEW / LEGAL / 01/06 counters / marquee
@@ -666,11 +673,11 @@ Run EVERY gate on a clean tree; all must be green before commit/push.
 ```bash
 bun run lint                                   # eslint .
 bun run typecheck                              # tsc --noEmit (strict)
-bun run test                                   # 74 unit tests
+bun run test                                   # 76 unit tests
 bunx vitest run --coverage                     # 100% on the pure seam
 bun run build                                  # 17/17 SSG pages
 DATABASE_URL="file:../db/custom.db" E2E_ADMIN_PASSWORD=… bunx playwright test
-#   → 34 passed + 5 skipped
+#   → 46 passed + 5 skipped
 E2E_OUTAGE=1 E2E_START=1 E2E_PORT=3100 \
   E2E_COMMAND="PORT=3100 DATABASE_URL=file:./db-outage-missing/custom.db bun run start" \
   bunx playwright test e2e/outage.spec.ts     # 5/5 graceful degradation
@@ -755,6 +762,37 @@ Additional process lessons:
   (5/10min) made every subsequent probe fail confusingly. Always verify
   with `ss -tlnp | grep :3000` after the kill, and treat EADDRINUSE in the
   server log as "you are talking to a zombie".
+- **L31 (s26): next/font/google and the gstatic CDN serve DIFFERENT font
+  files.** The reference loaded Inter v20 from fonts.googleapis.com while
+  next/font/google fetched a build whose weights 300/500 ran ~3% wider
+  (canvas `measureText`: 243px vs 236px for the same 30px string) — enough
+  to shift page flow 36px and re-wrap a paragraph. When the reference
+  self-hosts nothing but the metrics matter: network-trace the exact woff2
+  (byte size identifies it), download it, and serve it via
+  `next/font/local` with the matching weight range. Keep the license file
+  in the repo.
+- **L32 (s26): the reference's own behavior can be racy — extract intent
+  from the bundle, not from one probe run.** The source's project-detail
+  intro pin (GSAP ScrollTrigger in a 100ms setTimeout) engaged on only
+  ~50% of loads; two probe rounds disagreed, and the first fix (removing
+  sticky) was wrong. Grepping the JS bundle for the ScrollTrigger config
+  ("start: top 10px, end: bottom bottom, pin: intro") settled what the
+  DESIGNED behavior is. Replicate the intent deterministically (CSS
+  sticky at the measured hold position y=138), and record the divergence.
+- **L33 (s26): parse full computed values before crying bug.** A ring
+  probe truncated the box-shadow string at 60 chars — the transparent
+  segments Tailwind v4's `@property` initial values pad in FRONT of the
+  visible segment made "no visible ring" look true. The source-vs-clone
+  ring conclusion flipped after splitting on top-level commas and testing
+  each segment's color + width. Truncated reads of long computed strings
+  (box-shadow, font-family fallback stacks) are a false-alarm factory.
+- **L34 (s26): new-shadcn base components beat plain utilities via
+  attr-conditional classes.** The select trigger's base
+  `data-[size=default]:h-9` (class + attribute selector = higher
+  specificity than a plain `h-12` utility) collapsed the inquiry form's
+  selects to 36px. In Tailwind v4 the escape hatch is the important
+  suffix: `h-12!`. Same war exists for `data-[state=…]` variants — check
+  the base's conditional classes before overriding at the call site.
 
 ---
 

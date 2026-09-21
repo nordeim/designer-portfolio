@@ -109,7 +109,7 @@ export function RadialMenu({ projects, onClose }: { projects: MenuProject[]; onC
       <button
         type="button"
         onClick={onClose}
-        className="absolute top-6 right-6 md:top-8 md:right-8 text-gallery p-2 z-20 hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt"
+        className="absolute top-6 right-6 md:top-8 md:right-8 text-gallery p-2 z-20 hover:text-cobalt transition-colors focus:outline-none"
         aria-label="Close menu"
       >
         <X className="w-6 h-6" aria-hidden />
@@ -180,7 +180,7 @@ export function RadialMenu({ projects, onClose }: { projects: MenuProject[]; onC
                       <Link
                         href={item.path}
                         onClick={onClose}
-                        className="font-body text-3xl md:text-4xl font-light text-gallery hover:text-cobalt transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt leading-tight"
+                        className="font-body text-3xl md:text-4xl font-light text-gallery hover:text-cobalt transition-colors duration-300 focus:outline-none leading-tight"
                       >
                         {item.label}
                       </Link>
@@ -191,7 +191,7 @@ export function RadialMenu({ projects, onClose }: { projects: MenuProject[]; onC
                           e.stopPropagation();
                           setProjectsOpen((open) => !open);
                         }}
-                        className="text-white/50 hover:text-cobalt transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt mt-1"
+                        className="text-white/50 hover:text-cobalt transition-colors duration-200 focus:outline-none mt-1"
                         aria-label="Toggle projects list"
                         aria-expanded={projectsOpen}
                       >
@@ -206,7 +206,7 @@ export function RadialMenu({ projects, onClose }: { projects: MenuProject[]; onC
                     <Link
                       href={item.path}
                       onClick={onClose}
-                      className="font-body text-3xl md:text-4xl font-light text-gallery hover:text-cobalt transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt leading-tight"
+                      className="font-body text-3xl md:text-4xl font-light text-gallery hover:text-cobalt transition-colors duration-300 focus:outline-none leading-tight"
                     >
                       {item.label}
                     </Link>
@@ -222,7 +222,7 @@ export function RadialMenu({ projects, onClose }: { projects: MenuProject[]; onC
                           onMouseLeave={() => setHovered(null)}
                           onFocus={() => setHovered(p)}
                           onBlur={() => setHovered(null)}
-                          className="font-body text-base font-light text-white/50 hover:text-cobalt transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt leading-snug"
+                          className="font-body text-base font-light text-white/50 hover:text-cobalt transition-colors duration-200 focus:outline-none leading-snug"
                         >
                           <span className="font-mono text-xs text-white/30 mr-2" aria-hidden>
                             {String(p.order).padStart(2, "0")}

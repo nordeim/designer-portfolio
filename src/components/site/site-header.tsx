@@ -131,7 +131,7 @@ export function SiteHeader({ projects }: { projects: MenuProject[] }) {
         >
           <Link
             href="/"
-            className={`pointer-events-auto hover:text-cobalt transition-colors duration-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt ${chrome}`}
+            className={`pointer-events-auto hover:text-cobalt transition-colors duration-500 focus:outline-none ${chrome}`}
             aria-label="Alex Moreau — home"
           >
             <BreathingLogo light={overDarkHero} />
@@ -139,7 +139,7 @@ export function SiteHeader({ projects }: { projects: MenuProject[] }) {
           <button
             type="button"
             onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-            className={`pointer-events-auto p-1.5 hover:text-cobalt transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt ${chrome}`}
+            className={`pointer-events-auto p-1.5 hover:text-cobalt transition-colors duration-300 focus:outline-none ${chrome}`}
             aria-label="Toggle dark mode"
           >
             {resolvedTheme === "dark" ? (
@@ -151,7 +151,7 @@ export function SiteHeader({ projects }: { projects: MenuProject[] }) {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className={`pointer-events-auto font-mono text-xs tracking-widest uppercase hover:text-cobalt transition-colors duration-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt ${chrome}`}
+            className={`pointer-events-auto font-mono text-xs tracking-widest uppercase hover:text-cobalt transition-colors duration-500 focus:outline-none ${chrome}`}
             aria-label="Open menu"
           >
             Menu
@@ -162,7 +162,7 @@ export function SiteHeader({ projects }: { projects: MenuProject[] }) {
         <div className="hidden md:block">
           <Link
             href="/"
-            className={`pointer-events-auto absolute top-6 left-6 md:top-8 md:left-8 hover:text-cobalt transition-colors duration-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt ${chrome}`}
+            className={`pointer-events-auto absolute top-6 left-6 md:top-8 md:left-8 hover:text-cobalt transition-colors duration-500 focus:outline-none ${chrome}`}
             aria-label="Alex Moreau — home"
           >
             <BreathingLogo light={overDarkHero} />
@@ -170,7 +170,7 @@ export function SiteHeader({ projects }: { projects: MenuProject[] }) {
           <button
             type="button"
             onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-            className={`pointer-events-auto absolute top-6 left-1/2 -translate-x-1/2 md:top-8 p-1.5 hover:text-cobalt transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt ${chrome}`}
+            className={`pointer-events-auto absolute top-6 left-1/2 -translate-x-1/2 md:top-8 p-1.5 hover:text-cobalt transition-colors duration-300 focus:outline-none ${chrome}`}
             aria-label="Toggle dark mode"
           >
             {resolvedTheme === "dark" ? (
@@ -182,7 +182,7 @@ export function SiteHeader({ projects }: { projects: MenuProject[] }) {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className={`pointer-events-auto absolute top-6 right-6 md:top-8 md:right-8 font-mono text-xs md:text-sm tracking-widest uppercase hover:text-cobalt transition-colors duration-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt ${chrome}`}
+            className={`pointer-events-auto absolute top-6 right-6 md:top-8 md:right-8 font-mono text-xs md:text-sm tracking-widest uppercase hover:text-cobalt transition-colors duration-500 focus:outline-none ${chrome}`}
             aria-label="Open menu"
           >
             Menu
@@ -192,7 +192,7 @@ export function SiteHeader({ projects }: { projects: MenuProject[] }) {
         {/* Persistent corner call-to-action */}
         <Link
           href="/contact"
-          className={`pointer-events-auto absolute bottom-[26px] right-[26px] font-mono text-xs md:text-sm tracking-widest uppercase hover:text-cobalt transition-colors duration-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:ring-offset-4 ${chrome}`}
+          className={`pointer-events-auto absolute bottom-[26px] right-[26px] font-mono text-xs md:text-sm tracking-widest uppercase hover:text-cobalt transition-colors duration-500 focus:outline-none focus:ring-2 focus:ring-cobalt focus:ring-offset-4 ${chrome}`}
         >
           Start a Project →
         </Link>

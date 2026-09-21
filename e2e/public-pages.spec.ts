@@ -16,7 +16,8 @@ test("landing renders the hero, works index, philosophy, and footer marquee", as
 
   // Hero name + typewriter meta line.
   await expect(page.getByRole("heading", { level: 1, name: "Alex Moreau" })).toBeVisible();
-  await expect(page.getByText("GRAPHIC DESIGNER")).toBeVisible({ timeout: 10_000 });
+  // DOM text is mixed-case; the hero renders it uppercase via CSS (parity).
+  await expect(page.getByText("Graphic Designer")).toBeVisible({ timeout: 10_000 });
 
   // Selected Works: 3 rows with the reference's hardcoded 06 denominator.
   const works = page.getByLabel("Selected Works");
@@ -65,6 +66,82 @@ test("contact page renders headline, underline form, FAQ, and info columns", asy
   await expect(page.getByLabel("Project inquiry form").getByRole("button", { name: "Send Inquiry" })).toBeVisible();
   await expect(page.getByText("hello@alexmoreau.design").first()).toBeVisible();
   await expect(page.getByLabel("Contact information").getByText("Berlin, Germany")).toBeVisible();
+});
+
+test("display headings use the source's default line-heights (session 26 parity)", async ({ page }) => {
+  // Source-measured: the reference's display h1s carry NO leading-*
+  // utility — text-7xl/text-6xl defaults apply (lh 1.0: 72px / 60px). Our
+  // added leading-tight (1.25) inflated every contact/about h1 by 25%,
+  // pushing the whole page flow down ~36px.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/contact");
+  const contactLh = await page.locator("h1").evaluate((el) => getComputedStyle(el).lineHeight);
+  expect(contactLh).toBe("72px");
+
+  await page.goto("/about");
+  const aboutLh = await page.locator("h1").evaluate((el) => getComputedStyle(el).lineHeight);
+  expect(aboutLh).toBe("60px");
+});
+
+test("legal-page h1s use the source's mobile size and margin (session 26 parity)", async ({ page }) => {
+  // Source-measured: privacy/accessibility h1 = text-5xl md:text-6xl with
+  // mb-16 (64px) — the clone shipped text-4xl mobile + mb-10.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/privacy");
+  const h1 = page.locator("h1");
+  const fs = await h1.evaluate((el) => getComputedStyle(el).fontSize);
+  expect(fs).toBe("48px"); // text-5xl at mobile — the source's size
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const mb = await h1.evaluate((el) => getComputedStyle(el).marginBottom);
+  expect(mb).toBe("64px");
+});
+
+test("FAQ accordion matches the reference typography (session 26 parity)", async ({ page }) => {
+  // Source-measured: trigger = text-base (16px) font-medium (500) with
+  // py-6 → 72px tall; content wraps in an inner <p class="... max-w-2xl">
+  // with pb-6 → the open panel measures 128px on the 1440 layout. The
+  // clone shipped text-lg font-light py-4 (60px) and an unconstrained
+  // panel (68px).
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/contact");
+  const trigger = page.getByRole("button", { name: /typical process/i });
+  const fs = await trigger.evaluate((el) => getComputedStyle(el).fontSize);
+  expect(fs).toBe("16px");
+  const fw = await trigger.evaluate((el) => getComputedStyle(el).fontWeight);
+  expect(fw).toBe("500");
+  const h = await trigger.evaluate((el) => Math.round(el.getBoundingClientRect().height));
+  expect(h).toBe(72);
+
+  await trigger.click();
+  await page.waitForTimeout(1200); // let the accordion animation settle
+  const panel = page.locator("[data-slot='accordion-content'][data-state='open']").first();
+  const p = panel.locator("p").first();
+  await expect(p).toBeVisible();
+  const maxW = await p.evaluate((el) => getComputedStyle(el).maxWidth);
+  expect(maxW).toBe("672px"); // max-w-2xl — the source's measure
+  const panelH = await panel.evaluate((el) => Math.round(el.getBoundingClientRect().height));
+  expect(panelH).toBe(128);
+});
+
+test("form fields keep the source's 12px inset and 48px selects (session 26 parity)", async ({ page }) => {
+  // Source-measured: the reference's inquiry fields keep the base px-3
+  // (12px horizontal text inset) and its select triggers render h-12
+  // (48px) like the inputs. The clone shipped px-0 and let the shadcn
+  // base's data-[size=default]:h-9 collapse the triggers to 36px.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/contact");
+  const name = page.getByLabel("Name *", { exact: true });
+  const pad = await name.evaluate((el) => getComputedStyle(el).paddingLeft);
+  expect(pad).toBe("12px");
+
+  const details = page.getByLabel("Project Details *");
+  const taPad = await details.evaluate((el) => getComputedStyle(el).paddingLeft);
+  expect(taPad).toBe("12px");
+
+  const form = page.getByLabel("Project inquiry form");
+  const combo = form.getByRole("combobox", { name: "Project Type" });
+  const comboH = await combo.evaluate((el) => Math.round(el.getBoundingClientRect().height));
+  expect(comboH).toBe(48);
 });
 
 test("contact form starts with placeholder selects and four social links (source parity)", async ({ page }) => {

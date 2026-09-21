@@ -40,7 +40,7 @@ function WorkRow({ project, index }: { project: WorkRowProject; index: number })
     >
       <Link
         href={`/project/${project.slug}`}
-        className="group grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 items-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt"
+        className="group grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 items-start focus:outline-none"
       >
         <motion.div
           style={{ y, opacity }}
@@ -135,7 +135,7 @@ export function WorksSection({ projects }: { projects: WorkRowProject[] }) {
       <div className="mt-20 md:mt-32">
         <Link
           href="/projects"
-          className="font-mono text-2xl md:text-3xl tracking-widest uppercase font-light pb-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt animated-gradient-text"
+          className="font-mono text-2xl md:text-3xl tracking-widest uppercase font-light pb-1 focus:outline-none animated-gradient-text"
         >
           All Projects →
         </Link>

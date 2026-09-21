@@ -34,7 +34,7 @@ export default function AboutPage() {
           </FadeIn>
           <FadeIn className="md:col-start-7 md:col-span-6 flex flex-col justify-end" delay={0.2}>
             <span className="font-mono text-xs tracking-widest uppercase text-muted-foreground block mb-4">About</span>
-            <h1 className="font-body text-4xl md:text-5xl lg:text-6xl font-light tracking-tight text-foreground mb-8 leading-tight">
+            <h1 className="font-body text-4xl md:text-5xl lg:text-6xl font-light tracking-tight text-foreground mb-8">
               Brands that mean
               <br />
               <span className="text-muted-foreground">something.</span>

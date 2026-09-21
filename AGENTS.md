@@ -11,9 +11,9 @@ Every line here exists because an agent would plausibly miss it without help.
 | `bun run dev` | Dev server on http://localhost:3000 (logs tee'd to `dev.log`) |
 | `bun run lint` | ESLint 9 flat config over `src/`, `prisma/seed.ts`, `tests/`, `e2e/` |
 | `bun run typecheck` | `tsc --noEmit` (strict; **must** pass before commit) |
-| `bun run test` | Vitest unit suites (`tests/*.test.ts`, 74 tests) |
+| `bun run test` | Vitest unit suites (`tests/*.test.ts`, 76 tests) |
 | `bunx vitest run --coverage` | Unit suites + the 100% coverage gate on the pure seam (PAD §7.3) |
-| `bunx playwright test` | E2E suite (`e2e/*.spec.ts`, 45 tests: 40 normal + 5 outage specs that skip unless `E2E_OUTAGE=1`) against an already-running server on :3000 |
+| `bunx playwright test` | E2E suite (`e2e/*.spec.ts`, 51 tests: 46 normal + 5 outage specs that skip unless `E2E_OUTAGE=1`) against an already-running server on :3000 |
 | `E2E_START=1 bunx playwright test` | E2E suite with Playwright managing the server itself (`E2E_COMMAND` overrides the command) |
 | `E2E_OUTAGE=1 E2E_START=1 E2E_PORT=3100 E2E_COMMAND="PORT=3100 DATABASE_URL=file:./db-outage-missing/custom.db bun run start" bunx playwright test e2e/outage.spec.ts` | Graceful-degradation contract against a deliberately broken-DB server (health 503 honesty, static shell survival, non-throwing actions, styled error panel) |
 | `bun run db:push` | Push `prisma/schema.prisma` to the database (schema-declarative; ignores migration files) |
@@ -29,7 +29,7 @@ Every line here exists because an agent would plausibly miss it without help.
 1. After editing `prisma/schema.prisma`: `bun run db:generate` **then** `bun run db:push` — the running dev server caches the Prisma client, so **restart `bun run dev`** after schema changes or you get `Cannot read properties of undefined (reading 'findMany')`.
 2. Clean check before pushing: `bun run lint && bun run typecheck && bun run test` (build optional but recommended).
 3. Fresh database: delete `db/custom.db`, then `bunx prisma migrate deploy && bun run db:seed` (or `bun run db:push && bun run db:seed` for scratch iteration).
-4. The full gate is verified green on a **fresh clone** (`bun install` → `migrate deploy` → `seed`): lint, typecheck, 74 unit tests, coverage 100%, build, 40 E2E tests (+ the 5-spec outage suite under `E2E_OUTAGE=1`). Keep it that way — `tsc --noEmit` must pass with only the dependencies declared in `package.json` (no stale `node_modules` phantom packages).
+4. The full gate is verified green on a **fresh clone** (`bun install` → `migrate deploy` → `seed`): lint, typecheck, 76 unit tests, coverage 100%, build, 46 E2E tests (+ the 5-spec outage suite under `E2E_OUTAGE=1`). Keep it that way — `tsc --noEmit` must pass with only the dependencies declared in `package.json` (no stale `node_modules` phantom packages).
 
 ### Running a single test file
 
@@ -111,5 +111,9 @@ e2e/                   Playwright specs (public pages, project detail, auth, inq
 - `revalidatePath` is called in every mutating action for `/`, `/projects`, `/dashboard*` — if you add a public page that lists projects, add it to `revalidateProjectPages()`.
 - **Deployment**: production needs a provisioned database (the SQLite file is git-ignored — a repo-only deploy ships no data layer); follow `docs/DEPLOYMENT.md`. A relative `DATABASE_URL` now resolves identically at runtime and in the CLI, but an **absolute** path is still the recommendation for services. The app degrades gracefully while the DB is down (see the outage suite above).
 - **Env precedence trap**: `DATABASE_URL` exported in the shell (or a stray parent-dir `.env` picked up by bun/prisma walk-up) overrides the repo `.env` at runtime — if the server connects to an unexpected file, check the process environment first (`bun -e 'console.log(process.env.DATABASE_URL)'`), not just `.env`.
+- **Inter is `next/font/local`** (session 26): `next/font/google`'s Inter build runs ~3% wider at weights 300/500 than the reference's gstatic v20 woff2 (canvas-measured), shifting page flow. The reference's exact file is committed under `src/app/fonts/` — do not "simplify" it back to `next/font/google`. Verify glyph parity with a canvas `measureText` probe, not a screenshot.
+- **The source's project-detail pin is racy** (~50% of loads): its GSAP ScrollTrigger registers in a `setTimeout`, so probes disagree run-to-run. We replicate the pinned intent deterministically with CSS sticky at the measured hold position (`md:top-[138px]`) — extract the config from the source bundle before trusting any single probe run.
+- **Ring probes must parse full `box-shadow` strings**: transparent segments from Tailwind v4 `@property` initial values pad the string, and a truncated read hides the visible segment (a session-26 false alarm). Split on top-level commas and test each segment's color+width.
+- **New-shadcn select trigger height**: the base's `data-[size=default]:h-9` (class+attr specificity) beats a plain `h-12` utility — override with `h-12!` (Tailwind v4 important) at the call site.
 - The landing hero cycles constellation images on random timers (1.5–2.5s show, 1.2–3s gap). All of that is paused under `prefers-reduced-motion`; the SSR markup ships the full list so crawlers see every project.
 - `scripts/dev-watchdog.sh` is a local-dev convenience (not shipped to the repo's CI): it restarts `bun run dev` if BOTH `/api/health` and `/` fail 3 consecutive probes, clearing `.next/` on a cold-start failure.

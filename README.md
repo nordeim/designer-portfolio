@@ -21,7 +21,8 @@ Captured from the running app (see `docs/screenshots/` — 40 shots covering eve
 | `28-dev-landing.png` — dev-server verification (Turbopack) | `29-dev-project-not-found.png` — dev-server unknown-slug (title-parity fix, session 20) | `30`/`31` — dev-server login + projects |
 | `32-dev-login-error-alert.png` — reference alert card on failed sign-in (session 22) | `33-dev-contact-error-toast.png` — persistent destructive system toast (session 22) | `34-dev-contact-success-toast.png` — success panel + light toast (session 22) · `35` — login card divider |
 | `36-dev-works-hover-midflight.png` — works-row image hover mid-transition (session 24 smoothness proof) | `37-dev-works-hover-settled.png` — settled at scale 1.05 | `38-dev-robots-dynamic.png` — the dynamic robots.txt contract (session 24) |
-| `39-dev-sitemap-source-parity.png` — source-aligned 6-route sitemap.xml (session 24) | `40-dev-dashboard-signout-avatar.png` — sign-out avatar row (session 24) | |
+| `39-dev-sitemap-source-parity.png` — source-aligned 6-route sitemap.xml (session 24) | `40-dev-dashboard-signout-avatar.png` — sign-out avatar row (session 24) | `41-dev-faq-open-source-typography.png` — FAQ open at reference typography 16px/500, 128px panel (session 26) |
+| `42-dev-form-field-insets.png` — 12px field insets + 48px select triggers (session 26) | `43-dev-detail-pinned-intro-138.png` — project-detail intro pinned at y=138 mid-gallery (session 26) | `44-dev-cta-focus-ring.png` — CTA cobalt focus ring, header chrome ring-free (session 26) · `45` — contact h1 at default 72px line-height |
 
 ## Key Features
 
@@ -37,7 +38,7 @@ Captured from the running app (see `docs/screenshots/` — 40 shots covering eve
 | 📊 | Owner dashboard: stats overview, projects CRUD, inquiry triage workflow | `src/app/dashboard/` |
 | 🌗 | Light/dark themes; reduced-motion aware | `next-themes` + `globals.css` |
 | ♿ | Semantic landmarks, focus states, AA contrast, keyboard operability | throughout |
-| 🧪 | Vitest unit suites (validation, hashing, JSON parsing, typewriter, constellation, menu geometry, db-path resolution, site-config DOM parity) + Playwright E2E (7 spec files, 45 tests incl. the 5 opt-in outage specs) | `tests/`, `e2e/` |
+| 🧪 | Vitest unit suites (validation, hashing, JSON parsing, typewriter, constellation, menu geometry, db-path resolution, site-config DOM parity) + Playwright E2E (7 spec files, 51 tests incl. the 5 opt-in outage specs) | `tests/`, `e2e/` |
 
 ## Quick Start
 
@@ -155,12 +156,12 @@ Reads flow through RSC pages → `src/lib/data.ts` → Prisma. Mutations flow th
 ## Testing
 
 ```bash
-bun run test                                   # all unit suites (74 tests)
+bun run test                                   # all unit suites (76 tests)
 bunx vitest run --coverage                     # + 100% coverage gate on the pure seam
 bunx vitest run tests/validation.test.ts       # single file
 bunx vitest run -t "rejects a slug"            # single test
 
-E2E_ADMIN_PASSWORD=… bunx playwright test       # all e2e (45 tests: 40 normal + 5 outage-skipped; server on :3000)
+E2E_ADMIN_PASSWORD=… bunx playwright test       # all e2e (51 tests: 46 normal + 5 outage-skipped; server on :3000)
 bunx playwright test e2e/auth.spec.ts          # single spec file
 
 # graceful-degradation contract (run against a deliberately broken-DB server):
@@ -169,9 +170,9 @@ E2E_OUTAGE=1 E2E_START=1 E2E_PORT=3100 \
   bunx playwright test e2e/outage.spec.ts
 ```
 
-**Unit (Vitest, 74 tests)**: inquiry/login/project Zod schemas (valid input, boundary values, invalid input, unknown enum values, empty-select prompts), JSON-column serialization round-trips + parse degradation, the ActionResult envelope, scrypt hashing round-trips + malformed stored hashes, typewriter state machine (typing/pausing/cycling/out-of-bounds guard), constellation layout derivation (positions/sizes/contain flags/source fallbacks), radial-menu angle math (rotation clamping, counter-rotation), database-path resolution (CLI-parity anchoring, build-output skipping), and site-config DOM-parity contracts (title-case skill titles, four social networks, uppercase marquee). Password tests do real key derivation (~200 ms each). The pure-seam modules are held at 100% coverage by a machine-enforced gate (`bunx vitest run --coverage`).
+**Unit (Vitest, 76 tests)**: inquiry/login/project Zod schemas (valid input, boundary values, invalid input, unknown enum values, empty-select prompts), JSON-column serialization round-trips + parse degradation, the ActionResult envelope, scrypt hashing round-trips + malformed stored hashes, typewriter state machine (typing/pausing/cycling/out-of-bounds guard), constellation layout derivation (positions/sizes/contain flags/source fallbacks), radial-menu angle math (rotation clamping, counter-rotation), database-path resolution (CLI-parity anchoring, build-output skipping), and site-config DOM-parity contracts (title-case skill titles, four social networks, uppercase marquee, mixed-case hero role/location DOM text). Password tests do real key derivation (~200 ms each). The pure-seam modules are held at 100% coverage by a machine-enforced gate (`bunx vitest run --coverage`).
 
-**E2E (Playwright, 45 tests across 7 files)**: public page content + console cleanliness (including source-parity specs: the contact form's selects start empty showing "Select a type"-style placeholders and the Social column lists four networks with `↗` arrows; the session-22 error-surface specs pin the login alert card, native validation, the slate-400 focus ring, and the persistent destructive/success system toasts; the session-24 machine-surface specs pin the dynamic robots.txt contract — Disallow lines + Sitemap line + no stale static shadow — and the source-aligned 6-route sitemap.xml), project detail (hero labels, sticky intro, gallery zoom toggle, prev/next wrap-around, autoplaying video, 404), auth (login affordances, invalid credentials, dashboard gating, radial menu open/Escape), inquiry submission → dashboard inbox (values picked through the Radix select UI), dashboard flows (CRUD round-trip verified on the public site, inquiry triage, sign-out with the reference's avatar row), a11y smoke (focus visibility, theme toggle, mobile overflow, marquee animation, constellation rendering, works-row hover smoothness with in-flight scale sampling), and a graceful-degradation suite (`e2e/outage.spec.ts`, 5 specs — health honesty, static shell survival, non-throwing login/inquiry actions, styled error panel instead of a bare 500) that activates only under `E2E_OUTAGE=1` against a server with an unreachable database. Mutating specs use unique payloads and clean up after themselves. On RAM-constrained hosts (< ~6 GB), run the suite against the production build (`E2E_START=1 E2E_COMMAND="bun run start"`) — the Turbopack dev server + Chromium together can exceed the memory budget. The read-only specs also double as a **live-deployment smoke test**: `E2E_BASE_URL=https://your-domain bunx playwright test` (see `docs/DEPLOYMENT.md`).
+**E2E (Playwright, 51 tests across 7 files)**: public page content + console cleanliness (including source-parity specs: the contact form's selects start empty showing "Select a type"-style placeholders and the Social column lists four networks with `↗` arrows; the session-22 error-surface specs pin the login alert card, native validation, the slate-400 focus ring, and the persistent destructive/success system toasts; the session-24 machine-surface specs pin the dynamic robots.txt contract — Disallow lines + Sitemap line + no stale static shadow — and the source-aligned 6-route sitemap.xml; the session-26 deep-behavior specs pin the FAQ reference typography, the display h1 default line-heights, the 12px form-field insets with 48px selects, the exact focus-ring coverage map, and the Inter glyph metrics), project detail (hero labels, pinned intro at the source-measured y=138, gallery zoom toggle, prev/next wrap-around, autoplaying video, 404), auth (login affordances, invalid credentials, dashboard gating, radial menu open/Escape), inquiry submission → dashboard inbox (values picked through the Radix select UI), dashboard flows (CRUD round-trip verified on the public site, inquiry triage, sign-out with the reference's avatar row), a11y smoke (focus visibility, theme toggle, mobile overflow, marquee animation, constellation rendering, works-row hover smoothness with in-flight scale sampling), and a graceful-degradation suite (`e2e/outage.spec.ts`, 5 specs — health honesty, static shell survival, non-throwing login/inquiry actions, styled error panel instead of a bare 500) that activates only under `E2E_OUTAGE=1` against a server with an unreachable database. Mutating specs use unique payloads and clean up after themselves. On RAM-constrained hosts (< ~6 GB), run the suite against the production build (`E2E_START=1 E2E_COMMAND="bun run start"`) — the Turbopack dev server + Chromium together can exceed the memory budget. The read-only specs also double as a **live-deployment smoke test**: `E2E_BASE_URL=https://your-domain bunx playwright test` (see `docs/DEPLOYMENT.md`).
 
 ## Design System
 
@@ -186,7 +187,7 @@ Defined once in `src/app/globals.css` (Tailwind v4 tokens + CSS custom propertie
 | `--border` | `hsl(0 0% 85%)` / dark `18%` | Hairline rules, editorial grid |
 | `--radius` | `0` | Sharp editorial corners |
 
-Typography: **Inter** (300–700, body/display; hero h1 scales 106 → 141px → 9.8vw at ≥1440px) · **JetBrains Mono** (300–500, the `label-mono` micro-label style — 12–14px, 0.1em tracking, uppercase; ghost marquee up to 96px `font-light`). Motion: 60s marquee, breathing logo (letter-spacing 0.05em ↔ 0.7em), gradient-shift on the "All Projects →" link — all `prefers-reduced-motion` aware; Framer transitions on menu/rows/gallery with `ease-out-expo`.
+Typography: **Inter** (self-hosted `next/font/local`, 300–700, body/display — the reference's exact gstatic woff2, see `src/app/fonts/`; hero h1 scales 106 → 141px → 9.8vw at ≥1440px) · **JetBrains Mono** (300–500, the `label-mono` micro-label style — 12–14px, 0.1em tracking, uppercase; ghost marquee up to 96px `font-light`). Motion: 60s marquee, breathing logo (letter-spacing 0.05em ↔ 0.7em), gradient-shift on the "All Projects →" link — all `prefers-reduced-motion` aware; Framer transitions on menu/rows/gallery with `ease-out-expo`.
 
 ## Project Status
 

@@ -11,8 +11,11 @@ export const SITE = {
   title: "Designer Portfolio",
   description:
     "A high-impact, spatial portfolio gallery designed to showcase creative work through precision minimalism and cinematic storytelling.",
-  role: "GRAPHIC DESIGNER",
-  basedIn: "BASED: BERLIN",
+  // Mixed-case DOM text (source parity): the reference stores
+  // "Graphic Designer" / "BASED: Berlin" in the DOM and lets the hero's
+  // `uppercase` class render them visually uppercase (session 26).
+  role: "Graphic Designer",
+  basedIn: "BASED: Berlin",
   email: "hello@alexmoreau.design",
   location: "Berlin, Germany",
   availability: "Available for remote & on-site",

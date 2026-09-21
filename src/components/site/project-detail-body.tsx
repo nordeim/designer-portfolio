@@ -57,7 +57,7 @@ function GalleryItem({ item, className, title }: { item: MediaItem; className: s
 function ZoomToggle({ zoom, setZoom, docked }: { zoom: Zoom; setZoom: (z: Zoom) => void; docked: boolean }) {
   const btn = (active: boolean) => `flex items-center justify-center w-5 h-5 transition-colors duration-200 ${
     active ? "text-cobalt" : "text-muted-foreground hover:text-foreground"
-  } focus-visible:outline-none`;
+  }`;
   return (
     <div
       className={`hidden md:flex items-center gap-2 bg-white/50 backdrop-blur-md px-2 py-2 rounded-xl ${
@@ -90,7 +90,7 @@ function ProjectNavLink({ project, label, align }: { project: NavLinkProject; la
   return (
     <Link
       href={`/project/${project.slug}`}
-      className={`flex flex-col gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt ${
+      className={`flex flex-col gap-3 group focus:outline-none ${
         align === "right" ? "items-end" : "items-start"
       }`}
       onMouseEnter={() => setHovered(true)}
@@ -132,9 +132,12 @@ function ProjectNavLink({ project, label, align }: { project: NavLinkProject; la
 }
 
 /**
- * The project detail body: sticky intro column + 1↔2-column gallery with
+ * The project detail body: intro column + 1↔2-column gallery with
  * the circular zoom toggle, then the dot-styled prev/next navigation.
- * Mirrors the reference app's project route.
+ * Mirrors the reference app's project route. Source-measured (session 26):
+ * the reference wraps the intro in a GSAP pin-spacer whose pin never
+ * engages — the intro scrolls AWAY with the page (no CSS sticky), and
+ * the h2 uses the default text-3xl line-height (36px), not leading-snug.
  */
 export function ProjectDetailBody({
   project,
@@ -160,7 +163,7 @@ export function ProjectDetailBody({
           <span className="font-mono text-xs tracking-widest uppercase text-muted-foreground block mb-4">
             {project.category}
           </span>
-          <h2 className="font-body text-3xl font-light tracking-tight text-foreground mb-8 leading-snug">
+          <h2 className="font-body text-3xl font-light tracking-tight text-foreground mb-8">
             {project.tagline}
           </h2>
           <p className="font-body text-base leading-relaxed text-muted-foreground">{project.description}</p>
@@ -171,13 +174,22 @@ export function ProjectDetailBody({
           ))}
         </div>
 
-        {/* Desktop: sticky intro column + gallery */}
+        {/* Desktop: pinned intro column + gallery (source parity).
+            The reference pins the intro via GSAP ScrollTrigger
+            (trigger = this section, start "top 10px", end "bottom bottom",
+            pin = intro, pinSpacing false — extracted from its bundle). The
+            section top sits 128px above the grid (py-32), so the pin engages
+            at scroll 890 holding the intro at viewport y=138 — replicated
+            here with CSS sticky. The source's pin END (section bottom at
+            viewport bottom) releases ~294px before the grid's own bottom;
+            CSS sticky is constrained by the grid, so ours holds a hair
+            longer — documented divergence. */}
         <div className="hidden md:grid grid-cols-12 gap-16 relative">
-          <div className="col-span-4 self-start md:sticky md:top-24">
+          <div className="col-span-4 self-start md:sticky md:top-[138px]">
             <span className="font-mono text-xs tracking-widest uppercase text-muted-foreground block mb-4">
               {project.category}
             </span>
-            <h2 className="font-body text-2xl md:text-3xl font-light tracking-tight text-foreground mb-8 leading-snug">
+            <h2 className="font-body text-2xl md:text-3xl font-light tracking-tight text-foreground mb-8">
               {project.tagline}
             </h2>
             <p className="font-body text-base leading-relaxed text-muted-foreground">{project.description}</p>

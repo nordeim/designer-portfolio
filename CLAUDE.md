@@ -47,7 +47,7 @@ A self-contained, production-grade designer portfolio: a precision-minimalist pu
 - Pages export only `default` + `metadata`/`generateMetadata`/`generateStaticParams`/`revalidate`/`dynamic` — move helpers out of page files.
 - All mutations are Server Actions in `src/actions/` marked `"use server"`, Zod-validated, returning `ActionResult`.
 - Images use `next/image` (with `sizes`) for LCP-relevant frames; decorative hover previews may use raw `<img>` with `loading="eager"`.
-- `next/font` for Inter + JetBrains Mono (self-hosted, no render-blocking requests).
+- `next/font` for fonts: **Inter via `next/font/local`** (the reference's exact gstatic variable woff2, committed under `src/app/fonts/` with its SIL OFL license — weights 300–700) + **JetBrains Mono** via `next/font/google`. Both self-hosted at build time, no render-blocking requests.
 - Tailwind v4 CSS-first theming: `@theme inline` + custom properties in `globals.css`; utility classes from tokens only.
 - Radix/shadcn primitives for all interactive UI (accordion, dialog, select, switch, toast via sonner).
 
@@ -136,6 +136,7 @@ Never bundle unrelated changes. Never commit `.env`, `db/*.db`, or `dev.log` (al
 - Tailwind v4 radius-scale override: `rounded-xl` is 4px here (not 12px) because `@theme inline` remaps `--radius-xl` from `--radius: 0px`. Use `rounded-[12px]` literals where the reference demands 12px (auth-screen inputs/buttons). `rounded-2xl` (16px) is not remapped.
 - Two-design-system rule: auth screen + standalone 404 use literal slate utilities (the reference's system-screen language); everything else uses the grayscale token system. Do not mix them.
 - Playwright `toBeVisible()` does NOT require an element to be inside the viewport — off-screen elements pass. Specs guarding on-screen reachability (e.g. the mobile radial menu) must also assert `boundingBox()` geometry.
+- Inter self-hosting (session 26): `next/font/google`'s Inter differs from the reference's gstatic v20 woff2 by ~3% at weights 300/500 — the exact file lives in `src/app/fonts/` (with SIL OFL license). The reference's JS bundle also registers its GSAP pin in a `setTimeout` (~50% racy engagement) — replicate the measured intent deterministically, never the race.
 
 ## Communication & Documentation
 

@@ -15,7 +15,7 @@ export default function PrivacyPage() {
   return (
     <section className="mx-auto max-w-[1400px] px-6 md:px-10 pt-28 md:pt-40 pb-16 md:pb-24" aria-label="Privacy policy">
       <p className="label-mono text-muted-foreground mb-6">LEGAL</p>
-      <h1 className="font-body text-4xl md:text-6xl font-light tracking-tight text-foreground mb-10">
+      <h1 className="font-body text-5xl md:text-6xl font-light tracking-tight text-foreground mb-16">
         Privacy Policy
       </h1>
       <div className="max-w-3xl flex flex-col gap-8 font-body text-sm md:text-base leading-relaxed text-foreground">

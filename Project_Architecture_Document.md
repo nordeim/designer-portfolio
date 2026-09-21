@@ -11,6 +11,7 @@
 
 | Version | Date | Author | Type | Summary |
 |---|---|---|---|---|
+| 2.1 | 2026-09-21 | Engineering | [CA] | Session-26 deep-behavior parity (the surfaces only interaction-revealed probes, scroll-state geometry, canvas font metrics, and network font traces can see). Seven TDD fixes: (1) **Inter swapped to `next/font/local`** with the reference's exact gstatic v20 variable woff2 (48256B, committed under `src/app/fonts/` with its SIL OFL 1.1 license) — `next/font/google`'s build runs ~3% wider at weights 300/500 (canvas-measured "Matcha, elevated": 243px vs the source's 236px), shifting the contact flow ~36px and re-wrapping the detail description; (2) the **project-detail intro pin** re-measured via bundle forensics — the source's GSAP ScrollTrigger (`start "top 10px", end "bottom bottom", pin intro, pinSpacing false`, registered in a 100ms setTimeout — ~50% racy engagement) holds the intro at viewport y=138; the clone's CSS sticky moved from top-24 (96px) to `md:top-[138px]`, deterministic; (3) the **FAQ accordion** restored to the stock shadcn trigger shape (16px/500/py-6, items-center, no focus-ring/rounded utilities) + content `pb-6` with an inner `<p class="max-w-[672px] text-base font-normal text-muted-foreground leading-relaxed">` — desktop open panel 68→128px, pixel parity; (4) the **focus-ring coverage map** matched exactly (plain `focus:` cobalt ring on CTA/footer/philosophy/submit/info links; NO ring on header chrome, works rows, All Projects, radial-menu links, prev/next, FAQ triggers, zoom buttons — the old `focus-visible:ring` everywhere is gone); (5) **form field insets**: FIELD_INPUT px-0→px-3, select triggers h-9→h-12 (the new-shadcn `data-[size=default]:h-9` base beaten with `h-12!`), submit mt-8 restored; (6) **display h1 line-heights**: contact/about dropped `leading-tight` (90→72 / 75→60px); legal h1s `text-5xl md:text-6xl mb-16` (36→48px mobile, 40→64px margin); detail h2 dropped `leading-snug` (41.25→36px); (7) **hero meta DOM case** mixed-case ("Graphic Designer"/"BASED: Berlin" — the CSS `uppercase` renders it, matching the reference's DOM). E2E 40 → 46 (focus-ring map, font glyph metrics, FAQ typography, h1 line-heights, legal h1 geometry, form insets, pinned intro at y=138); unit 74 → 76 (hero-meta DOM-case rows). Live smoke pre-redeploy: 32/12/7 — the 7 failures are exactly the new read-only specs vs the pre-fix deployment (post-redeploy expectation 39/12/0). Dev-server screenshots 41–45. Accepted divergences: the CTA arrow glyph (source's latin-subset JBM lacks U+2192 → system fallback, 6px), the pin END release point (the source's own is racy) |
 | 2.0 | 2026-09-21 | Engineering | [CA] | Session-24 layered-behavior parity (the surfaces no prior audit measured: dark-mode computed colors, hover transitions, select popups, focus-visible rings, machine surfaces, dashboard-vs-reference pixel forensics) + machine-surface remediation. Dark mode, select popup, CTA hover/ring, index invert-fill, cursor-preview geometry, and contact/login error surfaces audited at EXACT parity — no drift. Four fixes landed TDD-first: (1) the works-row image hover now ANIMATES to scale 1.05 over 0.7s with the reference's cubic-bezier(0.65,0,0.35,1) — an inline `style={{transition:"transform …"}}` shorthand had silently dropped `scale` from the transition-property list (Tailwind v4's scale utility animates the `scale` PROPERTY), snapping instead of easing, and dead-lettering `motion-reduce:transition-none`; (2) a stale 160-byte `public/robots.txt` had SHADOWED the dynamic `robots.ts` route since before the first session — the documented Disallow-/dashboard//login + Sitemap contract was never served (locally or live); deleted; (3) `/sitemap.xml` rebuilt as a byte-exact route handler (`src/app/sitemap.xml/route.ts`): the reference's 6-route/weekly/1.0-0.8 set (home with trailing slash, 4-space indent, no trailing newline, NO project URLs) — the old `sitemap.ts` shipped 11 routes with mixed hints AND 500'd during a DB outage (getPublishedProjects); the static route set is outage-proof; (4) the dashboard sign-out row gained the reference's dark avatar circle with the owner's white initial, pulled flush to the button border, and the sidebar bg token measured to rgb(250,250,250) from the reference screenshot (--sidebar 96.5% → 98%). E2e 37 → 40 (hover-smoothness spec with in-flight sampling, robots no-shadow contract, sitemap route-set, sign-out avatar). Dev-server screenshots 36–40. Post-deploy expectation: live smoke 33/12/0 |
 | 1.9 | 2026-09-21 | Engineering | [CA] | Session-22 error-surface parity: a first-ever functional-behavior audit (form validation, login failures, toasts — surfaces the DOM line-diff cannot see) found and closed the last interactive divergences. Login failures now render the reference's system alert card (bg-red-50/70, border-red-200, 12px radius, `text-red-700`, copy "Invalid email or password" — no period, no toast); empty submits are blocked by native HTML5 validation (required attrs, noValidate dropped — the reference has no client-side schema errors on login); the loginAction's Zod-failure path returns the same undifferentiated copy; login inputs focus with slate-400 (was cobalt) and are h-11→sm:h-12 with text-base→md:text-sm like the reference; the OR divider rebuilt as the reference's shadcn Separator pattern (hairline through a white-backed uppercase "or"); Google button gains the reference's font-medium/hover states. Contact feedback now renders ONLY the reference's persistent Radix system toasts (new `ui/toast.tsx`: square, p-6/pr-8, 388px, viewport top-mobile/bottom-right-desktop, `duration: Infinity`; error = destructive #EF4444 with white `text-sm font-semibold` title, success = #F6F6F6 default variant) — the 6 per-field inline errors and the sonner toasts are gone from the public surface (sonner remains for the dashboard, which the reference does not route). Toast viewport is portaled to document.body (framer-motion wrappers re-anchor position:fixed — the toast rendered below the fold until portaled). Unit 74/74 @ 100%; e2e 34 → 37 (alert-box anatomy, native-validation, short-password, slate-400 ring, divider) + rewritten contact-parity specs (destructive-toast bg/radius/persistence/reachability, success-toast bg); outage 5/5 preserved (destructive toast carries role="alert"). Dev-server screenshots 32–35 |
 | 1.8 | 2026-09-21 | Engineering | [CA] | Session-20 parity audit + title fix: full re-verification of the session-18 end-state (gates green, live smoke 27/12/0 confirming the redeploy, 10-route DOM audit 8/10 exact, no source drift in raw pixel diffs) surfaced one last gap — the unknown-slug route `<title>` (source keeps the generic `Project Detail \| Designer Portfolio`; the clone rendered `Project not found \| …`). Root cause was TWO layers: the `generateMetadata` null-project branch AND the segment `not-found.tsx` boundary's own static metadata (which wins when `notFound()` is thrown). Fixed TDD-first (title assertion added to the existing project-not-found e2e spec); title sweep now 7/7 MATCH. Two invisible divergences documented in §10 (login `name`/`autocomplete` attributes, contact honeypot input). Dev-server verification screenshots 28–31 added |
@@ -172,8 +173,10 @@ src/
 │   │   ├── projects/page.tsx    ← CRUD manager
 │   │   └── inquiries/page.tsx   ← triage inbox
 │   ├── api/health/route.ts      ← liveness/readiness probe
+│   ├── fonts/                  ← Inter variable woff2 (next/font/local — the reference's exact
+│   │                              gstatic v20 file, SIL OFL 1.1 license alongside)
 │   ├── globals.css              ← design tokens + utilities (ghost-grid, marquee, animated-gradient-text, hero-h1-scale)
-│   ├── layout.tsx               ← fonts, theme provider, metadata, toaster
+│   ├── layout.tsx               ← fonts (Inter local, JBM google), theme provider, metadata, toaster
 │   ├── not-found.tsx, sitemap.xml/route.ts, robots.ts, icon.svg
 ├── actions/                     ← auth.ts, contact.ts, dashboard.ts ("use server")
 ├── components/
@@ -187,7 +190,7 @@ src/
 │                                  switch, textarea — extras regenerable via shadcn CLI)
 └── lib/                         ← data.ts, validation.ts, typewriter.ts, constellation.ts,
                                    site-config.ts, db.ts, auth/
-e2e/                            ← Playwright specs (6 files, 30 tests)
+e2e/                            ← Playwright specs (7 files, 51 tests)
 ```
 
 ### 3.3 Critical Code Patterns
@@ -329,8 +332,8 @@ erDiagram
 
 | Role | Family | Weights | Notes |
 |---|---|---|---|
-| Display/body | Inter (`next/font`) | 300–700 | Hero h1: 106px → 141px (md) → 9.8vw (≥1440px, `.hero-h1-scale`), `lineHeight: 0.82` |
-| Mono labels | JetBrains Mono (`next/font`) | 300–500 | `.label-mono`: 12–14px, 0.1em tracking, uppercase — the site's signature voice |
+| Display/body | Inter (`next/font/local`, the reference's exact gstatic v20 woff2 in `src/app/fonts/`) | 300–700 | Hero h1: 106px → 141px (md) → 9.8vw (≥1440px, `.hero-h1-scale`), `lineHeight: 0.82`; display h1s at ≥6xl use the default lh 1 (session 26) |
+| Mono labels | JetBrains Mono (`next/font/google`) | 300–500 | `.label-mono`: 12–14px, 0.1em tracking, uppercase — the site's signature voice |
 | Ghost marquee | JetBrains Mono | 300 | 36/60/96px (`text-4xl/6xl/8xl`), uppercase, 10% opacity, `-0.025em` tracking |
 
 ### 5.2 Color Tokens (with WCAG contrast on `--background`)
@@ -406,15 +409,15 @@ Single role model today: `OWNER` (full mutation rights). `VIEWER` exists in the 
 | Constellation layout | 1 | 9 | `tests/constellation.test.ts` | Vitest |
 | Radial-menu geometry | 1 | 7 | `tests/menu-wheel.test.ts` | Vitest |
 | Database-path resolution | 1 | 13 | `tests/db-path.test.ts` | Vitest |
-| Site-config DOM parity | 1 | 4 | `tests/site-config-parity.test.ts` | Vitest |
-| Public pages content | 1 | 8 | `e2e/public-pages.spec.ts` | Playwright |
-| Project detail flows | 1 | 5 | `e2e/project-detail.spec.ts` | Playwright |
-| Auth + radial menu | 1 | 7 | `e2e/auth.spec.ts` | Playwright |
+| Site-config DOM parity | 1 | 6 | `tests/site-config-parity.test.ts` | Vitest |
+| Public pages content | 1 | 14 | `e2e/public-pages.spec.ts` | Playwright |
+| Project detail flows | 1 | 6 | `e2e/project-detail.spec.ts` | Playwright |
+| Auth + radial menu | 1 | 10 | `e2e/auth.spec.ts` | Playwright |
 | Inquiry → dashboard | 1 | 2 | `e2e/inquiry.spec.ts` | Playwright |
 | Dashboard CRUD/triage | 1 | 5 | `e2e/dashboard.spec.ts` | Playwright |
-| A11y / rendering smoke | 1 | 7 | `e2e/a11y-smoke.spec.ts` | Playwright |
+| A11y / rendering smoke | 1 | 9 | `e2e/a11y-smoke.spec.ts` | Playwright |
 | Outage degradation | 1 | 5 | `e2e/outage.spec.ts` | Playwright (`E2E_OUTAGE=1` only) |
-| **Total** | **14** | **113** | | |
+| **Total** | **14** | **127** | | |
 
 ### 7.2 Test Patterns
 
@@ -507,6 +510,10 @@ TypeScript strict, no `any` (`unknown` + narrowing); `interface` for shapes, `ty
 
 | Priority | Issue | Impact | Status |
 |---|---|---|---|
+| Info | The CTA arrow glyph (U+2192 "→") renders ~6px narrower on the source: its gstatic latin-subset JetBrains Mono lacks the arrow, so the glyph falls back to a system font | CTA text 160px (source) vs 166px (clone); right edges align, the start shifts 6px | Accepted divergence (session 26) — engineering a one-glyph fallback is not worth it; pinned by the e2e CTA focus-ring spec (geometry tolerances) |
+| Info | The project-detail intro pin END: the source's GSAP ScrollTrigger (`end: "bottom bottom"`, registered in a 100ms setTimeout) releases ~294px before the grid's own bottom AND fails to engage at all on ~50% of loads; the clone's CSS sticky holds deterministically until the grid's flow end | At deep scroll the clone's intro holds slightly longer than the source's engaged run; on the source's disengaged runs the source scrolls away entirely while the clone still pins | Accepted divergence (session 26) — the pin POSITION (y=138) and start are exact; determinism beats replicating a race; the bundle's pinned intent is replicated |
+| Info | Inter ships as `next/font/local` (the reference's exact gstatic v20 woff2, `src/app/fonts/inter-var-latin.woff2`) rather than `next/font/google` | next/font/google's Inter build measures ~3% wider at weights 300/500 — different text wrapping and page flow vs the source; the local file is glyph-exact | Parity fix (session 26) — pinned by the a11y font-metrics e2e spec (canvas measureText 236±1px); SIL OFL 1.1 license committed alongside |
+| Info | The focus-ring coverage map deliberately matches the source exactly: NO ring on header chrome (logo/theme/menu), works rows, All Projects, radial-menu links, prev/next, FAQ triggers, zoom buttons; cobalt ring (plain `focus:`, any focus) on CTA, footer links, philosophy links, inquiry submit, contact info links | Keyboard focus remains visible on every navigation CTA and all links — the surfaces where the source shows it; the clone previously showed `focus-visible:` rings on everything | Parity fix (session 26) — pinned by the a11y focus-ring coverage spec (source-measured map) |
 | Info | The source serves `robots.txt`/`sitemap.xml` as `text/html` (base44 SPA artifact — its host serves everything as HTML); the clone serves the correct `text/plain` / `application/xml` | Replicating `text/html` would be actively wrong for crawlers | Documented artifact (session 24) — keep the correct types |
 | Info | The source's favicon (`media.base44.com/.../Frame11.svg`) returns `storage: object doesn't exist` — the source has no working favicon; the clone ships a working A/M monogram (`src/app/icon.svg`) | Clone is more polished than the broken reference state | Deliberate divergence (documented session 24) — do not replicate brokenness |
 | Info | `/sitemap.xml` ships exactly the reference's 6 routes (no project detail URLs) | The reference omits project pages from its sitemap; project pages remain SSG'd + internally linked, just not listed | Parity fix (session 24) — pinned by the sitemap route-set e2e spec; the route handler is outage-proof (no DB call) |

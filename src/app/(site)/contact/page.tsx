@@ -30,7 +30,7 @@ export default function ContactPage() {
             <span className="font-mono text-xs tracking-widest uppercase text-muted-foreground block mb-4">
               Contact
             </span>
-            <h1 className="font-body text-4xl md:text-6xl lg:text-7xl font-light tracking-tight text-foreground mb-6 leading-tight">
+            <h1 className="font-body text-4xl md:text-6xl lg:text-7xl font-light tracking-tight text-foreground mb-6">
               Let&apos;s build something
               <br />
               <span className="text-muted-foreground">remarkable together.</span>
@@ -69,11 +69,17 @@ export default function ContactPage() {
             <Accordion type="single" collapsible className="w-full">
               {FAQ_ITEMS.map((item) => (
                 <AccordionItem key={item.q} value={item.q}>
-                  <AccordionTrigger className="font-body text-lg font-light text-foreground hover:no-underline text-left">
+                  {/* Source-measured custom part: text-base (16px) font-medium,
+                      py-6 (24px), hover underline + cobalt — not text-lg/300. */}
+                  <AccordionTrigger className="font-body text-base text-foreground hover:text-cobalt py-6 text-left">
                     {item.q}
                   </AccordionTrigger>
-                  <AccordionContent className="font-body text-base text-muted-foreground leading-relaxed">
-                    {item.a}
+                  <AccordionContent>
+                    {/* The reference wraps the answer in a max-w-2xl (672px)
+                        paragraph so the text column matches its measure. */}
+                    <p className="font-body text-base text-muted-foreground leading-relaxed max-w-2xl">
+                      {item.a}
+                    </p>
                   </AccordionContent>
                 </AccordionItem>
               ))}
@@ -92,7 +98,7 @@ export default function ContactPage() {
               </span>
               <a
                 href={`mailto:${SITE.email}`}
-                className="font-body text-lg text-foreground hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:ring-offset-4"
+                className="font-body text-lg text-foreground hover:text-cobalt transition-colors focus:outline-none focus:ring-2 focus:ring-cobalt focus:ring-offset-4"
               >
                 {SITE.email}
               </a>
@@ -115,7 +121,7 @@ export default function ContactPage() {
                     href={link.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-body text-base text-foreground hover:text-cobalt transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:ring-offset-4"
+                    className="font-body text-base text-foreground hover:text-cobalt transition-colors focus:outline-none focus:ring-2 focus:ring-cobalt focus:ring-offset-4"
                   >
                     {`${link.label} ↗`}
                   </a>

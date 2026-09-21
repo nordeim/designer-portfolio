@@ -25,8 +25,12 @@ import {
 } from "@/components/ui/toast";
 
 const FIELD_LABEL = "font-mono text-xs tracking-widest uppercase text-muted-foreground block mb-2";
+// Source-measured (session 26): the reference's fields keep the base px-3
+// (12px horizontal text inset) — NOT px-0 — and focus states respond to
+// plain :focus (the source uses focus:ring-0 focus:border-b-2), not
+// :focus-visible.
 const FIELD_INPUT =
-  "bg-transparent border-0 border-b border-border rounded-none font-body text-base h-12 px-0 focus-visible:ring-0 focus-visible:rounded-none focus-visible:border-b-2 focus-visible:border-cobalt";
+  "bg-transparent border-0 border-b border-border rounded-none font-body text-base h-12 px-3 focus:ring-0 focus:rounded-none focus:border-b-2 focus:border-cobalt";
 
 /**
  * Project inquiry form, styled after the reference app's underline-field
@@ -105,7 +109,7 @@ export function InquiryForm() {
       </p>
       <button
         type="button"
-        className="mt-8 font-mono text-xs tracking-widest uppercase text-foreground hover:text-cobalt transition-colors border-b border-foreground/20 hover:border-cobalt pb-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt"
+        className="mt-8 font-mono text-xs tracking-widest uppercase text-foreground hover:text-cobalt transition-colors border-b border-foreground/20 hover:border-cobalt pb-1 focus:outline-none focus:ring-2 focus:ring-cobalt"
         onClick={() => {
           setSent(false);
           reset();
@@ -161,7 +165,7 @@ export function InquiryForm() {
             Project Type
           </label>
           <Select onValueChange={(v) => setValue("projectType", v as InquiryInput["projectType"])}>
-            <SelectTrigger id="projectType" className={`${FIELD_INPUT} w-full`}>
+            <SelectTrigger id="projectType" className={`${FIELD_INPUT} h-12! w-full`}>
               <SelectValue placeholder="Select a type" />
             </SelectTrigger>
             <SelectContent>
@@ -181,7 +185,7 @@ export function InquiryForm() {
           <Select
             onValueChange={(v) => setValue("budgetRange", v as InquiryInput["budgetRange"])}
           >
-            <SelectTrigger id="budgetRange" className={`${FIELD_INPUT} w-full`}>
+            <SelectTrigger id="budgetRange" className={`${FIELD_INPUT} h-12! w-full`}>
               <SelectValue placeholder="Select range" />
             </SelectTrigger>
             <SelectContent>
@@ -199,7 +203,7 @@ export function InquiryForm() {
             Timeline
           </label>
           <Select onValueChange={(v) => setValue("timeline", v as InquiryInput["timeline"])}>
-            <SelectTrigger id="timeline" className={`${FIELD_INPUT} w-full`}>
+            <SelectTrigger id="timeline" className={`${FIELD_INPUT} h-12! w-full`}>
               <SelectValue placeholder="Select timeline" />
             </SelectTrigger>
             <SelectContent>
@@ -221,7 +225,7 @@ export function InquiryForm() {
           id="details"
           rows={6}
           placeholder="Tell me about your project, goals, and what success looks like..."
-          className="bg-transparent border-0 border-b border-border rounded-none font-body text-base min-h-[160px] px-0 focus-visible:ring-0 focus-visible:rounded-none focus-visible:border-b-2 focus-visible:border-cobalt resize-none"
+          className="bg-transparent border-0 border-b border-border rounded-none font-body text-base min-h-[160px] px-3 focus:ring-0 focus:rounded-none focus:border-b-2 focus:border-cobalt resize-none"
           {...register("details")}
         />
       </div>
@@ -229,7 +233,7 @@ export function InquiryForm() {
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex items-center justify-center px-10 py-4 bg-charcoal text-gallery font-mono text-xs tracking-widest uppercase hover:bg-cobalt transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:ring-offset-4 disabled:opacity-50"
+        className="inline-flex items-center justify-center px-10 py-4 bg-charcoal text-gallery font-mono text-xs tracking-widest uppercase hover:bg-cobalt transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-cobalt focus:ring-offset-4 disabled:opacity-50"
       >
         {pending ? "Sending…" : "Send Inquiry"}
       </button>

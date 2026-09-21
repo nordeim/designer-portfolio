@@ -45,13 +45,13 @@ export function PhilosophySection({ philosophy }: { philosophy: string }) {
         >
           <Link
             href="/about"
-            className="font-mono text-sm tracking-widest uppercase text-foreground hover:text-cobalt transition-colors duration-300 border-b border-foreground/20 hover:border-cobalt pb-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:ring-offset-4"
+            className="font-mono text-sm tracking-widest uppercase text-foreground hover:text-cobalt transition-colors duration-300 border-b border-foreground/20 hover:border-cobalt pb-1 focus:outline-none focus:ring-2 focus:ring-cobalt focus:ring-offset-4"
           >
             Read My Story →
           </Link>
           <Link
             href="/contact"
-            className="font-mono text-sm tracking-widest uppercase text-foreground hover:text-cobalt transition-colors duration-300 border-b border-foreground/20 hover:border-cobalt pb-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:ring-offset-4"
+            className="font-mono text-sm tracking-widest uppercase text-foreground hover:text-cobalt transition-colors duration-300 border-b border-foreground/20 hover:border-cobalt pb-1 focus:outline-none focus:ring-2 focus:ring-cobalt focus:ring-offset-4"
           >
             Start a Conversation →
           </Link>

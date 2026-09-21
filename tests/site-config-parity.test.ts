@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MARQUEE_ITEMS, SKILL_GROUPS, SOCIAL_LINKS } from "@/lib/site-config";
+import { MARQUEE_ITEMS, SKILL_GROUPS, SOCIAL_LINKS, SITE } from "@/lib/site-config";
 
 /**
  * Source-app DOM-parity contracts (session 14).
@@ -29,6 +29,20 @@ describe("SKILL_GROUPS DOM parity", () => {
       "Digital Branding",
       "Tools",
     ]);
+  });
+});
+
+describe("SITE hero-meta DOM parity (session 26)", () => {
+  it("role is mixed-case in the DOM (CSS uppercases it visually)", () => {
+    // Source DOM textContent: "Graphic Designer" — the hero's `uppercase`
+    // class renders it. An uppercase literal would double-transform and
+    // diverge in screen readers / text extraction.
+    expect(SITE.role).toBe("Graphic Designer");
+  });
+
+  it("basedIn matches the source's exact DOM casing", () => {
+    // Source DOM textContent: "BASED: Berlin" (prefix caps, city mixed).
+    expect(SITE.basedIn).toBe("BASED: Berlin");
   });
 });
 
