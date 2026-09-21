@@ -54,15 +54,15 @@ $ bun run build
 $ next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/
 ▲ Next.js 16.3.5 (Turbopack)
 - Environments: .env
-✓ Running next.config.ts took 36ms
+✓ Running next.config.ts took 587ms
 
   Creating an optimized production build ...
-✓ Compiled successfully in 12.9s
+✓ Compiled successfully in 20.4s
   Skipping validation of types
-✓ Finished TypeScript config validation in 15ms    
-✓ Collecting page data using 3 workers in 1402ms    
-✓ Generating static pages using 3 workers (17/17) in 1165ms
-✓ Finalizing page optimization in 4.2s    
+✓ Finished TypeScript config validation in 28ms    
+✓ Collecting page data using 3 workers in 5.6s    
+✓ Generating static pages using 3 workers (17/17) in 944ms
+✓ Finalizing page optimization in 4.4s    
 
 Route (app)
 ┌ ○ /
@@ -90,7 +90,6 @@ Route (app)
 ○  (Static)   prerendered as static content
 ●  (SSG)      prerendered as static HTML (uses generateStaticParams)
 ƒ  (Dynamic)  server-rendered on demand
-
 
 $ PORT=3009 bun run start
 $ NODE_ENV=production node .next/standalone/server.js
