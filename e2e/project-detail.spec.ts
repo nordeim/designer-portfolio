@@ -63,6 +63,10 @@ test("unknown slug shows the source-parity project-not-found state", async ({ pa
   // HTTP semantics stay honest (the reference SPA returns 200; we keep the
   // correct 404 — documented divergence, visuals unaffected).
   expect(response?.status()).toBe(404);
+  // Source parity: the reference SPA keeps the generic project-route title
+  // for unknown slugs (its route shell renders the "Project not found."
+  // body) — the tab title does not change.
+  await expect(page).toHaveTitle("Project Detail | Designer Portfolio");
   // The reference renders the site chrome with a centered mono message —
   // NOT the generic 404 boundary.
   await expect(page.getByText("Project not found.", { exact: true })).toBeVisible();

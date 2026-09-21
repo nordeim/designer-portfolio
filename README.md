@@ -8,7 +8,7 @@ The public site opens on a cinematic hero: the designer's name in oversized disp
 
 ## Screenshots
 
-Captured from the running app (see `docs/screenshots/` — 21 shots covering every page, both themes, desktop + mobile, the radial menu, and the auth/404 system screens):
+Captured from the running app (see `docs/screenshots/` — 25 shots covering every page, both themes, desktop + mobile, the radial menu, the auth/404 system screens, and the dev-server verification set):
 
 | | | |
 |---|---|---|
@@ -18,6 +18,7 @@ Captured from the running app (see `docs/screenshots/` — 21 shots covering eve
 | `05-contact.png` — underline form + charcoal submit pill | `06-login.png` — auth card (reference system-screen design) | `08–10` — dashboard views |
 | `11-mobile-landing.png` — 390px hero | `12-mobile-menu.png` — mobile radial menu (open) | `23-mobile-menu-projects-submenu.png` — mobile submenu + preview |
 | `24-standalone-404.png` — unmatched-route 404 (quoted path, Go Home) | `25-project-not-found.png` — unknown-slug state in site chrome | `26`/`27` — legal pages (reference section anatomy) |
+| `28-dev-landing.png` — dev-server verification (Turbopack) | `29-dev-project-not-found.png` — dev-server unknown-slug (title-parity fix, session 20) | `30`/`31` — dev-server login + projects |
 
 ## Key Features
 

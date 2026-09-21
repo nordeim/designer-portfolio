@@ -27,7 +27,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   } catch {
     return { title: "Project Detail" };
   }
-  if (!project) return { title: "Project not found" };
+  // Source parity: the reference SPA keeps the generic project-route title
+  // for unknown slugs (its route shell renders the "Project not found."
+  // body) — the tab title does not change. The honest 404 status is kept.
+  if (!project) return { title: "Project Detail" };
   // Title matches the reference app's generic project-route title exactly
   // (title template composes "Project Detail | Designer Portfolio").
   // OG/description stay per-project: richer than the reference, invisible

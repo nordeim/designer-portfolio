@@ -1,9 +1,9 @@
 ---
 name: designer-portfolio
 description: "Complete engineering skill for the Designer Portfolio codebase — a precision-minimalist designer portfolio (Next.js 16 + React 19 + Prisma/SQLite + Tailwind v4) cloned from a base44 reference app. Covers the design-token system, the radial-menu geometry, the ActionResult action contract, auth/session design, test architecture (Vitest + Playwright), graceful-degradation, and every hard-won lesson from sessions 1–17."
-version: 1.0.0
-last_updated: 2026-09-21
-project_state: "74 unit tests @ 100% pure-seam coverage · 34 e2e (+5 outage) · build 17/17 SSG · live parity audit: 8/10 routes exact line parity"
+version: 1.0.1
+last_updated: 2026-09-21 (session 20 — unknown-slug title parity)
+project_state: "74 unit tests @ 100% pure-seam coverage · 34 e2e (+5 outage) · build 17/17 SSG · live parity audit: 8/10 routes exact line parity · title sweep 7/7 MATCH"
 ---
 
 # Designer Portfolio — Engineering SKILL
@@ -90,6 +90,8 @@ test or recorded in `docs/remediation-plan-session-18.md`):
 | Legal-page content | Unfilled Wix-template placeholders (`[enter X]`) | Real, filled-in statements with the reference's section anatomy | Enterprise-grade polish |
 | Contact form | 7 visible inputs | Same 7 + hidden `website` honeypot | Anti-spam (invisible) |
 | Login forgot/signup | Links out to base44 flows | Buttons revealing "not configured" notices | Flows don't exist here |
+| Login input attributes | No `name`/`autocomplete` on inputs | `name="email"`/`name="password"` + `autocomplete="email"`/`"current-password"` | Password managers + WCAG 1.3.5 (invisible) |
+| Unknown-slug `<title>` | `Project Detail \| Designer Portfolio` (route title persists) | Same — fixed session 20 (generateMetadata null branch + segment not-found metadata both return "Project Detail") | Parity (was "Project not found" pre-session 20) |
 
 ---
 
@@ -766,6 +768,13 @@ expect(box!.x + box!.width).toBeLessThanOrEqual(390);
 src/app/(site)/project/[slug]/not-found.tsx   → "Project not found." in site chrome
 src/app/not-found.tsx                         → standalone 404, quoted pathname
 ```
+
+**Metadata subtlety (session 20)**: when `notFound()` is thrown, the
+boundary's OWN static `metadata` wins over the page's `generateMetadata`
+for the rendered document — the unknown-slug title is controlled from
+`not-found.tsx` (returns `title: "Project Detail"` like the reference SPA;
+`generateMetadata`'s null branch mirrors it for crawlers). Keep both
+layers aligned when touching either.
 
 ### 15.6 Auth-screen slate block (sanctioned exception)
 

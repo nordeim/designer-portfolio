@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Project not found",
+  // Source parity: the reference SPA keeps the generic project-route title
+  // for unknown slugs (the tab title does not change; only the body renders
+  // "Project not found."). The honest 404 status stays (documented divergence).
+  title: "Project Detail",
   robots: { index: false, follow: false },
 };
 
